@@ -1,4 +1,6 @@
 #include "Framework.h"
+#include "DX.h"
+#include <vector>
 
 namespace
 {
@@ -24,15 +26,24 @@ bool Framework::initialize(HINSTANCE hInstance, int nCmdShow)
 	if (FAILED(device.initialize(window.getWindowHandle()))) {
 		return false;
 	}
+
+	std::vector<D3D11_INPUT_ELEMENT_DESC> layout = {
+		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0}
+	};
+
+	if (FAILED(vertexShader.create(L"example.fx", "VS", "vs_4_0", layout))) {
+		return false;
+	}
+
+	if (FAILED(pixelShader.create(L"example.fx", "PS", "ps_4_0"))) {
+		return false;
+	}
+
 	return true;
 }
 
 int Framework::execute()
 {
-	context = device.getContext();
-	renderTargetView = device.getRenderTargetView();
-	swapChain = device.getSwapChain();
-
 	MSG msg = {0};
 	while (WM_QUIT != msg.message) {
 		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
@@ -47,6 +58,6 @@ int Framework::execute()
 
 void Framework::render()
 {
-	context->ClearRenderTargetView(renderTargetView, clearColor);
-	swapChain->Present(0, 0);
+	DX::context->ClearRenderTargetView(DX::renderTargetView, clearColor);
+	DX::swapChain->Present(0, 0);
 }

@@ -2,6 +2,8 @@
 
 #include "Window.h"
 #include "Device.h"
+#include "VertexShader.h"
+#include "PixelShader.h"
 #include <d3d11.h>
 #include <windows.h>
 
@@ -17,9 +19,8 @@ public:
 private:
 	Window window;
 	Device device;
-	ID3D11DeviceContext* context = nullptr;
-	ID3D11RenderTargetView* renderTargetView = nullptr;
-	IDXGISwapChain* swapChain = nullptr;
+	VertexShader vertexShader;
+	PixelShader pixelShader;
 
 	void render();
 };

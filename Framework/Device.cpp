@@ -1,4 +1,6 @@
 #include "Device.h"
+#include "Common.h"
+#include "DX.h"
 
 Device::Device()
 {
@@ -9,18 +11,10 @@ Device::~Device()
 	if (immediateContext) {
 		immediateContext->ClearState();
 	}
-	if (renderTargetView) {
-		renderTargetView->Release();
-	}
-	if (swapChain) {
-		swapChain->Release();
-	}
-	if (immediateContext) {
-		immediateContext->Release();
-	}
-	if (d3dDevice) {
-		d3dDevice->Release();
-	}
+	release(renderTargetView);
+	release(swapChain);
+	release(immediateContext);
+	release(d3dDevice);
 }
 
 HRESULT Device::initialize(HWND windowHandle)
@@ -103,20 +97,10 @@ HRESULT Device::initialize(HWND windowHandle)
 	vp.TopLeftY = 0;
 	immediateContext->RSSetViewports(1, &vp);
 
+	DX::device = d3dDevice;
+	DX::context = immediateContext;
+	DX::renderTargetView = renderTargetView;
+	DX::swapChain = swapChain;
+
 	return S_OK;
-}
-
-ID3D11DeviceContext* Device::getContext()
-{
-	return immediateContext;
-}
-
-ID3D11RenderTargetView* Device::getRenderTargetView()
-{
-	return renderTargetView;
-}
-
-IDXGISwapChain* Device::getSwapChain()
-{
-	return swapChain;
 }

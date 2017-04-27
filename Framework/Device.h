@@ -1,4 +1,5 @@
 #pragma once
+
 #include <windows.h>
 #include <d3d11.h>
 
@@ -9,9 +10,6 @@ public:
 	~Device();
 
 	HRESULT initialize(HWND windowHandle);
-	ID3D11DeviceContext* getContext();
-	ID3D11RenderTargetView* getRenderTargetView();
-	IDXGISwapChain* getSwapChain();
 
 private:
 	ID3D11DeviceContext* immediateContext = NULL;
