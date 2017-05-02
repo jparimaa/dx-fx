@@ -30,4 +30,9 @@ HRESULT PixelShader::create(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderMod
 	return hr;
 }
 
+ID3D11PixelShader * PixelShader::get() const
+{
+	return pixelShader;
+}
+
 } // fx

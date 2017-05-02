@@ -13,6 +13,7 @@ public:
 	~VertexShader();
 
 	HRESULT create(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderModel, std::vector<D3D11_INPUT_ELEMENT_DESC> layout);
+	ID3D11VertexShader* get() const;
 
 private:
 	ID3D11VertexShader* vertexShader = nullptr;

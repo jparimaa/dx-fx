@@ -12,6 +12,7 @@ public:
 	~PixelShader();
 
 	HRESULT create(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderModel);
+	ID3D11PixelShader* get() const;
 
 private:
 	ID3D11PixelShader* pixelShader = nullptr;

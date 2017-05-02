@@ -1,5 +1,7 @@
 #include "Framework.h"
 #include "DX.h"
+#include "Common.h"
+#include <xnamath.h>
 #include <vector>
 
 namespace
@@ -18,6 +20,7 @@ Framework::Framework()
 
 Framework::~Framework()
 {
+	release(vertexBuffer);
 }
 
 bool Framework::initialize(HINSTANCE hInstance, int nCmdShow)
@@ -42,6 +45,10 @@ bool Framework::initialize(HINSTANCE hInstance, int nCmdShow)
 		return false;
 	}
 
+	if (!createBuffer()) {
+		return false;
+	}
+
 	return true;
 }
 
@@ -59,9 +66,45 @@ int Framework::execute()
 	return (int)msg.wParam;
 }
 
+bool Framework::createBuffer()
+{
+	XMFLOAT3 vertices[] = {
+		XMFLOAT3(0.0f, 0.5f, 0.5f),
+		XMFLOAT3(0.5f, -0.5f, 0.5f),
+		XMFLOAT3(-0.5f, -0.5f, 0.5f),
+	};
+
+	D3D11_BUFFER_DESC bd;
+	ZeroMemory(&bd, sizeof(bd));
+	bd.Usage = D3D11_USAGE_DEFAULT;
+	bd.ByteWidth = sizeof(XMFLOAT3) * 3;
+	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	bd.CPUAccessFlags = 0;
+
+	D3D11_SUBRESOURCE_DATA data;
+	ZeroMemory(&data, sizeof(data));
+	data.pSysMem = vertices;
+
+	HRESULT hr = DX::device->CreateBuffer(&bd, &data, &vertexBuffer);
+	if (FAILED(hr)) {
+		return false;
+	}
+
+	UINT stride = sizeof(XMFLOAT3);
+	UINT offset = 0;
+	DX::context->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
+	DX::context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	return true;
+}
+
 void Framework::render()
 {
 	DX::context->ClearRenderTargetView(DX::renderTargetView, clearColor);
+
+	DX::context->VSSetShader(vertexShader.get(), nullptr, 0);
+	DX::context->PSSetShader(pixelShader.get(), nullptr, 0);
+	DX::context->Draw(3, 0);
+
 	DX::swapChain->Present(0, 0);
 }
 

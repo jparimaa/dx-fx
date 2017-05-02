@@ -24,7 +24,9 @@ private:
 	Device device;
 	VertexShader vertexShader;
 	PixelShader pixelShader;
-
+	ID3D11Buffer* vertexBuffer = nullptr;
+	
+	bool createBuffer();
 	void render();
 };
 

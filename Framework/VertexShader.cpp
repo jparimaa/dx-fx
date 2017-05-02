@@ -43,4 +43,9 @@ HRESULT VertexShader::create(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderMo
 	return hr;
 }
 
+ID3D11VertexShader * VertexShader::get() const
+{
+	return vertexShader;
+}
+
 } // fx
