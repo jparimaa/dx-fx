@@ -9,6 +9,9 @@ float clearColor[4] = {0.0f, 0.125f, 0.3f, 1.0f};
 
 } // anonymous
 
+namespace dfx
+{
+
 Framework::Framework()
 {
 }
@@ -46,7 +49,7 @@ int Framework::execute()
 {
 	MSG msg = {0};
 	while (WM_QUIT != msg.message) {
-		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		} else {
@@ -61,3 +64,5 @@ void Framework::render()
 	DX::context->ClearRenderTargetView(DX::renderTargetView, clearColor);
 	DX::swapChain->Present(0, 0);
 }
+
+} // fx

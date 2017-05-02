@@ -3,6 +3,9 @@
 #include <d3dx11.h>
 #include <d3dcompiler.h>
 
+namespace dfx
+{
+
 inline HRESULT compileShaderFromFile(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderModel, ID3DBlob** blobOut)
 {
 	HRESULT hr = S_OK;
@@ -13,10 +16,10 @@ inline HRESULT compileShaderFromFile(WCHAR* fileName, LPCSTR entryPoint, LPCSTR 
 #endif
 
 	ID3DBlob* errorBlob;
-	hr = D3DX11CompileFromFile(fileName, NULL, NULL, entryPoint, shaderModel,
-							   shaderFlags, 0, NULL, blobOut, &errorBlob, NULL);
+	hr = D3DX11CompileFromFile(fileName, nullptr, nullptr, entryPoint, shaderModel,
+							   shaderFlags, 0, nullptr, blobOut, &errorBlob, nullptr);
 	if (FAILED(hr)) {
-		if (errorBlob != NULL) {
+		if (errorBlob != nullptr) {
 			OutputDebugStringA((char*)errorBlob->GetBufferPointer());
 		}
 	}
@@ -34,3 +37,5 @@ inline void release(T* t)
 		t->Release();
 	}
 }
+
+} // fx

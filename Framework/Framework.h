@@ -7,6 +7,9 @@
 #include <d3d11.h>
 #include <windows.h>
 
+namespace dfx
+{
+
 class Framework
 {
 public:
@@ -24,3 +27,5 @@ private:
 
 	void render();
 };
+
+} // fx

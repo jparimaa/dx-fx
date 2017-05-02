@@ -3,7 +3,7 @@
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPWSTR /*lpCmdLine*/, int nCmdShow)
 {
-	Framework framework;
+	dfx::Framework framework;
 	if (!framework.initialize(hInstance, nCmdShow)) {
 		return 0;
 	}

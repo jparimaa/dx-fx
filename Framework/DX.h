@@ -2,6 +2,9 @@
 
 #include <d3d11.h>
 
+namespace dfx
+{
+
 class DX
 {
 public:
@@ -11,3 +14,5 @@ public:
 	static IDXGISwapChain* swapChain;
 	static ID3D11Device* device;
 };
+
+} // fx

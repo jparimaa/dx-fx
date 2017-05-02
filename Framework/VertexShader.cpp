@@ -4,6 +4,9 @@
 #include <d3dx11.h>
 #include <d3dcompiler.h>
 
+namespace dfx
+{
+
 VertexShader::VertexShader()
 {
 }
@@ -19,11 +22,11 @@ HRESULT VertexShader::create(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderMo
 	ID3DBlob* blob = nullptr;
 	HRESULT hr = compileShaderFromFile(fileName, entryPoint, shaderModel, &blob);
 	if (FAILED(hr)) {
-		MessageBox(NULL, L"The FX file cannot be compiled. Please run this executable from the directory that contains the FX file.", L"Error", MB_OK);
+		MessageBox(nullptr, L"The FX file cannot be compiled. Please run this executable from the directory that contains the FX file.", L"Error", MB_OK);
 		return hr;
 	}
 
-	hr = DX::device->CreateVertexShader(blob->GetBufferPointer(), blob->GetBufferSize(), NULL, &vertexShader);
+	hr = DX::device->CreateVertexShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &vertexShader);
 	if (FAILED(hr)) {
 		blob->Release();
 		return hr;
@@ -39,3 +42,5 @@ HRESULT VertexShader::create(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderMo
 	DX::context->IASetInputLayout(vertexLayout);
 	return hr;
 }
+
+} // fx

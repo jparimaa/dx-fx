@@ -2,6 +2,9 @@
 
 #include <d3d11.h>
 
+namespace dfx
+{
+
 class PixelShader
 {
 public:
@@ -13,3 +16,5 @@ public:
 private:
 	ID3D11PixelShader* pixelShader = nullptr;
 };
+
+} // fx

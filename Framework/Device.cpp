@@ -2,6 +2,9 @@
 #include "Common.h"
 #include "DX.h"
 
+namespace dfx
+{
+
 Device::Device()
 {
 }
@@ -20,12 +23,12 @@ Device::~Device()
 HRESULT Device::initialize(HWND windowHandle)
 {
 	HRESULT hr = S_OK;
-	
+
 	RECT rc;
 	GetClientRect(windowHandle, &rc);
 	UINT width = rc.right - rc.left;
 	UINT height = rc.bottom - rc.top;
-	
+
 	UINT createDeviceFlags = 0;
 #ifdef _DEBUG
 	createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
@@ -38,7 +41,7 @@ HRESULT Device::initialize(HWND windowHandle)
 		D3D_DRIVER_TYPE_REFERENCE
 	};
 	UINT numDriverTypes = ARRAYSIZE(driverTypes);
-	
+
 	D3D_FEATURE_LEVEL featureLevels[] =
 	{
 		D3D_FEATURE_LEVEL_11_0,
@@ -46,7 +49,7 @@ HRESULT Device::initialize(HWND windowHandle)
 		D3D_FEATURE_LEVEL_10_0
 	};
 	UINT numFeatureLevels = ARRAYSIZE(featureLevels);
-	
+
 	DXGI_SWAP_CHAIN_DESC sd;
 	ZeroMemory(&sd, sizeof(sd));
 	sd.BufferCount = 1;
@@ -63,7 +66,7 @@ HRESULT Device::initialize(HWND windowHandle)
 
 	for (UINT driverTypeIndex = 0; driverTypeIndex < numDriverTypes; driverTypeIndex++) {
 		driverType = driverTypes[driverTypeIndex];
-		hr = D3D11CreateDeviceAndSwapChain(NULL, driverType, NULL, createDeviceFlags, featureLevels, numFeatureLevels,
+		hr = D3D11CreateDeviceAndSwapChain(nullptr, driverType, nullptr, createDeviceFlags, featureLevels, numFeatureLevels,
 										   D3D11_SDK_VERSION, &sd, &swapChain, &d3dDevice, &featureLevel, &immediateContext);
 		if (SUCCEEDED(hr)) {
 			break;
@@ -74,19 +77,19 @@ HRESULT Device::initialize(HWND windowHandle)
 		return hr;
 	}
 
-	ID3D11Texture2D* backBuffer = NULL;
+	ID3D11Texture2D* backBuffer = nullptr;
 	hr = swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBuffer);
 	if (FAILED(hr)) {
 		return hr;
 	}
 
-	hr = d3dDevice->CreateRenderTargetView(backBuffer, NULL, &renderTargetView);
+	hr = d3dDevice->CreateRenderTargetView(backBuffer, nullptr, &renderTargetView);
 	backBuffer->Release();
 	if (FAILED(hr)) {
 		return hr;
 	}
 
-	immediateContext->OMSetRenderTargets(1, &renderTargetView, NULL);
+	immediateContext->OMSetRenderTargets(1, &renderTargetView, nullptr);
 
 	D3D11_VIEWPORT vp;
 	vp.Width = (FLOAT)width;
@@ -104,3 +107,5 @@ HRESULT Device::initialize(HWND windowHandle)
 
 	return S_OK;
 }
+
+} // fx

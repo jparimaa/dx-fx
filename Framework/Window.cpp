@@ -25,6 +25,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 } //anonymous
 
+namespace dfx
+{
+
 Window::Window()
 {
 }
@@ -43,9 +46,9 @@ HRESULT Window::initialize(HINSTANCE hInstance, int nCmdShow)
 	wcex.cbWndExtra = 0;
 	wcex.hInstance = hInstance;
 	wcex.hIcon = LoadIcon(hInstance, (LPCTSTR)IDI_APPLICATION);
-	wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
+	wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
 	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-	wcex.lpszMenuName = NULL;
+	wcex.lpszMenuName = nullptr;
 	wcex.lpszClassName = L"dxfx";
 	wcex.hIconSm = LoadIcon(wcex.hInstance, (LPCTSTR)IDI_APPLICATION);
 
@@ -57,7 +60,7 @@ HRESULT Window::initialize(HINSTANCE hInstance, int nCmdShow)
 	RECT rc = {0, 0, 800, 600};
 	AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, FALSE);
 	windowHandle = CreateWindow(L"dxfx", L"Direct3D 11", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
-								rc.right - rc.left, rc.bottom - rc.top, NULL, NULL, hInstance, NULL);
+								rc.right - rc.left, rc.bottom - rc.top, nullptr, nullptr, hInstance, nullptr);
 
 	if (!windowHandle) {
 		return E_FAIL;
@@ -73,4 +76,4 @@ HWND Window::getWindowHandle()
 	return windowHandle;
 }
 
-
+} // fx

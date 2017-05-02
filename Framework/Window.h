@@ -2,6 +2,9 @@
 
 #include <windows.h>
 
+namespace dfx
+{
+
 class Window
 {
 public:
@@ -12,6 +15,8 @@ public:
 	HWND getWindowHandle();
 
 private:
-	HINSTANCE instanceHandle = NULL;
-	HWND windowHandle = NULL;
+	HINSTANCE instanceHandle = nullptr;
+	HWND windowHandle = nullptr;
 };
+
+} // fx
