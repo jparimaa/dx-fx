@@ -25,7 +25,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 } //anonymous
 
-namespace dfx
+namespace fw
 {
 
 Window::Window()

@@ -3,7 +3,7 @@
 #include <windows.h>
 #include <d3d11.h>
 
-namespace dfx
+namespace fw
 {
 
 class Device

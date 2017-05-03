@@ -3,7 +3,7 @@
 #include <d3dx11.h>
 #include <d3dcompiler.h>
 
-namespace dfx
+namespace fw
 {
 
 inline HRESULT compileShaderFromFile(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderModel, ID3DBlob** blobOut)

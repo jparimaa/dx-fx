@@ -2,7 +2,7 @@
 #include "Common.h"
 #include "DX.h"
 
-namespace dfx
+namespace fw
 {
 
 Device::Device()

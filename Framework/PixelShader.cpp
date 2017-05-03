@@ -4,7 +4,7 @@
 #include <d3dx11.h>
 #include <d3dcompiler.h>
 
-namespace dfx
+namespace fw
 {
 
 PixelShader::PixelShader()

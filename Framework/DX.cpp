@@ -1,6 +1,6 @@
 #include "DX.h"
 
-namespace dfx
+namespace fw
 {
 
 ID3D11DeviceContext* DX::context = nullptr;

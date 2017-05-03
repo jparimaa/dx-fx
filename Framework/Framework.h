@@ -2,12 +2,10 @@
 
 #include "Window.h"
 #include "Device.h"
-#include "VertexShader.h"
-#include "PixelShader.h"
-#include <d3d11.h>
+#include "Application.h"
 #include <windows.h>
 
-namespace dfx
+namespace fw
 {
 
 class Framework
@@ -17,17 +15,13 @@ public:
 	~Framework();
 
 	bool initialize(HINSTANCE hInstance, int nCmdShow);
+	void setApplication(Application* application);
 	int execute();
 
 private:
 	Window window;
 	Device device;
-	VertexShader vertexShader;
-	PixelShader pixelShader;
-	ID3D11Buffer* vertexBuffer = nullptr;
-	
-	bool createBuffer();
-	void render();
+	Application* app = nullptr;
 };
 
 } // fx

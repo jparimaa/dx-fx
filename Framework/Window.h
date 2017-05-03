@@ -2,7 +2,7 @@
 
 #include <windows.h>
 
-namespace dfx
+namespace fw
 {
 
 class Window

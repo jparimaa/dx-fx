@@ -3,7 +3,7 @@
 #include <d3d11.h>
 #include <vector>
 
-namespace dfx
+namespace fw
 {
 
 class VertexShader
