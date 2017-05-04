@@ -11,10 +11,10 @@ public:
 	ExampleApp();
 	virtual ~ExampleApp();
 	
-	virtual bool initialize();
-	virtual void update();
-	virtual void render();
-	virtual void gui();
+	virtual bool initialize() final;
+	virtual void update() final;
+	virtual void render() final;
+	virtual void gui() final;
 
 private:
 	fw::VertexShader vertexShader;

@@ -15,7 +15,7 @@ public:
 	~Framework();
 
 	bool initialize(HINSTANCE hInstance, int nCmdShow);
-	void setApplication(Application* application);
+	bool setApplication(Application* application);
 	int execute();
 
 private:

@@ -1,10 +1,26 @@
 #pragma once
 
+#include "Framework.h"
 #include <d3dx11.h>
 #include <d3dcompiler.h>
+#include <cstdlib>
 
 namespace fw
 {
+
+template <typename T>
+inline int executeGenericMain(HINSTANCE hInstance, int nCmdShow)
+{
+	int ret = EXIT_FAILURE;
+	Framework framework;
+	if (framework.initialize(hInstance, nCmdShow)) {
+		T app;
+		if (framework.setApplication(&app)) {
+			ret = framework.execute();
+		}
+	}
+	return ret;
+}
 
 inline HRESULT compileShaderFromFile(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderModel, ID3DBlob** blobOut)
 {

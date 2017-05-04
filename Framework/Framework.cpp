@@ -24,14 +24,18 @@ bool Framework::initialize(HINSTANCE hInstance, int nCmdShow)
 	return true;
 }
 
-void Framework::setApplication(Application* application)
+bool Framework::setApplication(Application* application)
 {
+	if (!application) {
+		return false;
+	}
+
 	app = application;
+	return app->initialize();
 }
 
 int Framework::execute()
 {
-	app->initialize();
 	MSG msg = {0};
 	while (WM_QUIT != msg.message) {
 		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
