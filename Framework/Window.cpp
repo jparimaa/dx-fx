@@ -76,4 +76,4 @@ HWND Window::getWindowHandle()
 	return windowHandle;
 }
 
-} // fx
+} // fw

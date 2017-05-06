@@ -106,4 +106,4 @@ HRESULT Device::initialize(HWND windowHandle)
 	return S_OK;
 }
 
-} // fx
+} // fw

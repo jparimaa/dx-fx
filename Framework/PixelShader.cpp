@@ -35,4 +35,4 @@ ID3D11PixelShader * PixelShader::get() const
 	return pixelShader;
 }
 
-} // fx
+} // fw

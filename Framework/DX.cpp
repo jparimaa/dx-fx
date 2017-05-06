@@ -8,4 +8,4 @@ ID3D11RenderTargetView* DX::renderTargetView = nullptr;
 IDXGISwapChain* DX::swapChain = nullptr;
 ID3D11Device* DX::device = nullptr;
 
-} // fx
+} // fw

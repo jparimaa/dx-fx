@@ -26,7 +26,7 @@ inline HRESULT compileShaderFromFile(WCHAR* fileName, LPCSTR entryPoint, LPCSTR 
 {
 	HRESULT hr = S_OK;
 
-	DWORD shaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
+	DWORD shaderFlags = D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_PACK_MATRIX_ROW_MAJOR;
 #if defined(DEBUG)
 	dwShaderFlags |= D3DCOMPILE_DEBUG;
 #endif
@@ -54,4 +54,4 @@ inline void release(T* t)
 	}
 }
 
-} // fx
+} // fw

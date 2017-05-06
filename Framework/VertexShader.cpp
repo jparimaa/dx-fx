@@ -48,4 +48,4 @@ ID3D11VertexShader * VertexShader::get() const
 	return vertexShader;
 }
 
-} // fx
+} // fw

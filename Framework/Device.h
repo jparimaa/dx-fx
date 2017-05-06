@@ -23,4 +23,4 @@ private:
 	D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_11_0;
 };
 
-} // fx
+} // fw

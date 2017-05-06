@@ -41,18 +41,25 @@ bool ExampleApp::initialize()
 		return false;
 	}
 
+	XMVECTOR pos = XMVectorSet(0.0f, 2.0f, -5.0f, 0.0f);
+	camera.getTransformation().position = pos;
+	camera.getTransformation().rotate(XMFLOAT3(1.0f, 0.0f, 0.0f), 0.4f);
+	camera.updateViewMatrix();
+
 	return true;
 }
 
 void ExampleApp::update()
-{
+{	
 	// Todo: Timer
-	rotation += 0.0001f;
-	MatrixSet m;
-	matrixSet.worldMatrix = XMMatrixRotationY(rotation);
-	m.worldMatrix = XMMatrixTranspose(matrixSet.worldMatrix);
-	m.viewMatrix = XMMatrixTranspose(matrixSet.viewMatrix);
-	m.projectionMatrix = XMMatrixTranspose(matrixSet.projectionMatrix);
+	trans.rotate(XMFLOAT3(0.0f, 1.0f, 0.0f), 0.0005f);
+	trans.updateWorldMatrix();
+	XMMATRIX m[] = {
+		trans.getWorldMatrix(),
+		camera.getViewMatrix(),
+		camera.getProjectionMatrix()
+	};
+
 	fw::DX::context->UpdateSubresource(matrixBuffer, 0, NULL, &m, 0, 0);
 }
 
@@ -130,7 +137,7 @@ bool ExampleApp::createBuffer()
 	fw::DX::context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.ByteWidth = sizeof(MatrixSet);
+	bd.ByteWidth = sizeof(XMMATRIX) * 3;
 	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	bd.CPUAccessFlags = 0;
 
@@ -138,14 +145,6 @@ bool ExampleApp::createBuffer()
 	if (FAILED(hr)) {
 		return false;
 	}
-
-	// Todo: Transform and camera classes
-	matrixSet.worldMatrix = XMMatrixIdentity();
-	XMVECTOR camera = XMVectorSet(0.0f, 1.0f, -5.0f, 0.0f);
-	XMVECTOR position = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-	matrixSet.viewMatrix = XMMatrixLookAtLH(camera, position, up);
-	matrixSet.projectionMatrix = XMMatrixPerspectiveFovLH(XM_PIDIV2, 800.0f / 600.0f, 0.01f, 100.0f);
-
+	
 	return true;
 }

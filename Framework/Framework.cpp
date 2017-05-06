@@ -50,4 +50,4 @@ int Framework::execute()
 	return (int)msg.wParam;
 }
 
-} // fx
+} // fw
