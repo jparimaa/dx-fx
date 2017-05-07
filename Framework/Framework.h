@@ -11,12 +11,14 @@ namespace fw
 class Framework
 {
 public:
-	Framework();
+	Framework(LONG windowWidth, LONG windowHeight);
 	~Framework();
 
 	bool initialize(HINSTANCE hInstance, int nCmdShow);
 	bool setApplication(Application* application);
 	int execute();
+
+	Window* getWindow();
 
 private:
 	Window window;

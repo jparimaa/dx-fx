@@ -3,7 +3,8 @@
 namespace fw
 {
 
-Framework::Framework()
+Framework::Framework(LONG windowWidth, LONG windowHeight) :
+	window(windowWidth, windowHeight)
 {
 }
 
@@ -31,6 +32,7 @@ bool Framework::setApplication(Application* application)
 	}
 
 	app = application;
+	app->initializeAPI(this);
 	return app->initialize();
 }
 
@@ -48,6 +50,11 @@ int Framework::execute()
 		}
 	}
 	return (int)msg.wParam;
+}
+
+Window* Framework::getWindow()
+{
+	return &window;
 }
 
 } // fw

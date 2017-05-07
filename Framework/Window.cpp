@@ -28,7 +28,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 namespace fw
 {
 
-Window::Window()
+Window::Window(LONG width, LONG height) :
+	width(width),
+	height(height)
 {
 }
 
@@ -57,7 +59,7 @@ HRESULT Window::initialize(HINSTANCE hInstance, int nCmdShow)
 	}
 
 	instanceHandle = hInstance;
-	RECT rc = {0, 0, 800, 600};
+	RECT rc = {0, 0, width, height};
 	AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, FALSE);
 	windowHandle = CreateWindow(L"dxfx", L"Direct3D 11", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
 								rc.right - rc.left, rc.bottom - rc.top, nullptr, nullptr, hInstance, nullptr);
@@ -74,6 +76,16 @@ HRESULT Window::initialize(HINSTANCE hInstance, int nCmdShow)
 HWND Window::getWindowHandle()
 {
 	return windowHandle;
+}
+
+LONG Window::getWidth() const
+{
+	return width;
+}
+
+LONG Window::getHeight() const
+{
+	return height;
 }
 
 } // fw

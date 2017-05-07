@@ -9,9 +9,9 @@ namespace fw
 class Transformation
 {
 public:
-	static const XMFLOAT3 FORWARD;
-	static const XMFLOAT3 UP;
-	static const XMFLOAT3 LEFT;
+	static const XMVECTOR FORWARD;
+	static const XMVECTOR UP;
+	static const XMVECTOR LEFT;
 
 	XMVECTOR position;
 	XMVECTOR rotation;
@@ -21,7 +21,9 @@ public:
 	~Transformation();
 
 	void move(const XMFLOAT3& translation);
+	void move(const XMVECTOR& translation);
 	void rotate(const XMFLOAT3& axis, float amount);
+	void rotate(const XMVECTOR& axis, float amount);
 
 	XMVECTOR getForward() const;
 	XMVECTOR getUp() const;
@@ -31,10 +33,6 @@ public:
 	const XMMATRIX& getWorldMatrix();
 	
 private:
-	static const XMVECTOR FORWARD_VEC;
-	static const XMVECTOR UP_VEC;
-	static const XMVECTOR LEFT_VEC;
-
 	XMVECTOR forward;
 	XMVECTOR up;
 	XMVECTOR left;

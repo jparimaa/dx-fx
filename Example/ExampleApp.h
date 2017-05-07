@@ -21,6 +21,7 @@ public:
 	virtual void gui() final;
 
 private:
+	fw::API* api = nullptr;
 	fw::Camera camera;
 	fw::Transformation trans;
 	fw::VertexShader vertexShader;

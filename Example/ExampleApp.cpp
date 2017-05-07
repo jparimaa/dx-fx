@@ -11,7 +11,8 @@ float clearColor[4] = {0.0f, 0.125f, 0.3f, 1.0f};
 
 } // anonymous
 
-ExampleApp::ExampleApp()
+ExampleApp::ExampleApp() :
+	api(getAPI())
 {
 }
 
@@ -41,8 +42,7 @@ bool ExampleApp::initialize()
 		return false;
 	}
 
-	XMVECTOR pos = XMVectorSet(0.0f, 2.0f, -5.0f, 0.0f);
-	camera.getTransformation().position = pos;
+	camera.getTransformation().position = XMVectorSet(0.0f, 2.0f, -5.0f, 0.0f);
 	camera.getTransformation().rotate(XMFLOAT3(1.0f, 0.0f, 0.0f), 0.4f);
 	camera.updateViewMatrix();
 

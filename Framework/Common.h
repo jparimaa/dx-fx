@@ -9,10 +9,10 @@ namespace fw
 {
 
 template <typename T>
-inline int executeGenericMain(HINSTANCE hInstance, int nCmdShow)
+inline int executeGenericMain(HINSTANCE hInstance, int nCmdShow, LONG windowWidth = 800, LONG windowHeight = 600)
 {
 	int ret = EXIT_FAILURE;
-	Framework framework;
+	Framework framework(windowWidth, windowHeight);
 	if (framework.initialize(hInstance, nCmdShow)) {
 		T app;
 		if (framework.setApplication(&app)) {
