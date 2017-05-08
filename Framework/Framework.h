@@ -3,6 +3,7 @@
 #include "Window.h"
 #include "Device.h"
 #include "Application.h"
+#include "Timer.h"
 #include <windows.h>
 
 namespace fw
@@ -18,12 +19,14 @@ public:
 	bool setApplication(Application* application);
 	int execute();
 
-	Window* getWindow();
+	const Window& getWindow() const;
+	const Timer& getTimer() const;
 
 private:
 	Window window;
-	Device device;
+	Device device;	
 	Application* app = nullptr;
+	Timer timer;
 };
 
 } // fw

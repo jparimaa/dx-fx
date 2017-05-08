@@ -136,6 +136,7 @@
     <ClCompile Include="DX.cpp" />
     <ClCompile Include="Framework.cpp" />
     <ClCompile Include="PixelShader.cpp" />
+    <ClCompile Include="Timer.cpp" />
     <ClCompile Include="Transformation.cpp" />
     <ClCompile Include="VertexShader.cpp" />
     <ClCompile Include="Window.cpp" />
@@ -149,6 +150,7 @@
     <ClInclude Include="DX.h" />
     <ClInclude Include="Framework.h" />
     <ClInclude Include="PixelShader.h" />
+    <ClInclude Include="Timer.h" />
     <ClInclude Include="Transformation.h" />
     <ClInclude Include="VertexShader.h" />
     <ClInclude Include="Window.h" />

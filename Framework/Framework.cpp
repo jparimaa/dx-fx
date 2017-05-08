@@ -38,23 +38,30 @@ bool Framework::setApplication(Application* application)
 
 int Framework::execute()
 {
+	timer.start();
 	MSG msg = {0};
 	while (WM_QUIT != msg.message) {
 		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
-		} else {
+		} else {			
 			app->update();
+			timer.tick();
 			app->render();
-			app->gui();
+			app->gui();			
 		}
 	}
 	return (int)msg.wParam;
 }
 
-Window* Framework::getWindow()
+const Window& Framework::getWindow() const
 {
-	return &window;
+	return window;
+}
+
+const Timer& Framework::getTimer() const
+{
+	return timer;
 }
 
 } // fw

@@ -12,6 +12,8 @@ public:
 	~API();
 	
 	float getWindowRatio() const;
+	float getTimeSinceStart() const;
+	float getTimeDelta() const;
 
 private:
 	Framework* framework = nullptr;
