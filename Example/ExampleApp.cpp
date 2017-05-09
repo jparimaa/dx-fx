@@ -3,6 +3,7 @@
 #include <DX.h>
 #include <windows.h>
 #include <vector>
+#include <iostream>
 
 namespace
 {
@@ -47,11 +48,13 @@ bool ExampleApp::initialize()
 	camera.getTransformation().rotate(XMFLOAT3(1.0f, 0.0f, 0.0f), 0.4f);
 	camera.updateViewMatrix();
 
+	std::cout << "ExampleApp initialization completed\n";
+
 	return true;
 }
 
 void ExampleApp::update()
-{
+{	
 	trans.rotate(XMFLOAT3(0.0f, 1.0f, 0.0f), XM_2PI * api->getTimeDelta());
 	trans.updateWorldMatrix();
 	XMMATRIX m[] = {

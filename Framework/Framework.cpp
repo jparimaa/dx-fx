@@ -14,6 +14,10 @@ Framework::~Framework()
 
 bool Framework::initialize(HINSTANCE hInstance, int nCmdShow)
 {
+	AllocConsole();
+	freopen_s(&consoleStream, "CONOUT$", "w", stdout);
+	freopen_s(&consoleStream, "CONOUT$", "w", stderr);
+
 	if (FAILED(window.initialize(hInstance, nCmdShow))) {
 		return false;
 	}

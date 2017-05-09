@@ -5,6 +5,7 @@
 #include "Application.h"
 #include "Timer.h"
 #include <windows.h>
+#include <cstdio>
 
 namespace fw
 {
@@ -23,6 +24,7 @@ public:
 	const Timer& getTimer() const;
 
 private:
+	FILE* consoleStream;
 	Window window;
 	Device device;	
 	Application* app = nullptr;
