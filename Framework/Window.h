@@ -12,7 +12,7 @@ public:
 	~Window();
 	HRESULT initialize(HINSTANCE hInstance, int nCmdShow);
 
-	HWND getWindowHandle();
+	HWND getWindowHandle() const;
 	LONG getWidth() const;
 	LONG getHeight() const;
 

@@ -3,6 +3,8 @@
 #include "Framework.h"
 #include <d3dx11.h>
 #include <d3dcompiler.h>
+#include <Windows.h>
+#include <iostream>
 #include <cstdlib>
 
 namespace fw
@@ -19,6 +21,11 @@ inline int executeGenericMain(HINSTANCE hInstance, int nCmdShow, LONG windowWidt
 			ret = framework.execute();
 		}
 	}
+
+	if (ret == EXIT_FAILURE) {
+		MessageBox(framework.getWindow().getWindowHandle(), L"Fatal error. Check console output.", nullptr, MB_OK);
+	}
+
 	return ret;
 }
 
@@ -36,7 +43,7 @@ inline HRESULT compileShaderFromFile(WCHAR* fileName, LPCSTR entryPoint, LPCSTR 
 							   shaderFlags, 0, nullptr, blobOut, &errorBlob, nullptr);
 	if (FAILED(hr)) {
 		if (errorBlob != nullptr) {
-			OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+			std::cerr << "ERROR: " << static_cast<char*>(errorBlob->GetBufferPointer()) << "\n";;
 		}
 	}
 	if (errorBlob) {

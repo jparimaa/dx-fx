@@ -1,4 +1,5 @@
 #include "Framework.h"
+#include <iostream>
 
 namespace fw
 {
@@ -18,11 +19,14 @@ bool Framework::initialize(HINSTANCE hInstance, int nCmdShow)
 	freopen_s(&consoleStream, "CONOUT$", "w", stdout);
 	freopen_s(&consoleStream, "CONOUT$", "w", stderr);
 
-	if (FAILED(window.initialize(hInstance, nCmdShow))) {
+	HRESULT hr = window.initialize(hInstance, nCmdShow);
+	if (FAILED(hr)) {
+		std::cerr << "ERROR: Failed to initialize window\n";
 		return false;
 	}
 
 	if (FAILED(device.initialize(window.getWindowHandle()))) {
+		std::cerr << "ERROR: Failed to initialize device\n";
 		return false;
 	}
 
@@ -32,6 +36,7 @@ bool Framework::initialize(HINSTANCE hInstance, int nCmdShow)
 bool Framework::setApplication(Application* application)
 {
 	if (!application) {
+		std::cerr << "ERROR: Invalid application pointer\n";
 		return false;
 	}
 
@@ -55,7 +60,7 @@ int Framework::execute()
 			app->gui();			
 		}
 	}
-	return (int)msg.wParam;
+	return static_cast<int>(msg.wParam);
 }
 
 const Window& Framework::getWindow() const

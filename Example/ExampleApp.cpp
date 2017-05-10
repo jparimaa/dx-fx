@@ -32,11 +32,11 @@ bool ExampleApp::initialize()
 	    {"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0}
 	};
 
-	if (FAILED(vertexShader.create(L"example.fx", "VS", "vs_4_0", layout))) {
+	if (!vertexShader.create(L"example.fx", "VS", "vs_4_0", layout)) {
 		return false;
 	}
 
-	if (FAILED(pixelShader.create(L"example.fx", "PS", "ps_4_0"))) {
+	if (!pixelShader.create(L"example.fx", "PS", "ps_4_0")) {
 		return false;
 	}
 
@@ -108,6 +108,7 @@ bool ExampleApp::createBuffer()
 
 	HRESULT hr = fw::DX::device->CreateBuffer(&bd, &data, &vertexBuffer);
 	if (FAILED(hr)) {
+		std::cerr << "ERROR: Failed to create vertex buffer\n";
 		return false;
 	}
 
@@ -133,6 +134,7 @@ bool ExampleApp::createBuffer()
 
 	hr = fw::DX::device->CreateBuffer(&bd, &data, &indexBuffer);
 	if (FAILED(hr)) {
+		std::cerr << "ERROR: Failed to create index buffer\n";
 		return false;
 	}
 
@@ -146,6 +148,7 @@ bool ExampleApp::createBuffer()
 
 	hr = fw::DX::device->CreateBuffer(&bd, NULL, &matrixBuffer);
 	if (FAILED(hr)) {
+		std::cerr << "ERROR: Failed to create matrix buffer\n";
 		return false;
 	}
 	

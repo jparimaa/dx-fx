@@ -16,18 +16,24 @@ PixelShader::~PixelShader()
 	release(pixelShader);
 }
 
-HRESULT PixelShader::create(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderModel)
+bool PixelShader::create(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderModel)
 {
 	ID3DBlob* blob = nullptr;
 	HRESULT hr = compileShaderFromFile(fileName, entryPoint, shaderModel, &blob);
 	if (FAILED(hr)) {
-		MessageBox(nullptr, L"The FX file cannot be compiled. Please run this executable from the directory that contains the FX file.", L"Error", MB_OK);
-		return hr;
+		std::cerr << "ERROR: Failed to compile pixel shader\n";
+		return false;
 	}
 
 	hr = DX::device->CreatePixelShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &pixelShader);
 	blob->Release();
-	return hr;
+
+	if (FAILED(hr)) {
+		std::cerr << "ERROR: Failed to create pixel shader\n";
+		return false;
+	}
+
+	return true;
 }
 
 ID3D11PixelShader * PixelShader::get() const

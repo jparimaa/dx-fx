@@ -1,6 +1,7 @@
 #include "Device.h"
 #include "Common.h"
 #include "DX.h"
+#include <iostream>
 
 namespace fw
 {
@@ -72,18 +73,21 @@ HRESULT Device::initialize(HWND windowHandle)
 	}
 
 	if (FAILED(hr)) {
+		std::cerr << "ERROR: Failed to create device and swap chain\n";
 		return hr;
 	}
 
 	ID3D11Texture2D* backBuffer = nullptr;
 	hr = swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBuffer);
 	if (FAILED(hr)) {
+		std::cerr << "ERROR: Failed to get swap chain buffer\n";
 		return hr;
 	}
 
 	hr = d3dDevice->CreateRenderTargetView(backBuffer, nullptr, &renderTargetView);
 	backBuffer->Release();
 	if (FAILED(hr)) {
+		std::cerr << "ERROR: Failed to create render target view\n";
 		return hr;
 	}
 

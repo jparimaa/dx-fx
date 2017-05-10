@@ -17,30 +17,32 @@ VertexShader::~VertexShader()
 	release(vertexLayout);
 }
 
-HRESULT VertexShader::create(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderModel, std::vector<D3D11_INPUT_ELEMENT_DESC> layout)
+bool VertexShader::create(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderModel, std::vector<D3D11_INPUT_ELEMENT_DESC> layout)
 {
 	ID3DBlob* blob = nullptr;
 	HRESULT hr = compileShaderFromFile(fileName, entryPoint, shaderModel, &blob);
 	if (FAILED(hr)) {
-		MessageBox(nullptr, L"The FX file cannot be compiled. Please run this executable from the directory that contains the FX file.", L"Error", MB_OK);
-		return hr;
+		std::wcerr << "ERROR: Failed to compile vertex shader\n";
+		return false;
 	}
 
 	hr = DX::device->CreateVertexShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &vertexShader);
 	if (FAILED(hr)) {
+		std::wcerr << "ERROR: Failed to create vertex shader\n";
 		blob->Release();
-		return hr;
+		return false;
 	}
 
 	hr = DX::device->CreateInputLayout(layout.data(), layout.size(), blob->GetBufferPointer(),
 									   blob->GetBufferSize(), &vertexLayout);
 	blob->Release();
 	if (FAILED(hr)) {
-		return hr;
+		std::wcerr << "ERROR: Failed to create input layout for vertex shader\n";
+		return false;
 	}
 
 	DX::context->IASetInputLayout(vertexLayout);
-	return hr;
+	return true;
 }
 
 ID3D11VertexShader * VertexShader::get() const

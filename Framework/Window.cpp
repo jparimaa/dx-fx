@@ -1,4 +1,5 @@
 #include "Window.h"
+#include <iostream>
 
 namespace
 {
@@ -53,8 +54,9 @@ HRESULT Window::initialize(HINSTANCE hInstance, int nCmdShow)
 	wcex.lpszMenuName = nullptr;
 	wcex.lpszClassName = L"dxfx";
 	wcex.hIconSm = LoadIcon(wcex.hInstance, (LPCTSTR)IDI_APPLICATION);
-
+	
 	if (!RegisterClassEx(&wcex)) {
+		std::cerr << "ERROR: Could not register window class\n";
 		return E_FAIL;
 	}
 
@@ -65,6 +67,7 @@ HRESULT Window::initialize(HINSTANCE hInstance, int nCmdShow)
 								rc.right - rc.left, rc.bottom - rc.top, nullptr, nullptr, hInstance, nullptr);
 
 	if (!windowHandle) {
+		std::cerr << "ERROR: Could not create window\n";
 		return E_FAIL;
 	}
 
@@ -73,7 +76,7 @@ HRESULT Window::initialize(HINSTANCE hInstance, int nCmdShow)
 	return S_OK;
 }
 
-HWND Window::getWindowHandle()
+HWND Window::getWindowHandle() const
 {
 	return windowHandle;
 }
