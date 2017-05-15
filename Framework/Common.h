@@ -23,7 +23,7 @@ inline int executeGenericMain(HINSTANCE hInstance, int nCmdShow, LONG windowWidt
 	}
 
 	if (ret == EXIT_FAILURE) {
-		MessageBox(framework.getWindow().getWindowHandle(), L"Fatal error. Check console output.", nullptr, MB_OK);
+		MessageBox(framework.getWindow().getHandle(), L"Fatal error. Check console output.", nullptr, MB_OK);
 	}
 
 	return ret;

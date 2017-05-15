@@ -1,4 +1,5 @@
 #include "Window.h"
+#include <Keyboard.h>
 #include <iostream>
 
 namespace
@@ -16,6 +17,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 	case WM_DESTROY:
 		PostQuitMessage(0);
+		break;
+	case WM_ACTIVATEAPP:
+		DirectX::Keyboard::ProcessMessage(message, wParam, lParam);
+		break;
+	case WM_KEYDOWN:
+	case WM_SYSKEYDOWN:
+	case WM_KEYUP:
+	case WM_SYSKEYUP:
+		DirectX::Keyboard::ProcessMessage(message, wParam, lParam);
 		break;
 	default:
 		return DefWindowProc(hWnd, message, wParam, lParam);
@@ -54,7 +64,7 @@ HRESULT Window::initialize(HINSTANCE hInstance, int nCmdShow)
 	wcex.lpszMenuName = nullptr;
 	wcex.lpszClassName = L"dxfx";
 	wcex.hIconSm = LoadIcon(wcex.hInstance, (LPCTSTR)IDI_APPLICATION);
-	
+
 	if (!RegisterClassEx(&wcex)) {
 		std::cerr << "ERROR: Could not register window class\n";
 		return E_FAIL;
@@ -76,7 +86,7 @@ HRESULT Window::initialize(HINSTANCE hInstance, int nCmdShow)
 	return S_OK;
 }
 
-HWND Window::getWindowHandle() const
+HWND Window::getHandle() const
 {
 	return windowHandle;
 }

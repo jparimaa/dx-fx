@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Windows.h>
+
 namespace fw
 {
 
@@ -12,8 +14,10 @@ public:
 	~API();
 	
 	float getWindowRatio() const;
+	HWND getWindowHandle() const;
 	float getTimeSinceStart() const;
 	float getTimeDelta() const;
+	void quit();
 
 private:
 	Framework* framework = nullptr;

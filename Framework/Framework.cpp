@@ -10,7 +10,7 @@ Framework::Framework(LONG windowWidth, LONG windowHeight) :
 }
 
 Framework::~Framework()
-{	
+{
 }
 
 bool Framework::initialize(HINSTANCE hInstance, int nCmdShow)
@@ -25,7 +25,7 @@ bool Framework::initialize(HINSTANCE hInstance, int nCmdShow)
 		return false;
 	}
 
-	if (FAILED(device.initialize(window.getWindowHandle()))) {
+	if (FAILED(device.initialize(window.getHandle()))) {
 		std::cerr << "ERROR: Failed to initialize device\n";
 		return false;
 	}
@@ -49,18 +49,23 @@ int Framework::execute()
 {
 	timer.start();
 	MSG msg = {0};
-	while (WM_QUIT != msg.message) {
+	while (WM_QUIT != msg.message && running) {
 		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
-		} else {			
+		} else {
 			app->update();
 			timer.tick();
 			app->render();
-			app->gui();			
+			app->gui();
 		}
 	}
 	return static_cast<int>(msg.wParam);
+}
+
+void Framework::quit()
+{
+	running = false;
 }
 
 const Window& Framework::getWindow() const
