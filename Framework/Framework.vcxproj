@@ -135,6 +135,7 @@
     <ClCompile Include="Device.cpp" />
     <ClCompile Include="DX.cpp" />
     <ClCompile Include="Framework.cpp" />
+    <ClCompile Include="Input.cpp" />
     <ClCompile Include="PixelShader.cpp" />
     <ClCompile Include="Timer.cpp" />
     <ClCompile Include="Transformation.cpp" />
@@ -149,6 +150,7 @@
     <ClInclude Include="Device.h" />
     <ClInclude Include="DX.h" />
     <ClInclude Include="Framework.h" />
+    <ClInclude Include="Input.h" />
     <ClInclude Include="PixelShader.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="Transformation.h" />

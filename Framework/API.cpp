@@ -5,7 +5,9 @@ namespace fw
 {
 
 API::API(Framework* fw) :
-	framework(fw)
+	framework(fw),
+	timer(fw->getTimer()),
+	input(fw->getInput())
 {
 }
 
@@ -15,7 +17,7 @@ API::~API()
 
 float API::getWindowRatio() const
 {
-	const Window& w = framework->getWindow();
+	const Window& w = *framework->getWindow();
 	float width = static_cast<float>(w.getWidth());
 	float height = static_cast<float>(w.getHeight());
 	return width / height;
@@ -23,17 +25,27 @@ float API::getWindowRatio() const
 
 HWND API::getWindowHandle() const
 {
-	return framework->getWindow().getHandle();
+	return framework->getWindow()->getHandle();
 }
 
 float API::getTimeSinceStart() const
 {
-	return framework->getTimer().getTimeSinceStart();
+	return timer->getTimeSinceStart();
 }
 
 float API::getTimeDelta() const
 {
-	return framework->getTimer().getTimeDelta();
+	return timer->getTimeDelta();
+}
+
+bool API::isKeyReleased(DirectX::Keyboard::Keys k) const
+{
+	return input->getKeyboardState()->IsKeyReleased(k);
+}
+
+int API::getMousePosX() const
+{
+	return input->getMouse()->GetState().x;
 }
 
 void API::quit()

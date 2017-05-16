@@ -4,6 +4,7 @@
 #include "Device.h"
 #include "Application.h"
 #include "Timer.h"
+#include "Input.h"
 #include <windows.h>
 #include <cstdio>
 
@@ -21,15 +22,17 @@ public:
 	int execute();
 	void quit();
 
-	const Window& getWindow() const;
-	const Timer& getTimer() const;
-	
+	const Window* getWindow() const;
+	const Timer* getTimer() const;
+	const Input* getInput() const;
+
 private:
 	FILE* consoleStream;
 	Window window;
-	Device device;	
+	Device device;
 	Application* app = nullptr;
 	Timer timer;
+	Input input;
 	bool running = true;
 };
 

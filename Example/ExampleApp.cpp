@@ -12,8 +12,7 @@ float clearColor[4] = {0.0f, 0.125f, 0.3f, 1.0f};
 
 } // anonymous
 
-ExampleApp::ExampleApp() :
-	api(getAPI())
+ExampleApp::ExampleApp()
 {
 }
 
@@ -27,7 +26,6 @@ ExampleApp::~ExampleApp()
 bool ExampleApp::initialize()
 {
 	api = getAPI();
-	keyboard = std::make_unique<DirectX::Keyboard>();
 
 	std::vector<D3D11_INPUT_ELEMENT_DESC> layout = {
 		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
@@ -57,10 +55,10 @@ bool ExampleApp::initialize()
 
 void ExampleApp::update()
 {
-	DirectX::Keyboard::State keyboardState = keyboard->GetState();
-	if (keyboardState.Escape) {
+	if (api->isKeyReleased(DirectX::Keyboard::Escape)) {
 		api->quit();
 	}
+	std::cout << api->getMousePosX() << "\n";
 
 	trans.rotate(XMFLOAT3(0.0f, 1.0f, 0.0f), XM_2PI * api->getTimeDelta());
 	trans.updateWorldMatrix();

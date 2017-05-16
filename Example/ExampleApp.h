@@ -5,8 +5,6 @@
 #include <PixelShader.h>
 #include <Transformation.h>
 #include <Camera.h>
-#include <Keyboard.h>
-#include <windows.h>
 #include <xnamath.h>
 #include <d3d11.h>
 #include <memory>
@@ -30,8 +28,7 @@ private:
 	fw::PixelShader pixelShader;
 	ID3D11Buffer* vertexBuffer = nullptr;
 	ID3D11Buffer* indexBuffer = nullptr;
-	ID3D11Buffer* matrixBuffer = nullptr;	
-	std::unique_ptr<DirectX::Keyboard> keyboard;
+	ID3D11Buffer* matrixBuffer = nullptr;
 	
 	bool createBuffer();
 };

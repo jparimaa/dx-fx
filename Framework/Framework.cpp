@@ -30,6 +30,7 @@ bool Framework::initialize(HINSTANCE hInstance, int nCmdShow)
 		return false;
 	}
 
+	input.initialize(window.getHandle());
 	return true;
 }
 
@@ -54,6 +55,7 @@ int Framework::execute()
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		} else {
+			input.update();
 			app->update();
 			timer.tick();
 			app->render();
@@ -68,14 +70,19 @@ void Framework::quit()
 	running = false;
 }
 
-const Window& Framework::getWindow() const
+const Window* Framework::getWindow() const
 {
-	return window;
+	return &window;
 }
 
-const Timer& Framework::getTimer() const
+const Timer* Framework::getTimer() const
 {
-	return timer;
+	return &timer;
+}
+
+const Input* Framework::getInput() const
+{
+	return &input;
 }
 
 } // fw
