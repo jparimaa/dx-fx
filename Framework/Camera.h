@@ -1,8 +1,7 @@
 #pragma once
 
 #include "Transformation.h"
-#include <windows.h>
-#include <xnamath.h>
+#include <DirectXMath.h>
 
 namespace fw
 {
@@ -13,22 +12,22 @@ public:
 	Camera();
 	~Camera();
 
-	const XMMATRIX& updateViewMatrix();
-	const XMMATRIX& updateProjectionMatrix();
+	const DirectX::XMMATRIX& updateViewMatrix();
+	const DirectX::XMMATRIX& updateProjectionMatrix();
 
-	const XMMATRIX& getViewMatrix();
-	const XMMATRIX& getProjectionMatrix();
+	const DirectX::XMMATRIX& getViewMatrix();
+	const DirectX::XMMATRIX& getProjectionMatrix();
 
 	Transformation& getTransformation();
 
 private:
-	float FOV = XM_PIDIV2;
+	float FOV = DirectX::XM_PIDIV2;
 	float ratio = 1.33333f;
 	float nearClipDistance = 0.1f;
 	float farClipDistance = 100.0f;
 
-	XMMATRIX viewMatrix;
-	XMMATRIX projectionMatrix;
+	DirectX::XMMATRIX viewMatrix;
+	DirectX::XMMATRIX projectionMatrix;
 	Transformation transformation;
 };
 

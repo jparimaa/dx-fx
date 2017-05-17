@@ -1,5 +1,7 @@
 #include "Camera.h"
 
+using namespace DirectX;
+
 namespace fw
 {
 

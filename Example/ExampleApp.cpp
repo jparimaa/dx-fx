@@ -1,9 +1,11 @@
 #include "ExampleApp.h"
 #include <Common.h>
 #include <DX.h>
-#include <windows.h>
+#include <DirectXMath.h>
 #include <vector>
 #include <iostream>
+
+using namespace DirectX;
 
 namespace
 {

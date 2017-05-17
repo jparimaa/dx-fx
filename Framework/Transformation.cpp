@@ -1,5 +1,7 @@
 #include "Transformation.h"
 
+using namespace DirectX;
+
 namespace fw
 {
 

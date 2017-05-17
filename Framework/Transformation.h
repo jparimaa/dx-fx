@@ -1,7 +1,6 @@
 #pragma once
 
-#include <windows.h>
-#include <xnamath.h>
+#include <DirectXMath.h>
 
 namespace fw
 {
@@ -9,34 +8,34 @@ namespace fw
 class Transformation
 {
 public:
-	static const XMVECTOR FORWARD;
-	static const XMVECTOR UP;
-	static const XMVECTOR LEFT;
+	static const DirectX::XMVECTOR FORWARD;
+	static const DirectX::XMVECTOR UP;
+	static const DirectX::XMVECTOR LEFT;
 
-	XMVECTOR position;
-	XMVECTOR rotation;
-	XMVECTOR scale;
-
+	DirectX::XMVECTOR position;
+	DirectX::XMVECTOR rotation;
+	DirectX::XMVECTOR scale;
+	
 	Transformation();
 	~Transformation();
 
-	void move(const XMFLOAT3& translation);
-	void move(const XMVECTOR& translation);
-	void rotate(const XMFLOAT3& axis, float amount);
-	void rotate(const XMVECTOR& axis, float amount);
+	void move(const DirectX::XMFLOAT3& translation);
+	void move(const DirectX::XMVECTOR& translation);
+	void rotate(const DirectX::XMFLOAT3& axis, float amount);
+	void rotate(const DirectX::XMVECTOR& axis, float amount);
 
-	XMVECTOR getForward() const;
-	XMVECTOR getUp() const;
-	XMVECTOR getLeft() const;
+	DirectX::XMVECTOR getForward() const;
+	DirectX::XMVECTOR getUp() const;
+	DirectX::XMVECTOR getLeft() const;
 
-	const XMMATRIX& updateWorldMatrix();
-	const XMMATRIX& getWorldMatrix();
+	const DirectX::XMMATRIX& updateWorldMatrix();
+	const DirectX::XMMATRIX& getWorldMatrix();
 	
 private:
-	XMVECTOR forward;
-	XMVECTOR up;
-	XMVECTOR left;
-	XMMATRIX worldMatrix;
+	DirectX::XMVECTOR forward;
+	DirectX::XMVECTOR up;
+	DirectX::XMVECTOR left;
+	DirectX::XMMATRIX worldMatrix;
 };
 
 } // fw

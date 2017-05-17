@@ -5,7 +5,6 @@
 #include <PixelShader.h>
 #include <Transformation.h>
 #include <Camera.h>
-#include <xnamath.h>
 #include <d3d11.h>
 #include <memory>
 
