@@ -28,6 +28,7 @@ private:
 	ID3D11Buffer* vertexBuffer = nullptr;
 	ID3D11Buffer* indexBuffer = nullptr;
 	ID3D11Buffer* matrixBuffer = nullptr;
-	
+	unsigned int numIndices = 0;
+
 	bool createBuffer();
 };

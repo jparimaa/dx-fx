@@ -61,9 +61,9 @@ bool Model::loadModel(const std::string& file)
 					std::cerr << "ERROR: Unable to parse model indices for " << file << "\n";
 					return false;
 				}
-				mesh.indices.push_back(aMesh->mFaces[faceIndex].mIndices[0]);
-				mesh.indices.push_back(aMesh->mFaces[faceIndex].mIndices[1]);
-				mesh.indices.push_back(aMesh->mFaces[faceIndex].mIndices[2]);
+				mesh.indices.push_back(static_cast<WORD>(aMesh->mFaces[faceIndex].mIndices[0]));
+				mesh.indices.push_back(static_cast<WORD>(aMesh->mFaces[faceIndex].mIndices[1]));
+				mesh.indices.push_back(static_cast<WORD>(aMesh->mFaces[faceIndex].mIndices[2]));
 			}
 
 			aiMaterial* aMaterial = aScene->mMaterials[aMesh->mMaterialIndex];
@@ -88,8 +88,8 @@ bool Model::loadModel(const std::string& file)
 			meshes.push_back(std::move(mesh));
 		}
 	} else {
-		std::cerr << "WARNING: Failed to read model: " << file << "\n";
-		std::cerr << importer.GetErrorString() << "\n";
+		std::cerr << "WARNING: Failed to read model: " << file << "\n"
+			      << "Importer error message: " << importer.GetErrorString() << "\n";
 		return false;
 	}
 

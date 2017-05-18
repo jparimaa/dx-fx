@@ -1,4 +1,5 @@
 #include "ExampleApp.h"
+#include <fw/Model.h>
 #include <fw/Common.h>
 #include <fw/DX.h>
 #include <DirectXMath.h>
@@ -31,7 +32,7 @@ bool ExampleApp::initialize()
 
 	std::vector<D3D11_INPUT_ELEMENT_DESC> layout = {
 		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-	    {"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0}
+		{"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0}
 	};
 
 	if (!vertexShader.create(L"example.fx", "VS", "vs_4_0", layout)) {
@@ -60,9 +61,8 @@ void ExampleApp::update()
 	if (api->isKeyReleased(DirectX::Keyboard::Escape)) {
 		api->quit();
 	}
-	std::cout << api->getMousePosX() << "\n";
 
-	trans.rotate(XMFLOAT3(0.0f, 1.0f, 0.0f), XM_2PI * api->getTimeDelta());
+	trans.rotate(XMFLOAT3(0.0f, 1.0f, 0.0f), XM_2PI * api->getTimeDelta() * 0.1f);
 	trans.updateWorldMatrix();
 	XMMATRIX m[] = {
 		trans.getWorldMatrix(),
@@ -81,7 +81,7 @@ void ExampleApp::render()
 	fw::DX::context->VSSetConstantBuffers(0, 1, &matrixBuffer);
 	fw::DX::context->PSSetShader(pixelShader.get(), nullptr, 0);
 
-	fw::DX::context->DrawIndexed(36, 0, 0);
+	fw::DX::context->DrawIndexed(numIndices, 0, 0);
 	fw::DX::swapChain->Present(0, 0);
 }
 
@@ -91,27 +91,24 @@ void ExampleApp::gui()
 
 bool ExampleApp::createBuffer()
 {
-	float vertices[] = {
-		-1.0f,  1.0f, -1.0f,   0.0f, 0.0f, 1.0f, 1.0f,
-		 1.0f,  1.0f, -1.0f,   0.0f, 1.0f, 0.0f, 1.0f,
-		 1.0f,  1.0f,  1.0f,   0.0f, 1.0f, 1.0f, 1.0f,
-		-1.0f,  1.0f,  1.0f,   1.0f, 0.0f, 0.0f, 1.0f,
-		-1.0f, -1.0f, -1.0f,   1.0f, 0.0f, 1.0f, 1.0f,
-		 1.0f, -1.0f, -1.0f,   1.0f, 1.0f, 0.0f, 1.0f,
-		 1.0f, -1.0f,  1.0f,   1.0f, 1.0f, 1.0f, 1.0f,
-		-1.0f, -1.0f,  1.0f,   0.0f, 0.0f, 0.0f, 1.0f
-	};
+	fw::Model model;
+	model.loadModel("../Assets/monkey.3ds");
+	std::vector<XMFLOAT3> vertexData;
+	for (const auto& mesh : model.getMeshes()) {
+		vertexData.insert(vertexData.end(), mesh.vertices.begin(), mesh.vertices.end());
+		vertexData.insert(vertexData.end(), mesh.normals.begin(), mesh.normals.end());
+	}
 
 	D3D11_BUFFER_DESC bd;
 	ZeroMemory(&bd, sizeof(bd));
 	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.ByteWidth = sizeof(float) * 7 * 8;
+	bd.ByteWidth = sizeof(XMFLOAT3) * vertexData.size();
 	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	bd.CPUAccessFlags = 0;
 
 	D3D11_SUBRESOURCE_DATA data;
 	ZeroMemory(&data, sizeof(data));
-	data.pSysMem = vertices;
+	data.pSysMem = vertexData.data();
 
 	HRESULT hr = fw::DX::device->CreateBuffer(&bd, &data, &vertexBuffer);
 	if (FAILED(hr)) {
@@ -119,25 +116,22 @@ bool ExampleApp::createBuffer()
 		return false;
 	}
 
-	UINT stride = sizeof(float) * 7;
+	UINT stride = sizeof(XMFLOAT3);
 	UINT offset = 0;
 	fw::DX::context->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
 	
-	WORD indices[] = {
-		3,1,0, 2,1,3,
-		0,5,4, 1,5,0,
-		3,4,7, 0,4,3,
-		1,6,5, 2,6,1,
-		2,7,6, 3,7,2,
-		6,4,5, 7,4,6
-	};
+	numIndices = model.getNumIndices();
+	std::vector<WORD> indices;
+	for (const auto& mesh : model.getMeshes()) {
+		indices.insert(indices.end(), mesh.indices.begin(), mesh.indices.end());
+	}
 
 	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.ByteWidth = sizeof(WORD) * 36;
+	bd.ByteWidth = sizeof(WORD) * model.getNumIndices();
 	bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
 	bd.CPUAccessFlags = 0;
 
-	data.pSysMem = indices;
+	data.pSysMem = indices.data();
 
 	hr = fw::DX::device->CreateBuffer(&bd, &data, &indexBuffer);
 	if (FAILED(hr)) {
@@ -145,7 +139,7 @@ bool ExampleApp::createBuffer()
 		return false;
 	}
 
-	fw::DX::context->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R16_UINT, 0);
+	fw::DX::context->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R16_UINT, 0);	
 	fw::DX::context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	bd.Usage = D3D11_USAGE_DEFAULT;
@@ -158,6 +152,6 @@ bool ExampleApp::createBuffer()
 		std::cerr << "ERROR: Failed to create matrix buffer\n";
 		return false;
 	}
-	
+
 	return true;
 }

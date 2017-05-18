@@ -2,6 +2,7 @@
 
 #include <assimp/material.h>
 #include <DirectXMath.h>
+#include <Windows.h>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -18,7 +19,7 @@ public:
 		std::vector<DirectX::XMFLOAT3> normals;
 		std::vector<DirectX::XMFLOAT3> tangents;
 		std::vector<DirectX::XMFLOAT2> uvs;
-		std::vector<unsigned int> indices;
+		std::vector<WORD> indices;
 
 		using Materials = std::unordered_map<aiTextureType, std::vector<std::string>>;
 		Materials materials;
