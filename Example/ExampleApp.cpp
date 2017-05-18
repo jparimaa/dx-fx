@@ -1,6 +1,6 @@
 #include "ExampleApp.h"
-#include <Common.h>
-#include <DX.h>
+#include <fw/Common.h>
+#include <fw/DX.h>
 #include <DirectXMath.h>
 #include <vector>
 #include <iostream>

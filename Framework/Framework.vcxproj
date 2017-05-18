@@ -131,40 +131,40 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="API.cpp" />
-    <ClCompile Include="Application.cpp" />
-    <ClCompile Include="Camera.cpp" />
-    <ClCompile Include="Device.cpp" />
-    <ClCompile Include="DX.cpp" />
-    <ClCompile Include="Framework.cpp" />
-    <ClCompile Include="Input.cpp" />
-    <ClCompile Include="Model.cpp" />
-    <ClCompile Include="PixelShader.cpp" />
-    <ClCompile Include="Timer.cpp" />
-    <ClCompile Include="Transformation.cpp" />
-    <ClCompile Include="VertexShader.cpp" />
-    <ClCompile Include="Window.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="API.h" />
-    <ClInclude Include="Application.h" />
-    <ClInclude Include="Camera.h" />
-    <ClInclude Include="Common.h" />
-    <ClInclude Include="Device.h" />
-    <ClInclude Include="DX.h" />
-    <ClInclude Include="Framework.h" />
-    <ClInclude Include="Input.h" />
-    <ClInclude Include="Model.h" />
-    <ClInclude Include="PixelShader.h" />
-    <ClInclude Include="Timer.h" />
-    <ClInclude Include="Transformation.h" />
-    <ClInclude Include="VertexShader.h" />
-    <ClInclude Include="Window.h" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\..\tools\DirectXTK-apr2017b\DirectXTK_Desktop_2017.vcxproj">
       <Project>{e0b52ae7-e160-4d32-bf3f-910b785e5a8e}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="fw\API.cpp" />
+    <ClCompile Include="fw\Application.cpp" />
+    <ClCompile Include="fw\Camera.cpp" />
+    <ClCompile Include="fw\Device.cpp" />
+    <ClCompile Include="fw\DX.cpp" />
+    <ClCompile Include="fw\Framework.cpp" />
+    <ClCompile Include="fw\Input.cpp" />
+    <ClCompile Include="fw\Model.cpp" />
+    <ClCompile Include="fw\PixelShader.cpp" />
+    <ClCompile Include="fw\Timer.cpp" />
+    <ClCompile Include="fw\Transformation.cpp" />
+    <ClCompile Include="fw\VertexShader.cpp" />
+    <ClCompile Include="fw\Window.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="fw\API.h" />
+    <ClInclude Include="fw\Application.h" />
+    <ClInclude Include="fw\Camera.h" />
+    <ClInclude Include="fw\Common.h" />
+    <ClInclude Include="fw\Device.h" />
+    <ClInclude Include="fw\DX.h" />
+    <ClInclude Include="fw\Framework.h" />
+    <ClInclude Include="fw\Input.h" />
+    <ClInclude Include="fw\Model.h" />
+    <ClInclude Include="fw\PixelShader.h" />
+    <ClInclude Include="fw\Timer.h" />
+    <ClInclude Include="fw\Transformation.h" />
+    <ClInclude Include="fw\VertexShader.h" />
+    <ClInclude Include="fw\Window.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

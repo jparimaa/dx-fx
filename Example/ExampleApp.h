@@ -1,10 +1,10 @@
 #pragma once
 
-#include <Application.h>
-#include <VertexShader.h>
-#include <PixelShader.h>
-#include <Transformation.h>
-#include <Camera.h>
+#include <fw/Application.h>
+#include <fw/VertexShader.h>
+#include <fw/PixelShader.h>
+#include <fw/Transformation.h>
+#include <fw/Camera.h>
 #include <d3d11.h>
 #include <memory>
 

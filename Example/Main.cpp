@@ -1,5 +1,5 @@
 #include "ExampleApp.h"
-#include <Common.h>
+#include <fw/Common.h>
 #include <windows.h>
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPWSTR /*lpCmdLine*/, int nCmdShow)
