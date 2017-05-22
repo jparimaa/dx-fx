@@ -85,4 +85,9 @@ const Input* Framework::getInput() const
 	return &input;
 }
 
+Device* Framework::getDevice()
+{
+	return &device;
+}
+
 } // fw

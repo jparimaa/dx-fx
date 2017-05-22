@@ -76,6 +76,7 @@ void ExampleApp::update()
 void ExampleApp::render()
 {
 	fw::DX::context->ClearRenderTargetView(fw::DX::renderTargetView, clearColor);
+	fw::DX::context->ClearDepthStencilView(api->getDepthStencilView(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 	fw::DX::context->VSSetShader(vertexShader.get(), nullptr, 0);
 	fw::DX::context->VSSetConstantBuffers(0, 1, &matrixBuffer);

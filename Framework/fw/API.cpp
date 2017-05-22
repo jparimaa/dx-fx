@@ -7,7 +7,8 @@ namespace fw
 API::API(Framework* fw) :
 	framework(fw),
 	timer(fw->getTimer()),
-	input(fw->getInput())
+	input(fw->getInput()),
+	device(fw->getDevice())
 {
 }
 
@@ -46,6 +47,11 @@ bool API::isKeyReleased(DirectX::Keyboard::Keys k) const
 int API::getMousePosX() const
 {
 	return input->getMouse()->GetState().x;
+}
+
+ID3D11DepthStencilView* API::getDepthStencilView()
+{
+	return device->getDepthStencilView();
 }
 
 void API::quit()

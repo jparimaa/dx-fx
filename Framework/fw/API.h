@@ -2,8 +2,10 @@
 
 #include "Timer.h"
 #include "Input.h"
-#include <windows.h>
+#include "Device.h"
 #include <Keyboard.h>
+#include <d3d11.h>
+#include <windows.h>
 
 namespace fw
 {
@@ -24,6 +26,8 @@ public:
 
 	bool isKeyReleased(DirectX::Keyboard::Keys k) const;
 	int getMousePosX() const;
+	
+	ID3D11DepthStencilView* getDepthStencilView();
 
 	void quit();
 
@@ -31,6 +35,7 @@ private:
 	Framework* framework = nullptr;
 	const Timer* timer = nullptr;
 	const Input* input = nullptr;
+	Device* device = nullptr;
 };
 
 }

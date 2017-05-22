@@ -25,6 +25,7 @@ public:
 	const Window* getWindow() const;
 	const Timer* getTimer() const;
 	const Input* getInput() const;
+	Device* getDevice();
 
 private:
 	FILE* consoleStream;
