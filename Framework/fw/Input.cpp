@@ -14,14 +14,14 @@ Input::~Input()
 void Input::initialize(HWND windowHandle)
 {
 	mouse.reset(new DirectX::Mouse);
-	mouse->SetWindow(windowHandle);
+	mouse->SetWindow(windowHandle);	
 	keyboard.reset(new DirectX::Keyboard);
 }
 
 void Input::update()
 {
-	mouseState.Update(mouse->GetState());
-	keyboardState.Update(keyboard->GetState());
+	mouseTracker.Update(mouse->GetState());
+	keyboardTracker.Update(keyboard->GetState());
 }
 
 const DirectX::Mouse* Input::getMouse() const
@@ -34,14 +34,14 @@ const DirectX::Keyboard* Input::getKeyboard() const
 	return keyboard.get();
 }
 
-const DirectX::Mouse::ButtonStateTracker* Input::getMouseState() const
+const DirectX::Mouse::ButtonStateTracker* Input::getMouseTracker() const
 {
-	return &mouseState;
+	return &mouseTracker;
 }
 
-const DirectX::Keyboard::KeyboardStateTracker* Input::getKeyboardState() const
+const DirectX::Keyboard::KeyboardStateTracker* Input::getKeyboardTracker() const
 {
-	return &keyboardState;
+	return &keyboardTracker;
 }
 
 }

@@ -19,14 +19,14 @@ public:
 	
 	const DirectX::Mouse* getMouse() const;
 	const DirectX::Keyboard* getKeyboard() const;
-	const DirectX::Mouse::ButtonStateTracker* getMouseState() const;
-	const DirectX::Keyboard::KeyboardStateTracker* getKeyboardState() const;
+	const DirectX::Mouse::ButtonStateTracker* getMouseTracker() const;
+	const DirectX::Keyboard::KeyboardStateTracker* getKeyboardTracker() const;
 
 private:
 	std::unique_ptr<DirectX::Mouse> mouse;
 	std::unique_ptr<DirectX::Keyboard> keyboard;
-	DirectX::Mouse::ButtonStateTracker mouseState;
-	DirectX::Keyboard::KeyboardStateTracker keyboardState;
+	DirectX::Mouse::ButtonStateTracker mouseTracker;
+	DirectX::Keyboard::KeyboardStateTracker keyboardTracker;
 };
 
 } // fw

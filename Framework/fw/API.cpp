@@ -4,19 +4,23 @@
 namespace fw
 {
 
-API::API(Framework* fw) :
-	framework(fw),
-	timer(fw->getTimer()),
-	input(fw->getInput()),
-	device(fw->getDevice())
+Framework* API::framework = nullptr;
+Device* API::device = nullptr;
+const Timer* API::timer = nullptr;
+const Input* API::input = nullptr;
+
+void API::initialize(Framework* fw)
 {
+	if (framework) {
+		return;
+	}
+	framework = fw;
+	timer = fw->getTimer();
+	input = fw->getInput();
+	device = fw->getDevice();
 }
 
-API::~API()
-{
-}
-
-float API::getWindowRatio() const
+float API::getWindowRatio()
 {
 	const Window& w = *framework->getWindow();
 	float width = static_cast<float>(w.getWidth());
@@ -24,29 +28,39 @@ float API::getWindowRatio() const
 	return width / height;
 }
 
-HWND API::getWindowHandle() const
+HWND API::getWindowHandle()
 {
 	return framework->getWindow()->getHandle();
 }
 
-float API::getTimeSinceStart() const
+float API::getTimeSinceStart()
 {
 	return timer->getTimeSinceStart();
 }
 
-float API::getTimeDelta() const
+float API::getTimeDelta()
 {
 	return timer->getTimeDelta();
 }
 
-bool API::isKeyReleased(DirectX::Keyboard::Keys k) const
+DirectX::Keyboard::State API::getKeyboardState()
 {
-	return input->getKeyboardState()->IsKeyReleased(k);
+	return input->getKeyboard()->GetState();
 }
 
-int API::getMousePosX() const
+bool API::isKeyReleased(DirectX::Keyboard::Keys k)
+{
+	return input->getKeyboardTracker()->IsKeyReleased(k);
+}
+
+int API::getMouseX()
 {
 	return input->getMouse()->GetState().x;
+}
+
+int API::getMouseY()
+{
+	return input->getMouse()->GetState().y;
 }
 
 ID3D11DepthStencilView* API::getDepthStencilView()

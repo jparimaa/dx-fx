@@ -2,6 +2,7 @@
 #include <fw/Model.h>
 #include <fw/Common.h>
 #include <fw/DX.h>
+#include <fw/API.h>
 #include <DirectXMath.h>
 #include <vector>
 #include <iostream>
@@ -28,8 +29,6 @@ ExampleApp::~ExampleApp()
 
 bool ExampleApp::initialize()
 {
-	api = getAPI();
-
 	std::vector<D3D11_INPUT_ELEMENT_DESC> layout = {
 		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
 		{"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0}
@@ -50,6 +49,7 @@ bool ExampleApp::initialize()
 	camera.getTransformation().position = XMVectorSet(0.0f, 2.0f, -5.0f, 0.0f);
 	camera.getTransformation().rotate(XMFLOAT3(1.0f, 0.0f, 0.0f), 0.4f);
 	camera.updateViewMatrix();
+	cameraController.setCamera(&camera);
 
 	std::cout << "ExampleApp initialization completed\n";
 
@@ -58,11 +58,14 @@ bool ExampleApp::initialize()
 
 void ExampleApp::update()
 {
-	if (api->isKeyReleased(DirectX::Keyboard::Escape)) {
-		api->quit();
+	if (fw::API::isKeyReleased(DirectX::Keyboard::Escape)) {
+		fw::API::quit();
 	}
 
-	trans.rotate(XMFLOAT3(0.0f, 1.0f, 0.0f), XM_2PI * api->getTimeDelta() * 0.1f);
+	cameraController.update();
+	camera.updateViewMatrix();
+
+	trans.rotate(XMFLOAT3(0.0f, 1.0f, 0.0f), XM_2PI * fw::API::getTimeDelta() * 0.1f);
 	trans.updateWorldMatrix();
 	XMMATRIX m[] = {
 		trans.getWorldMatrix(),
@@ -76,7 +79,7 @@ void ExampleApp::update()
 void ExampleApp::render()
 {
 	fw::DX::context->ClearRenderTargetView(fw::DX::renderTargetView, clearColor);
-	fw::DX::context->ClearDepthStencilView(api->getDepthStencilView(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	fw::DX::context->ClearDepthStencilView(fw::API::getDepthStencilView(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 	fw::DX::context->VSSetShader(vertexShader.get(), nullptr, 0);
 	fw::DX::context->VSSetConstantBuffers(0, 1, &matrixBuffer);

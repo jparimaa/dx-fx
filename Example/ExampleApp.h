@@ -5,6 +5,7 @@
 #include <fw/PixelShader.h>
 #include <fw/Transformation.h>
 #include <fw/Camera.h>
+#include <fw/CameraController.h>
 #include <d3d11.h>
 #include <memory>
 
@@ -20,8 +21,8 @@ public:
 	virtual void gui() final;
 
 private:
-	fw::API* api = nullptr;
 	fw::Camera camera;
+	fw::CameraController cameraController;
 	fw::Transformation trans;
 	fw::VertexShader vertexShader;
 	fw::PixelShader pixelShader;

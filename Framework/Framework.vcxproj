@@ -139,6 +139,7 @@
     <ClCompile Include="fw\API.cpp" />
     <ClCompile Include="fw\Application.cpp" />
     <ClCompile Include="fw\Camera.cpp" />
+    <ClCompile Include="fw\CameraController.cpp" />
     <ClCompile Include="fw\Device.cpp" />
     <ClCompile Include="fw\DX.cpp" />
     <ClCompile Include="fw\Framework.cpp" />
@@ -154,6 +155,7 @@
     <ClInclude Include="fw\API.h" />
     <ClInclude Include="fw\Application.h" />
     <ClInclude Include="fw\Camera.h" />
+    <ClInclude Include="fw\CameraController.h" />
     <ClInclude Include="fw\Common.h" />
     <ClInclude Include="fw\Device.h" />
     <ClInclude Include="fw\DX.h" />

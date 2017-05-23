@@ -15,27 +15,30 @@ class Framework;
 class API
 {
 public:
-	API(Framework* fw);
-	~API();
+	API() = delete;
 	
-	float getWindowRatio() const;
-	HWND getWindowHandle() const;
+	static void initialize(Framework* fw);
 
-	float getTimeSinceStart() const;
-	float getTimeDelta() const;
+	static float getWindowRatio();
+	static HWND getWindowHandle();
 
-	bool isKeyReleased(DirectX::Keyboard::Keys k) const;
-	int getMousePosX() const;
+	static float getTimeSinceStart();
+	static float getTimeDelta();
+
+	static DirectX::Keyboard::State getKeyboardState();
+	static bool isKeyReleased(DirectX::Keyboard::Keys k);
+	static int getMouseX();
+	static int getMouseY();
 	
-	ID3D11DepthStencilView* getDepthStencilView();
+	static ID3D11DepthStencilView* getDepthStencilView();
 
-	void quit();
+	static void quit();
 
 private:
-	Framework* framework = nullptr;
-	const Timer* timer = nullptr;
-	const Input* input = nullptr;
-	Device* device = nullptr;
+	static Framework* framework;
+	static Device* device;
+	static const Timer* timer;
+	static const Input* input;	
 };
 
 }

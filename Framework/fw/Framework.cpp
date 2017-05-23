@@ -31,6 +31,7 @@ bool Framework::initialize(HINSTANCE hInstance, int nCmdShow)
 	}
 
 	input.initialize(window.getHandle());
+	API::initialize(this);
 	return true;
 }
 
@@ -41,8 +42,7 @@ bool Framework::setApplication(Application* application)
 		return false;
 	}
 
-	app = application;
-	app->initializeAPI(this);
+	app = application;	
 	return app->initialize();
 }
 

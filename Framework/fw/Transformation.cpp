@@ -7,7 +7,7 @@ namespace fw
 
 const XMVECTOR Transformation::FORWARD = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
 const XMVECTOR Transformation::UP = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-const XMVECTOR Transformation::LEFT = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+const XMVECTOR Transformation::LEFT = XMVectorSet(-1.0f, 0.0f, 0.0f, 0.0f);
 
 Transformation::Transformation() :
 	position(XMVectorZero()),
