@@ -24,6 +24,12 @@ void Input::update()
 	keyboardTracker.Update(keyboard->GetState());
 }
 
+void Input::lateUpdate()
+{
+	lastMouseX = mouse->GetState().x;
+	lastMouseY = mouse->GetState().y;
+}
+
 const DirectX::Mouse* Input::getMouse() const
 {
 	return mouse.get();
@@ -44,4 +50,14 @@ const DirectX::Keyboard::KeyboardStateTracker* Input::getKeyboardTracker() const
 	return &keyboardTracker;
 }
 
+float Input::getDeltaX() const
+{
+	return static_cast<float>(mouse->GetState().x - lastMouseX);
 }
+
+float Input::getDeltaY() const
+{
+	return static_cast<float>(mouse->GetState().y - lastMouseY);
+}
+
+} // fw

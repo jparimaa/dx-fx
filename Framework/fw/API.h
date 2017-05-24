@@ -26,9 +26,12 @@ public:
 	static float getTimeDelta();
 
 	static DirectX::Keyboard::State getKeyboardState();
+	static DirectX::Mouse::State getMouseState();
 	static bool isKeyReleased(DirectX::Keyboard::Keys k);
 	static int getMouseX();
 	static int getMouseY();
+	static float getDeltaX();
+	static float getDeltaY();
 	
 	static ID3D11DepthStencilView* getDepthStencilView();
 

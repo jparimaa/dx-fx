@@ -22,7 +22,7 @@ void API::initialize(Framework* fw)
 
 float API::getWindowRatio()
 {
-	const Window& w = *framework->getWindow();
+	const Window& w = *(framework->getWindow());
 	float width = static_cast<float>(w.getWidth());
 	float height = static_cast<float>(w.getHeight());
 	return width / height;
@@ -48,6 +48,11 @@ DirectX::Keyboard::State API::getKeyboardState()
 	return input->getKeyboard()->GetState();
 }
 
+DirectX::Mouse::State API::getMouseState()
+{
+	return input->getMouse()->GetState();
+}
+
 bool API::isKeyReleased(DirectX::Keyboard::Keys k)
 {
 	return input->getKeyboardTracker()->IsKeyReleased(k);
@@ -61,6 +66,16 @@ int API::getMouseX()
 int API::getMouseY()
 {
 	return input->getMouse()->GetState().y;
+}
+
+float API::getDeltaX()
+{
+	return input->getDeltaX();
+}
+
+float API::getDeltaY()
+{
+	return input->getDeltaY();
 }
 
 ID3D11DepthStencilView* API::getDepthStencilView()

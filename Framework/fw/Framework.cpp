@@ -58,6 +58,7 @@ int Framework::execute()
 			input.update();
 			app->update();
 			timer.tick();
+			input.lateUpdate();
 			app->render();
 			app->gui();
 		}
