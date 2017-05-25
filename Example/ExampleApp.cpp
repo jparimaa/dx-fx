@@ -99,10 +99,13 @@ bool ExampleApp::createBuffer()
 	model.loadModel("../Assets/monkey.3ds");
 	std::vector<XMFLOAT3> vertexData;
 	for (const auto& mesh : model.getMeshes()) {
-		vertexData.insert(vertexData.end(), mesh.vertices.begin(), mesh.vertices.end());
-		vertexData.insert(vertexData.end(), mesh.normals.begin(), mesh.normals.end());
+		for (unsigned int i = 0; i < mesh.vertices.size(); ++i) {
+			vertexData.push_back(mesh.vertices[i]);
+			vertexData.push_back(mesh.normals[i]);
+		}
 	}
 
+	// Vertex data
 	D3D11_BUFFER_DESC bd;
 	ZeroMemory(&bd, sizeof(bd));
 	bd.Usage = D3D11_USAGE_DEFAULT;
@@ -120,10 +123,11 @@ bool ExampleApp::createBuffer()
 		return false;
 	}
 
-	UINT stride = sizeof(XMFLOAT3);
+	UINT stride = 2 * sizeof(XMFLOAT3);
 	UINT offset = 0;
 	fw::DX::context->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
 	
+	// Index data
 	numIndices = model.getNumIndices();
 	std::vector<WORD> indices;
 	for (const auto& mesh : model.getMeshes()) {
@@ -146,6 +150,7 @@ bool ExampleApp::createBuffer()
 	fw::DX::context->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R16_UINT, 0);	
 	fw::DX::context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
+	// Transformation matrix data
 	bd.Usage = D3D11_USAGE_DEFAULT;
 	bd.ByteWidth = sizeof(XMMATRIX) * 3;
 	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;

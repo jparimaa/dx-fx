@@ -21,7 +21,7 @@ public:
 	Transformation& getTransformation();
 
 private:
-	float FOV = DirectX::XM_PIDIV2;
+	float FOV = DirectX::XM_PIDIV4;
 	float ratio = 1.33333f;
 	float nearClipDistance = 0.1f;
 	float farClipDistance = 100.0f;
