@@ -31,5 +31,9 @@ private:
 	ID3D11Buffer* matrixBuffer = nullptr;
 	unsigned int numIndices = 0;
 
+	ID3D11Resource* texture = nullptr;
+	ID3D11ShaderResourceView* textureView = nullptr;
+	ID3D11SamplerState* samplerLinear = nullptr;
+
 	bool createBuffer();
 };

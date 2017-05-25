@@ -3,6 +3,7 @@
 #include <fw/Common.h>
 #include <fw/DX.h>
 #include <fw/API.h>
+#include <WICTextureLoader.h>
 #include <DirectXMath.h>
 #include <vector>
 #include <iostream>
@@ -25,13 +26,17 @@ ExampleApp::~ExampleApp()
 	fw::release(vertexBuffer);
 	fw::release(indexBuffer);
 	fw::release(matrixBuffer);
+	fw::release(texture);
+	fw::release(textureView);
+	fw::release(samplerLinear);
 }
 
 bool ExampleApp::initialize()
 {
 	std::vector<D3D11_INPUT_ELEMENT_DESC> layout = {
 		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-		{"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0}
+		{"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0}
 	};
 
 	if (!vertexShader.create(L"example.fx", "VS", "vs_4_0", layout)) {
@@ -50,6 +55,26 @@ bool ExampleApp::initialize()
 	camera.getTransformation().rotate(XMFLOAT3(1.0f, 0.0f, 0.0f), 0.4f);
 	camera.updateViewMatrix();
 	cameraController.setCamera(&camera);
+
+	HRESULT hr = DirectX::CreateWICTextureFromFile(fw::DX::device, L"../Assets/green_square.png", &texture, &textureView);
+	if (FAILED(hr)) {
+		std::cerr << "ERRROR: Failed to create WIC texture from file\n";
+		return false;
+	}
+	D3D11_SAMPLER_DESC sampDesc;
+	ZeroMemory(&sampDesc, sizeof(sampDesc));
+	sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	sampDesc.MinLOD = 0;
+	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	hr = fw::DX::device->CreateSamplerState(&sampDesc, &samplerLinear);
+	if (FAILED(hr)) {
+		std::cerr << "ERROR: Failed to create sampler state\n";
+		return hr;
+	}
 
 	std::cout << "ExampleApp initialization completed\n";
 
@@ -85,6 +110,9 @@ void ExampleApp::render()
 	fw::DX::context->VSSetConstantBuffers(0, 1, &matrixBuffer);
 	fw::DX::context->PSSetShader(pixelShader.get(), nullptr, 0);
 
+	fw::DX::context->PSSetShaderResources(0, 1, &textureView);
+	fw::DX::context->PSSetSamplers(0, 1, &samplerLinear);
+
 	fw::DX::context->DrawIndexed(numIndices, 0, 0);
 	fw::DX::swapChain->Present(0, 0);
 }
@@ -97,11 +125,17 @@ bool ExampleApp::createBuffer()
 {
 	fw::Model model;
 	model.loadModel("../Assets/monkey.3ds");
-	std::vector<XMFLOAT3> vertexData;
+	std::vector<float> vertexData;
 	for (const auto& mesh : model.getMeshes()) {
 		for (unsigned int i = 0; i < mesh.vertices.size(); ++i) {
-			vertexData.push_back(mesh.vertices[i]);
-			vertexData.push_back(mesh.normals[i]);
+			vertexData.push_back(mesh.vertices[i].x);
+			vertexData.push_back(mesh.vertices[i].y);
+			vertexData.push_back(mesh.vertices[i].z);
+			vertexData.push_back(mesh.normals[i].x);
+			vertexData.push_back(mesh.normals[i].y);
+			vertexData.push_back(mesh.normals[i].z);
+			vertexData.push_back(mesh.uvs[i].x);
+			vertexData.push_back(mesh.uvs[i].y);
 		}
 	}
 
@@ -109,7 +143,7 @@ bool ExampleApp::createBuffer()
 	D3D11_BUFFER_DESC bd;
 	ZeroMemory(&bd, sizeof(bd));
 	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.ByteWidth = sizeof(XMFLOAT3) * vertexData.size();
+	bd.ByteWidth = sizeof(float) * vertexData.size();
 	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	bd.CPUAccessFlags = 0;
 
@@ -123,7 +157,7 @@ bool ExampleApp::createBuffer()
 		return false;
 	}
 
-	UINT stride = 2 * sizeof(XMFLOAT3);
+	UINT stride = 8 * sizeof(float);
 	UINT offset = 0;
 	fw::DX::context->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
 	
