@@ -28,7 +28,7 @@ public:
 	Device* getDevice();
 
 private:
-	FILE* consoleStream;
+	FILE* consoleStream = nullptr;
 	Window window;
 	Device device;
 	Application* app = nullptr;

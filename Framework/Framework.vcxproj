@@ -141,6 +141,7 @@
     <ClCompile Include="fw\Application.cpp" />
     <ClCompile Include="fw\Camera.cpp" />
     <ClCompile Include="fw\CameraController.cpp" />
+    <ClCompile Include="fw\Common.cpp" />
     <ClCompile Include="fw\Device.cpp" />
     <ClCompile Include="fw\DX.cpp" />
     <ClCompile Include="fw\Framework.cpp" />

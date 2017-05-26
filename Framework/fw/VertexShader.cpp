@@ -45,7 +45,7 @@ bool VertexShader::create(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderModel
 	return true;
 }
 
-ID3D11VertexShader * VertexShader::get() const
+ID3D11VertexShader* VertexShader::get() const
 {
 	return vertexShader;
 }
