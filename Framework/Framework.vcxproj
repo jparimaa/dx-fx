@@ -145,6 +145,10 @@
     <ClCompile Include="fw\Device.cpp" />
     <ClCompile Include="fw\DX.cpp" />
     <ClCompile Include="fw\Framework.cpp" />
+    <ClCompile Include="fw\imgui\imgui.cpp" />
+    <ClCompile Include="fw\imgui\imgui_demo.cpp" />
+    <ClCompile Include="fw\imgui\imgui_draw.cpp" />
+    <ClCompile Include="fw\imgui\imgui_impl_dx11.cpp" />
     <ClCompile Include="fw\Input.cpp" />
     <ClCompile Include="fw\Model.cpp" />
     <ClCompile Include="fw\PixelShader.cpp" />
@@ -162,6 +166,13 @@
     <ClInclude Include="fw\Device.h" />
     <ClInclude Include="fw\DX.h" />
     <ClInclude Include="fw\Framework.h" />
+    <ClInclude Include="fw\imgui\imconfig.h" />
+    <ClInclude Include="fw\imgui\imgui.h" />
+    <ClInclude Include="fw\imgui\imgui_impl_dx11.h" />
+    <ClInclude Include="fw\imgui\imgui_internal.h" />
+    <ClInclude Include="fw\imgui\stb_rect_pack.h" />
+    <ClInclude Include="fw\imgui\stb_textedit.h" />
+    <ClInclude Include="fw\imgui\stb_truetype.h" />
     <ClInclude Include="fw\Input.h" />
     <ClInclude Include="fw\Model.h" />
     <ClInclude Include="fw\PixelShader.h" />

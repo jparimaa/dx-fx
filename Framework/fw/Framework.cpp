@@ -1,4 +1,7 @@
 #include "Framework.h"
+#include "DX.h"
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_dx11.h"
 #include <iostream>
 
 namespace fw
@@ -11,6 +14,7 @@ Framework::Framework(LONG windowWidth, LONG windowHeight) :
 
 Framework::~Framework()
 {
+	ImGui_ImplDX11_Shutdown();
 }
 
 bool Framework::initialize(HINSTANCE hInstance, int nCmdShow)
@@ -32,6 +36,7 @@ bool Framework::initialize(HINSTANCE hInstance, int nCmdShow)
 
 	input.initialize(window.getHandle());
 	API::initialize(this);
+	ImGui_ImplDX11_Init(window.getHandle(), DX::device, DX::context);
 	return true;
 }
 
@@ -55,14 +60,17 @@ int Framework::execute()
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		} else {
+			ImGui_ImplDX11_NewFrame();
 			input.update();
 			app->update();
 			timer.tick();
 			input.lateUpdate();
 			app->render();
 			app->gui();
+			ImGui::Render();
+			DX::swapChain->Present(0, 0);
 		}
-	}
+	}	
 	return static_cast<int>(msg.wParam);
 }
 

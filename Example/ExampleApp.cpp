@@ -3,6 +3,7 @@
 #include <fw/Common.h>
 #include <fw/DX.h>
 #include <fw/API.h>
+#include <fw/imgui/imgui.h>
 #include <WICTextureLoader.h>
 #include <DirectXMath.h>
 #include <vector>
@@ -102,12 +103,12 @@ void ExampleApp::render()
 	fw::DX::context->PSSetShaderResources(0, 1, &textureView);
 	fw::DX::context->PSSetSamplers(0, 1, &samplerLinear);
 
-	fw::DX::context->DrawIndexed(numIndices, 0, 0);
-	fw::DX::swapChain->Present(0, 0);
+	fw::DX::context->DrawIndexed(numIndices, 0, 0);	
 }
 
 void ExampleApp::gui()
 {
+	ImGui::Text("Hello, world!");
 }
 
 bool ExampleApp::createBuffer()

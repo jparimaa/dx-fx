@@ -49,9 +49,14 @@ void CameraController::update()
 		return;
 	}
 
+	const Keyboard::State& kb = API::getKeyboardState();
+	if (kb.LeftShift) {
+		return;
+	}
+
 	Transformation& t = camera->getTransformation();
 	float speed = movementSpeed * API::getTimeDelta();
-	const Keyboard::State& kb = API::getKeyboardState();
+	
 	if (kb.W) {
 		t.move(t.getForward() * speed);
 	}
