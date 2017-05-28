@@ -48,7 +48,7 @@ HRESULT Device::initialize(HWND windowHandle)
 		D3D_FEATURE_LEVEL_11_0
 	};
 	UINT numFeatureLevels = ARRAYSIZE(featureLevels);
-
+		
 	DXGI_SWAP_CHAIN_DESC sd;
 	ZeroMemory(&sd, sizeof(sd));
 	sd.BufferCount = 1;
@@ -59,8 +59,8 @@ HRESULT Device::initialize(HWND windowHandle)
 	sd.BufferDesc.RefreshRate.Denominator = 1;
 	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	sd.OutputWindow = windowHandle;
-	sd.SampleDesc.Count = 1;
-	sd.SampleDesc.Quality = 0;
+	sd.SampleDesc.Count = 4;
+	sd.SampleDesc.Quality = (UINT)D3D11_STANDARD_MULTISAMPLE_PATTERN;
 	sd.Windowed = TRUE;
 
 	for (UINT driverTypeIndex = 0; driverTypeIndex < numDriverTypes; driverTypeIndex++) {
@@ -100,8 +100,8 @@ HRESULT Device::initialize(HWND windowHandle)
 	depthDesc.MipLevels = 1;
 	depthDesc.ArraySize = 1;
 	depthDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	depthDesc.SampleDesc.Count = 1;
-	depthDesc.SampleDesc.Quality = 0;
+	depthDesc.SampleDesc.Count = 4;
+	depthDesc.SampleDesc.Quality = (UINT)D3D11_STANDARD_MULTISAMPLE_PATTERN;
 	depthDesc.Usage = D3D11_USAGE_DEFAULT;
 	depthDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
 	depthDesc.CPUAccessFlags = 0;
@@ -110,13 +110,12 @@ HRESULT Device::initialize(HWND windowHandle)
 	if (FAILED(hr)) {
 		std::cerr << "ERROR: Failed to create depth stencil texture\n";
 		return hr;
-
 	}
 
 	D3D11_DEPTH_STENCIL_VIEW_DESC DSVDesc;
 	ZeroMemory(&DSVDesc, sizeof(DSVDesc));
 	DSVDesc.Format = depthDesc.Format;
-	DSVDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	DSVDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
 	DSVDesc.Texture2D.MipSlice = 0;
 	hr = d3dDevice->CreateDepthStencilView(depthStencil, &DSVDesc, &depthStencilView);
 	if (FAILED(hr)) {
