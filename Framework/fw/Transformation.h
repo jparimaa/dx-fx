@@ -29,7 +29,7 @@ public:
 	DirectX::XMVECTOR getLeft() const;
 
 	const DirectX::XMMATRIX& updateWorldMatrix();
-	const DirectX::XMMATRIX& getWorldMatrix();
+	const DirectX::XMMATRIX& getWorldMatrix() const;
 	
 private:
 	DirectX::XMVECTOR forward;

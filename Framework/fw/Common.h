@@ -2,11 +2,13 @@
 
 #include "Framework.h"
 #include "DX.h"
+#include "Model.h"
 #include <d3dx11.h>
 #include <d3dcompiler.h>
 #include <Windows.h>
 #include <iostream>
 #include <cstdlib>
+#include <vector>
 
 namespace fw
 {
@@ -35,11 +37,14 @@ inline void release(T* t)
 {
 	if (t) {
 		t->Release();
-	}
+		t = nullptr;
+	}	
 }
 
 HRESULT compileShaderFromFile(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderModel, ID3DBlob** blobOut);
 
 bool getLinearSampler(ID3D11SamplerState** sampler);
+
+std::vector<float> getVertexData(const fw::Model& model);
 
 } // fw

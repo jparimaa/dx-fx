@@ -55,7 +55,7 @@ XMVECTOR Transformation::getLeft() const
 	return XMVector4Transform(LEFT, XMMatrixRotationRollPitchYawFromVector(rotation));
 }
 
-const XMMATRIX & Transformation::updateWorldMatrix()
+const XMMATRIX& Transformation::updateWorldMatrix()
 {
 	worldMatrix =
 		XMMatrixTranslationFromVector(position) *
@@ -64,7 +64,7 @@ const XMMATRIX & Transformation::updateWorldMatrix()
 	return worldMatrix;
 }
 
-const XMMATRIX & Transformation::getWorldMatrix()
+const XMMATRIX& Transformation::getWorldMatrix() const
 {
 	return worldMatrix;
 }

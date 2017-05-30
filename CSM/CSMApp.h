@@ -1,8 +1,10 @@
 #pragma once
 
+#include "RenderData.h"
 #include <fw/Application.h>
 #include <fw/VertexShader.h>
 #include <fw/PixelShader.h>
+#include <fw/Common.h>
 #include <fw/Transformation.h>
 #include <fw/Camera.h>
 #include <fw/CameraController.h>
@@ -21,19 +23,32 @@ public:
 	virtual void gui() final;
 
 private:
+	struct MatrixData
+	{
+		DirectX::XMMATRIX world;
+		DirectX::XMMATRIX view;
+		DirectX::XMMATRIX projection;
+	};
+
 	fw::Camera camera;
-	fw::CameraController cameraController;
-	fw::Transformation trans;
+	fw::CameraController cameraController;	
 	fw::VertexShader vertexShader;
 	fw::PixelShader pixelShader;
-	ID3D11Buffer* vertexBuffer = nullptr;
-	ID3D11Buffer* indexBuffer = nullptr;
+
 	ID3D11Buffer* matrixBuffer = nullptr;
-	unsigned int numIndices = 0;
 
 	ID3D11Resource* texture = nullptr;
 	ID3D11ShaderResourceView* textureView = nullptr;
 	ID3D11SamplerState* samplerLinear = nullptr;
 
-	bool createBuffer();
+	VertexBuffers cubeBuffers;
+	VertexBuffers monkeyBuffers;
+
+	RenderData cube;
+	RenderData monkey1;
+	RenderData monkey2;
+
+	bool createMatrixBuffer();
+	bool createVertexBuffers(VertexBuffers& vertexBuffers, const std::string& modelFile);
+	void renderObject(const RenderData& renderData);
 };

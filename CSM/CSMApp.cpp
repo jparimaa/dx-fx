@@ -1,6 +1,5 @@
 #include "CSMApp.h"
 #include <fw/Model.h>
-#include <fw/Common.h>
 #include <fw/DX.h>
 #include <fw/API.h>
 #include <fw/imgui/imgui.h>
@@ -24,8 +23,6 @@ CSMApp::CSMApp()
 
 CSMApp::~CSMApp()
 {
-	fw::release(vertexBuffer);
-	fw::release(indexBuffer);
 	fw::release(matrixBuffer);
 	fw::release(texture);
 	fw::release(textureView);
@@ -48,23 +45,44 @@ bool CSMApp::initialize()
 		return false;
 	}
 
-	if (!createBuffer()) {
+	if (!createMatrixBuffer()) {
 		return false;
 	}
+
+	if (!fw::getLinearSampler(&samplerLinear)) {
+		return false;
+	}
+
+	HRESULT hr = DirectX::CreateWICTextureFromFile(fw::DX::device, L"../Assets/checker.png", &texture, &textureView);
+	if (FAILED(hr)) {
+		std::cerr << "ERRROR: Failed to create WIC texture from file\n";
+		return false;
+	}
+
+	if (!createVertexBuffers(monkeyBuffers, "../Assets/monkey.3ds")) {
+		return false;
+	}
+	
+	if (!createVertexBuffers(cubeBuffers, "../Assets/cube.obj")) {
+		return false;
+	}
+	
+	monkey1.vertexBuffers = &monkeyBuffers;
+	monkey1.transformation.position = XMVectorSet(3.0f, 1.0f, 0.0f, 0.0f);
+	monkey1.transformation.updateWorldMatrix();
+
+	monkey2.vertexBuffers = &monkeyBuffers;
+	monkey2.transformation.position = XMVectorSet(1.0f, 1.0f, 0.0f, 0.0f);
+	monkey2.transformation.updateWorldMatrix();
+
+	cube.vertexBuffers = &cubeBuffers;
+	cube.transformation.scale = XMVectorSet(10.0f, 0.01f, 10.0f, 0.0f);
+	cube.transformation.updateWorldMatrix();
 
 	camera.getTransformation().position = XMVectorSet(0.0f, 2.0f, -5.0f, 0.0f);
 	camera.getTransformation().rotate(XMFLOAT3(1.0f, 0.0f, 0.0f), 0.4f);
 	camera.updateViewMatrix();
 	cameraController.setCamera(&camera);
-
-	HRESULT hr = DirectX::CreateWICTextureFromFile(fw::DX::device, L"../Assets/green_square.png", &texture, &textureView);
-	if (FAILED(hr)) {
-		std::cerr << "ERRROR: Failed to create WIC texture from file\n";
-		return false;
-	}
-	if (!fw::getLinearSampler(&samplerLinear)) {
-		return false;
-	}
 
 	std::cout << "CSMApp initialization completed\n";
 
@@ -79,16 +97,6 @@ void CSMApp::update()
 
 	cameraController.update();
 	camera.updateViewMatrix();
-
-	trans.rotate(XMFLOAT3(0.0f, 1.0f, 0.0f), XM_2PI * fw::API::getTimeDelta() * 0.1f);
-	trans.updateWorldMatrix();
-	XMMATRIX m[] = {
-		trans.getWorldMatrix(),
-		camera.getViewMatrix(),
-		camera.getProjectionMatrix()
-	};
-
-	fw::DX::context->UpdateSubresource(matrixBuffer, 0, NULL, &m, 0, 0);
 }
 
 void CSMApp::render()
@@ -97,13 +105,14 @@ void CSMApp::render()
 	fw::DX::context->ClearDepthStencilView(fw::API::getDepthStencilView(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 	fw::DX::context->VSSetShader(vertexShader.get(), nullptr, 0);
-	fw::DX::context->VSSetConstantBuffers(0, 1, &matrixBuffer);
+
 	fw::DX::context->PSSetShader(pixelShader.get(), nullptr, 0);
-
-	fw::DX::context->PSSetShaderResources(0, 1, &textureView);
 	fw::DX::context->PSSetSamplers(0, 1, &samplerLinear);
-
-	fw::DX::context->DrawIndexed(numIndices, 0, 0);
+	fw::DX::context->PSSetShaderResources(0, 1, &textureView);
+	
+	renderObject(monkey1);
+	renderObject(monkey2);
+	renderObject(cube);	
 }
 
 void CSMApp::gui()
@@ -111,25 +120,29 @@ void CSMApp::gui()
 	ImGui::Text("Hello, world!");
 }
 
-bool CSMApp::createBuffer()
+bool CSMApp::createMatrixBuffer()
+{
+	D3D11_BUFFER_DESC bd;
+	ZeroMemory(&bd, sizeof(bd));
+	bd.ByteWidth = sizeof(XMMATRIX) * 3;
+	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	bd.Usage = D3D11_USAGE_DYNAMIC;
+
+	HRESULT hr = fw::DX::device->CreateBuffer(&bd, nullptr, &matrixBuffer);
+	if (FAILED(hr)) {
+		std::cerr << "ERROR: Failed to create matrix buffer\n";
+		return false;
+	}
+	return true;
+}
+
+bool CSMApp::createVertexBuffers(VertexBuffers& vertexBuffers, const std::string& modelFile)
 {
 	fw::Model model;
-	model.loadModel("../Assets/monkey.3ds");
-	std::vector<float> vertexData;
-	for (const auto& mesh : model.getMeshes()) {
-		for (unsigned int i = 0; i < mesh.vertices.size(); ++i) {
-			vertexData.push_back(mesh.vertices[i].x);
-			vertexData.push_back(mesh.vertices[i].y);
-			vertexData.push_back(mesh.vertices[i].z);
-			vertexData.push_back(mesh.normals[i].x);
-			vertexData.push_back(mesh.normals[i].y);
-			vertexData.push_back(mesh.normals[i].z);
-			vertexData.push_back(mesh.uvs[i].x);
-			vertexData.push_back(mesh.uvs[i].y);
-		}
-	}
+	model.loadModel(modelFile);
+	std::vector<float> vertexData = fw::getVertexData(model);
 
-	// Vertex data
 	D3D11_BUFFER_DESC bd;
 	ZeroMemory(&bd, sizeof(bd));
 	bd.Usage = D3D11_USAGE_DEFAULT;
@@ -141,18 +154,13 @@ bool CSMApp::createBuffer()
 	ZeroMemory(&data, sizeof(data));
 	data.pSysMem = vertexData.data();
 
-	HRESULT hr = fw::DX::device->CreateBuffer(&bd, &data, &vertexBuffer);
+	HRESULT hr = fw::DX::device->CreateBuffer(&bd, &data, &vertexBuffers.vertexBuffer);
 	if (FAILED(hr)) {
 		std::cerr << "ERROR: Failed to create vertex buffer\n";
 		return false;
 	}
 
-	UINT stride = 8 * sizeof(float);
-	UINT offset = 0;
-	fw::DX::context->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
-
-	// Index data
-	numIndices = model.getNumIndices();
+	vertexBuffers.numIndices = model.getNumIndices();
 	std::vector<WORD> indices;
 	for (const auto& mesh : model.getMeshes()) {
 		indices.insert(indices.end(), mesh.indices.begin(), mesh.indices.end());
@@ -165,26 +173,30 @@ bool CSMApp::createBuffer()
 
 	data.pSysMem = indices.data();
 
-	hr = fw::DX::device->CreateBuffer(&bd, &data, &indexBuffer);
+	hr = fw::DX::device->CreateBuffer(&bd, &data, &vertexBuffers.indexBuffer);
 	if (FAILED(hr)) {
 		std::cerr << "ERROR: Failed to create index buffer\n";
 		return false;
 	}
 
-	fw::DX::context->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R16_UINT, 0);
+	return true;
+}
+
+void CSMApp::renderObject(const RenderData& renderData)
+{
+	VertexBuffers& vb = *renderData.vertexBuffers;
+	fw::DX::context->IASetVertexBuffers(0, 1, &vb.vertexBuffer, &vb.stride, &vb.offset);
+	fw::DX::context->IASetIndexBuffer(vb.indexBuffer, DXGI_FORMAT_R16_UINT, 0);
 	fw::DX::context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	// Transformation matrix data
-	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.ByteWidth = sizeof(XMMATRIX) * 3;
-	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	bd.CPUAccessFlags = 0;
+	D3D11_MAPPED_SUBRESOURCE MappedResource;
+	fw::DX::context->Map(matrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource);
+	MatrixData* matrixData = (MatrixData*)MappedResource.pData;
+	matrixData->world = renderData.transformation.getWorldMatrix();
+	matrixData->view = camera.getViewMatrix();
+	matrixData->projection = camera.getProjectionMatrix();
+	fw::DX::context->Unmap(matrixBuffer, 0);
 
-	hr = fw::DX::device->CreateBuffer(&bd, NULL, &matrixBuffer);
-	if (FAILED(hr)) {
-		std::cerr << "ERROR: Failed to create matrix buffer\n";
-		return false;
-	}
-
-	return true;
+	fw::DX::context->VSSetConstantBuffers(0, 1, &matrixBuffer);
+	fw::DX::context->DrawIndexed(vb.numIndices, 0, 0);
 }

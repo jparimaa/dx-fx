@@ -46,4 +46,22 @@ bool getLinearSampler(ID3D11SamplerState** sampler)
 	return true;
 }
 
+std::vector<float> getVertexData(const fw::Model& model)
+{
+	std::vector<float> vertexData;
+	for (const auto& mesh : model.getMeshes()) {
+		for (unsigned int i = 0; i < mesh.vertices.size(); ++i) {
+			vertexData.push_back(mesh.vertices[i].x);
+			vertexData.push_back(mesh.vertices[i].y);
+			vertexData.push_back(mesh.vertices[i].z);
+			vertexData.push_back(mesh.normals[i].x);
+			vertexData.push_back(mesh.normals[i].y);
+			vertexData.push_back(mesh.normals[i].z);
+			vertexData.push_back(mesh.uvs[i].x);
+			vertexData.push_back(mesh.uvs[i].y);
+		}
+	}
+	return vertexData;
+}
+
 } // fw
