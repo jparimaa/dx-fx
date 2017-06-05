@@ -1,6 +1,5 @@
 #pragma once
 
-#include "RenderData.h"
 #include <fw/Application.h>
 #include <fw/VertexShader.h>
 #include <fw/PixelShader.h>
@@ -8,6 +7,7 @@
 #include <fw/Transformation.h>
 #include <fw/Camera.h>
 #include <fw/CameraController.h>
+#include <fw/AssetManager.h>
 #include <d3d11.h>
 #include <memory>
 
@@ -30,25 +30,26 @@ private:
 		DirectX::XMMATRIX projection;
 	};
 
+	struct RenderData
+	{
+		ID3D11ShaderResourceView* textureView = nullptr;
+		fw::AssetManager::VertexBuffer* vertexBuffer = nullptr;
+		fw::Transformation transformation;
+	};
+	
 	fw::Camera camera;
-	fw::CameraController cameraController;	
+	fw::CameraController cameraController;
 	fw::VertexShader vertexShader;
 	fw::PixelShader pixelShader;
+	fw::AssetManager assetManager;
 
 	ID3D11Buffer* matrixBuffer = nullptr;
-
-	ID3D11Resource* texture = nullptr;
-	ID3D11ShaderResourceView* textureView = nullptr;
 	ID3D11SamplerState* samplerLinear = nullptr;
-
-	VertexBuffers cubeBuffers;
-	VertexBuffers monkeyBuffers;
 
 	RenderData cube;
 	RenderData monkey1;
 	RenderData monkey2;
 
 	bool createMatrixBuffer();
-	bool createVertexBuffers(VertexBuffers& vertexBuffers, const std::string& modelFile);
 	void renderObject(const RenderData& renderData);
 };

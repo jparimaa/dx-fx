@@ -1,9 +1,7 @@
 #include "CSMApp.h"
-#include <fw/Model.h>
 #include <fw/DX.h>
 #include <fw/API.h>
 #include <fw/imgui/imgui.h>
-#include <WICTextureLoader.h>
 #include <DirectXMath.h>
 #include <vector>
 #include <iostream>
@@ -23,9 +21,7 @@ CSMApp::CSMApp()
 
 CSMApp::~CSMApp()
 {
-	fw::release(matrixBuffer);
-	fw::release(texture);
-	fw::release(textureView);
+	fw::release(matrixBuffer);	
 	fw::release(samplerLinear);
 }
 
@@ -52,30 +48,19 @@ bool CSMApp::initialize()
 	if (!fw::getLinearSampler(&samplerLinear)) {
 		return false;
 	}
-
-	HRESULT hr = DirectX::CreateWICTextureFromFile(fw::DX::device, L"../Assets/checker.png", &texture, &textureView);
-	if (FAILED(hr)) {
-		std::cerr << "ERRROR: Failed to create WIC texture from file\n";
-		return false;
-	}
-
-	if (!createVertexBuffers(monkeyBuffers, "../Assets/monkey.3ds")) {
-		return false;
-	}
 	
-	if (!createVertexBuffers(cubeBuffers, "../Assets/cube.obj")) {
-		return false;
-	}
-	
-	monkey1.vertexBuffers = &monkeyBuffers;
+	monkey1.textureView = assetManager.getTextureView("../Assets/checker.png");
+	monkey1.vertexBuffer = assetManager.getVertexBuffer("../Assets/monkey.3ds");
 	monkey1.transformation.position = XMVectorSet(3.0f, 1.0f, 0.0f, 0.0f);
 	monkey1.transformation.updateWorldMatrix();
 
-	monkey2.vertexBuffers = &monkeyBuffers;
+	monkey2.textureView = assetManager.getTextureView("../Assets/green_square.png");
+	monkey2.vertexBuffer = assetManager.getVertexBuffer("../Assets/monkey.3ds");
 	monkey2.transformation.position = XMVectorSet(1.0f, 1.0f, 0.0f, 0.0f);
 	monkey2.transformation.updateWorldMatrix();
 
-	cube.vertexBuffers = &cubeBuffers;
+	cube.textureView = assetManager.getTextureView("../Assets/checker.png");
+	cube.vertexBuffer = assetManager.getVertexBuffer("../Assets/cube.obj");
 	cube.transformation.scale = XMVectorSet(10.0f, 0.01f, 10.0f, 0.0f);
 	cube.transformation.updateWorldMatrix();
 
@@ -108,8 +93,7 @@ void CSMApp::render()
 
 	fw::DX::context->PSSetShader(pixelShader.get(), nullptr, 0);
 	fw::DX::context->PSSetSamplers(0, 1, &samplerLinear);
-	fw::DX::context->PSSetShaderResources(0, 1, &textureView);
-	
+		
 	renderObject(monkey1);
 	renderObject(monkey2);
 	renderObject(cube);	
@@ -137,56 +121,11 @@ bool CSMApp::createMatrixBuffer()
 	return true;
 }
 
-bool CSMApp::createVertexBuffers(VertexBuffers& vertexBuffers, const std::string& modelFile)
-{
-	fw::Model model;
-	model.loadModel(modelFile);
-	std::vector<float> vertexData = fw::getVertexData(model);
-
-	D3D11_BUFFER_DESC bd;
-	ZeroMemory(&bd, sizeof(bd));
-	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.ByteWidth = sizeof(float) * vertexData.size();
-	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	bd.CPUAccessFlags = 0;
-
-	D3D11_SUBRESOURCE_DATA data;
-	ZeroMemory(&data, sizeof(data));
-	data.pSysMem = vertexData.data();
-
-	HRESULT hr = fw::DX::device->CreateBuffer(&bd, &data, &vertexBuffers.vertexBuffer);
-	if (FAILED(hr)) {
-		std::cerr << "ERROR: Failed to create vertex buffer\n";
-		return false;
-	}
-
-	vertexBuffers.numIndices = model.getNumIndices();
-	std::vector<WORD> indices;
-	for (const auto& mesh : model.getMeshes()) {
-		indices.insert(indices.end(), mesh.indices.begin(), mesh.indices.end());
-	}
-
-	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.ByteWidth = sizeof(WORD) * model.getNumIndices();
-	bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
-	bd.CPUAccessFlags = 0;
-
-	data.pSysMem = indices.data();
-
-	hr = fw::DX::device->CreateBuffer(&bd, &data, &vertexBuffers.indexBuffer);
-	if (FAILED(hr)) {
-		std::cerr << "ERROR: Failed to create index buffer\n";
-		return false;
-	}
-
-	return true;
-}
-
 void CSMApp::renderObject(const RenderData& renderData)
 {
-	VertexBuffers& vb = *renderData.vertexBuffers;
-	fw::DX::context->IASetVertexBuffers(0, 1, &vb.vertexBuffer, &vb.stride, &vb.offset);
-	fw::DX::context->IASetIndexBuffer(vb.indexBuffer, DXGI_FORMAT_R16_UINT, 0);
+	fw::AssetManager::VertexBuffer* vb = renderData.vertexBuffer;
+	fw::DX::context->IASetVertexBuffers(0, 1, &vb->vertexBuffer, &vb->stride, &vb->offset);
+	fw::DX::context->IASetIndexBuffer(vb->indexBuffer, DXGI_FORMAT_R16_UINT, 0);
 	fw::DX::context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	D3D11_MAPPED_SUBRESOURCE MappedResource;
@@ -198,5 +137,6 @@ void CSMApp::renderObject(const RenderData& renderData)
 	fw::DX::context->Unmap(matrixBuffer, 0);
 
 	fw::DX::context->VSSetConstantBuffers(0, 1, &matrixBuffer);
-	fw::DX::context->DrawIndexed(vb.numIndices, 0, 0);
+	fw::DX::context->PSSetShaderResources(0, 1, &renderData.textureView);
+	fw::DX::context->DrawIndexed(vb->numIndices, 0, 0);
 }

@@ -139,6 +139,7 @@
   <ItemGroup>
     <ClCompile Include="fw\API.cpp" />
     <ClCompile Include="fw\Application.cpp" />
+    <ClCompile Include="fw\AssetManager.cpp" />
     <ClCompile Include="fw\Camera.cpp" />
     <ClCompile Include="fw\CameraController.cpp" />
     <ClCompile Include="fw\Common.cpp" />
@@ -160,6 +161,7 @@
   <ItemGroup>
     <ClInclude Include="fw\API.h" />
     <ClInclude Include="fw\Application.h" />
+    <ClInclude Include="fw\AssetManager.h" />
     <ClInclude Include="fw\Camera.h" />
     <ClInclude Include="fw\CameraController.h" />
     <ClInclude Include="fw\Common.h" />
