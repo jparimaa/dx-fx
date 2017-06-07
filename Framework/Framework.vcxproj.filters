@@ -76,7 +76,7 @@
       <Filter>imgui</Filter>
     </ClCompile>
     <ClCompile Include="fw\AssetManager.cpp">
-      <Filter>Header Files</Filter>
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -147,7 +147,7 @@
       <Filter>imgui</Filter>
     </ClInclude>
     <ClInclude Include="fw\AssetManager.h">
-      <Filter>Source Files</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -38,7 +38,7 @@ ID3D11ShaderResourceView* AssetManager::getTextureView(const std::string& filena
 	std::wstring ws = converter.from_bytes(filename);
 	ID3D11Resource* texture = nullptr;
 	ID3D11ShaderResourceView* textureView = nullptr;
-	HRESULT hr = DirectX::CreateWICTextureFromFile(fw::DX::device, ws.c_str(), &texture, &textureView);
+	HRESULT hr = DirectX::CreateWICTextureFromFile(fw::DX::device, fw::DX::context, ws.c_str(), &texture, &textureView);
 	if (FAILED(hr)) {
 		std::cerr << "ERRROR: Failed to create WIC texture from file\n";
 		return nullptr;
