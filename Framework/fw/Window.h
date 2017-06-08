@@ -10,7 +10,7 @@ class Window
 public:
 	Window(LONG width, LONG height);
 	~Window();
-	HRESULT initialize(HINSTANCE hInstance, int nCmdShow);
+	bool initialize(HINSTANCE hInstance, int nCmdShow);
 
 	HWND getHandle() const;
 	LONG getWidth() const;

@@ -115,7 +115,7 @@ bool CSMApp::createMatrixBuffer()
 
 	HRESULT hr = fw::DX::device->CreateBuffer(&bd, nullptr, &matrixBuffer);
 	if (FAILED(hr)) {
-		std::cerr << "ERROR: Failed to create matrix buffer\n";
+		fw::printError("Failed to create matrix buffer", &hr);
 		return false;
 	}
 	return true;

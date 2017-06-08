@@ -40,7 +40,7 @@ ID3D11ShaderResourceView* AssetManager::getTextureView(const std::string& filena
 	ID3D11ShaderResourceView* textureView = nullptr;
 	HRESULT hr = DirectX::CreateWICTextureFromFile(fw::DX::device, fw::DX::context, ws.c_str(), &texture, &textureView);
 	if (FAILED(hr)) {
-		std::cerr << "ERRROR: Failed to create WIC texture from file\n";
+		printError("Failed to create WIC texture from file", &hr);
 		return nullptr;
 	}
 	
@@ -74,7 +74,7 @@ AssetManager::VertexBuffer* AssetManager::getVertexBuffer(const std::string& fil
 	VertexBuffer buffer;
 	HRESULT hr = fw::DX::device->CreateBuffer(&bd, &data, &buffer.vertexBuffer);
 	if (FAILED(hr)) {
-		std::cerr << "ERROR: Failed to create vertex buffer\n";
+		printError("ERROR: Failed to create vertex buffer", &hr);
 		return nullptr;
 	}
 
@@ -93,7 +93,7 @@ AssetManager::VertexBuffer* AssetManager::getVertexBuffer(const std::string& fil
 
 	hr = fw::DX::device->CreateBuffer(&bd, &data, &buffer.indexBuffer);
 	if (FAILED(hr)) {
-		std::cerr << "ERROR: Failed to create index buffer\n";
+		printError("ERROR: Failed to create index buffer", &hr);
 		return nullptr;
 	}
 

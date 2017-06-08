@@ -1,9 +1,29 @@
 #include "Common.h"
+#include <comdef.h>
 
 namespace fw
 {
 
-HRESULT compileShaderFromFile(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderModel, ID3DBlob** blobOut)
+void printHresult(HRESULT* hr, std::wostream& os)
+{
+	if (hr) {
+		os << "HRESULT: " << _com_error(*hr).ErrorMessage() << "\n";
+	}
+}
+
+void printError(const std::string& msg, HRESULT* hr)
+{
+	std::cerr << "ERROR: " << msg << "\n";
+	printHresult(hr, std::wcerr);
+}
+
+void printWarning(const std::string& msg, HRESULT* hr)
+{
+	std::cerr << "WARNING: " << msg << "\n";
+	printHresult(hr, std::wcerr);
+}
+
+bool compileShaderFromFile(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderModel, ID3DBlob** blobOut)
 {
 	HRESULT hr = S_OK;
 
@@ -17,14 +37,14 @@ HRESULT compileShaderFromFile(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderM
 							   shaderFlags, 0, nullptr, blobOut, &errorBlob, nullptr);
 	if (FAILED(hr)) {
 		if (errorBlob != nullptr) {
-			std::cerr << "ERROR: " << static_cast<char*>(errorBlob->GetBufferPointer()) << "\n";;
+			printError(static_cast<char*>(errorBlob->GetBufferPointer()), &hr);
 		}
 	}
 	if (errorBlob) {
 		errorBlob->Release();
 	}
 
-	return hr;
+	return !FAILED(hr);
 }
 
 bool getLinearSampler(ID3D11SamplerState** sampler)
@@ -40,7 +60,7 @@ bool getLinearSampler(ID3D11SamplerState** sampler)
 	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
 	HRESULT hr = fw::DX::device->CreateSamplerState(&sampDesc, sampler);
 	if (FAILED(hr)) {
-		std::cerr << "ERROR: Failed to create sampler state\n";
+		printError("Failed to create sampler state", &hr);
 		return false;
 	}
 	return true;

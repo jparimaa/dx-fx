@@ -1,4 +1,5 @@
 #include "Model.h"
+#include "Common.h"
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
@@ -28,7 +29,7 @@ bool Model::loadModel(const std::string& file)
 
 	if (aScene) {
 		if (aScene->mNumMeshes == 0) {
-			std::cerr << "WARNING: No mesh found in the model; " << file << "\n";
+			printWarning("No mesh found in the file: " + file);
 			return false;
 		}
 
@@ -58,7 +59,7 @@ bool Model::loadModel(const std::string& file)
 
 			for (unsigned int faceIndex = 0; faceIndex < aMesh->mNumFaces; ++faceIndex) {
 				if (aMesh->mFaces[faceIndex].mNumIndices != 3) {
-					std::cerr << "ERROR: Unable to parse model indices for " << file << "\n";
+					printWarning("Unable to parse model indices for file: " + file);
 					return false;
 				}
 				mesh.indices.push_back(static_cast<WORD>(aMesh->mFaces[faceIndex].mIndices[0]));
@@ -80,7 +81,7 @@ bool Model::loadModel(const std::string& file)
 			}
 
 			if (mesh.vertices.empty()) {
-				std::cerr << "ERROR: Invalid mesh, 0 vertices\n";
+				printWarning("Invalid mesh, 0 vertices");
 				return false;
 			}
 			numVertices += mesh.vertices.size();
@@ -88,13 +89,13 @@ bool Model::loadModel(const std::string& file)
 			meshes.push_back(std::move(mesh));
 		}
 	} else {
-		std::cerr << "WARNING: Failed to read model: " << file << "\n"
-			      << "Importer error message: " << importer.GetErrorString() << "\n";
+		printWarning("Failed to read model: " + file + "\n" + 
+					 "Importer error message: " + importer.GetErrorString() + "\n");
 		return false;
 	}
 
 	if (meshes.empty()) {
-		std::cerr << "WARNING: Empty model\n";
+		printWarning("Empty model");
 		return false;
 	}
 	return true;

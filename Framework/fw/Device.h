@@ -12,7 +12,7 @@ public:
 	Device();
 	~Device();
 
-	HRESULT initialize(HWND windowHandle);
+	bool initialize(HWND windowHandle);
 	ID3D11DepthStencilView* getDepthStencilView();
 
 private:

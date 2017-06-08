@@ -22,13 +22,13 @@ bool VertexShader::create(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderModel
 	ID3DBlob* blob = nullptr;
 	HRESULT hr = compileShaderFromFile(fileName, entryPoint, shaderModel, &blob);
 	if (FAILED(hr)) {
-		std::wcerr << "ERROR: Failed to compile vertex shader\n";
+		printError("Failed to compile vertex shader", &hr);
 		return false;
 	}
 
 	hr = DX::device->CreateVertexShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &vertexShader);
 	if (FAILED(hr)) {
-		std::wcerr << "ERROR: Failed to create vertex shader\n";
+		printError("Failed to create vertex shader", &hr);
 		blob->Release();
 		return false;
 	}
@@ -37,7 +37,7 @@ bool VertexShader::create(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderModel
 									   blob->GetBufferSize(), &vertexLayout);
 	blob->Release();
 	if (FAILED(hr)) {
-		std::wcerr << "ERROR: Failed to create input layout for vertex shader\n";
+		printError("Failed to create input layout for vertex shader", &hr);
 		return false;
 	}
 

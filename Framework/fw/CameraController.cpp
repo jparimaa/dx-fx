@@ -1,6 +1,7 @@
 #include "CameraController.h"
 #include "Transformation.h"
 #include "API.h"
+#include "Common.h"
 #include <DirectXMath.h>
 #include <iostream>
 #include <algorithm>
@@ -45,7 +46,7 @@ void CameraController::setSensitivity(float s)
 void CameraController::update()
 {
 	if (!camera) {
-		std::cerr << "WARNING: Camera is not set for camera controller\n";
+		printWarning("Camera is not set for camera controller");
 		return;
 	}
 

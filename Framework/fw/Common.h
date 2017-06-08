@@ -13,6 +13,10 @@
 namespace fw
 {
 
+void printHresult(HRESULT* hr, std::ostream& os);
+void printError(const std::string& msg, HRESULT* hr = nullptr);
+void printWarning(const std::string& msg, HRESULT* hr = nullptr);
+
 template <typename T>
 inline int executeGenericMain(HINSTANCE hInstance, int nCmdShow, LONG windowWidth = 800, LONG windowHeight = 600)
 {
@@ -41,7 +45,7 @@ inline void release(T* t)
 	}	
 }
 
-HRESULT compileShaderFromFile(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderModel, ID3DBlob** blobOut);
+bool compileShaderFromFile(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderModel, ID3DBlob** blobOut);
 
 bool getLinearSampler(ID3D11SamplerState** sampler);
 

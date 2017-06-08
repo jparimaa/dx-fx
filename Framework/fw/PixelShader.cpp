@@ -21,7 +21,7 @@ bool PixelShader::create(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderModel)
 	ID3DBlob* blob = nullptr;
 	HRESULT hr = compileShaderFromFile(fileName, entryPoint, shaderModel, &blob);
 	if (FAILED(hr)) {
-		std::cerr << "ERROR: Failed to compile pixel shader\n";
+		printError("Failed to compile pixel shader", &hr);
 		return false;
 	}
 
@@ -29,7 +29,7 @@ bool PixelShader::create(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderModel)
 	blob->Release();
 
 	if (FAILED(hr)) {
-		std::cerr << "ERROR: Failed to create pixel shader\n";
+		printError("Failed to create pixel shader", &hr);
 		return false;
 	}
 

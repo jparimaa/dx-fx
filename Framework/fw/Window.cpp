@@ -1,4 +1,5 @@
 #include "Window.h"
+#include "Common.h"
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_dx11.h"
 #include <Keyboard.h>
@@ -70,7 +71,7 @@ Window::~Window()
 {
 }
 
-HRESULT Window::initialize(HINSTANCE hInstance, int nCmdShow)
+bool Window::initialize(HINSTANCE hInstance, int nCmdShow)
 {
 	WNDCLASSEX wcex;
 	wcex.cbSize = sizeof(WNDCLASSEX);
@@ -87,8 +88,8 @@ HRESULT Window::initialize(HINSTANCE hInstance, int nCmdShow)
 	wcex.hIconSm = LoadIcon(wcex.hInstance, (LPCTSTR)IDI_APPLICATION);
 
 	if (!RegisterClassEx(&wcex)) {
-		std::cerr << "ERROR: Could not register window class\n";
-		return E_FAIL;
+		printError("Could not register window class");
+		return false;
 	}
 
 	instanceHandle = hInstance;
@@ -98,13 +99,13 @@ HRESULT Window::initialize(HINSTANCE hInstance, int nCmdShow)
 								rc.right - rc.left, rc.bottom - rc.top, nullptr, nullptr, hInstance, nullptr);
 
 	if (!windowHandle) {
-		std::cerr << "ERROR: Could not create window\n";
-		return E_FAIL;
+		printError("Could not create window");
+		return false;
 	}
 
 	ShowWindow(windowHandle, nCmdShow);
 
-	return S_OK;
+	return true;
 }
 
 HWND Window::getHandle() const

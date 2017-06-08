@@ -1,5 +1,6 @@
 #include "Framework.h"
 #include "DX.h"
+#include "Common.h"
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_dx11.h"
 #include <iostream>
@@ -23,14 +24,10 @@ bool Framework::initialize(HINSTANCE hInstance, int nCmdShow)
 	freopen_s(&consoleStream, "CONOUT$", "w", stdout);
 	freopen_s(&consoleStream, "CONOUT$", "w", stderr);
 
-	HRESULT hr = window.initialize(hInstance, nCmdShow);
-	if (FAILED(hr)) {
-		std::cerr << "ERROR: Failed to initialize window\n";
+	if (!window.initialize(hInstance, nCmdShow)) {
 		return false;
 	}
-
-	if (FAILED(device.initialize(window.getHandle()))) {
-		std::cerr << "ERROR: Failed to initialize device\n";
+	if (!device.initialize(window.getHandle())) {
 		return false;
 	}
 
@@ -43,7 +40,7 @@ bool Framework::initialize(HINSTANCE hInstance, int nCmdShow)
 bool Framework::setApplication(Application* application)
 {
 	if (!application) {
-		std::cerr << "ERROR: Invalid application pointer\n";
+		printError("Invalid application pointer");
 		return false;
 	}
 

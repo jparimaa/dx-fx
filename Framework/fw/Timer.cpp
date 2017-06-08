@@ -1,4 +1,5 @@
 #include "Timer.h"
+#include "Common.h"
 #include <iostream>
 
 namespace fw
@@ -16,7 +17,7 @@ bool Timer::start()
 {
 	LARGE_INTEGER counter;
 	if (!QueryPerformanceFrequency(&counter)) {
-		std::cerr << "WARNING: Could not query performance frequency\n";
+		printWarning("Could not query performance frequency");
 		return false;
 	}
 

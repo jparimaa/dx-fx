@@ -23,10 +23,8 @@ Device::~Device()
 	release(depthStencilView);
 }
 
-HRESULT Device::initialize(HWND windowHandle)
+bool Device::initialize(HWND windowHandle)
 {
-	HRESULT hr = S_OK;
-
 	RECT rc;
 	GetClientRect(windowHandle, &rc);
 	UINT width = rc.right - rc.left;
@@ -63,6 +61,7 @@ HRESULT Device::initialize(HWND windowHandle)
 	sd.SampleDesc.Quality = (UINT)D3D11_STANDARD_MULTISAMPLE_PATTERN;
 	sd.Windowed = TRUE;
 
+	HRESULT hr = S_OK;
 	for (UINT driverTypeIndex = 0; driverTypeIndex < numDriverTypes; driverTypeIndex++) {
 		driverType = driverTypes[driverTypeIndex];
 		hr = D3D11CreateDeviceAndSwapChain(nullptr, driverType, nullptr, createDeviceFlags, featureLevels, numFeatureLevels,
@@ -73,22 +72,22 @@ HRESULT Device::initialize(HWND windowHandle)
 	}
 
 	if (FAILED(hr)) {
-		std::cerr << "ERROR: Failed to create device and swap chain\n";
-		return hr;
+		printError("Failed to create device and swap chain", &hr);
+		return false;
 	}
 
 	ID3D11Texture2D* backBuffer = nullptr;
 	hr = swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBuffer);
 	if (FAILED(hr)) {
-		std::cerr << "ERROR: Failed to get swap chain buffer\n";
-		return hr;
+		printError("Failed to get swap chain buffer", &hr);
+		return false;
 	}
 
 	hr = d3dDevice->CreateRenderTargetView(backBuffer, nullptr, &renderTargetView);
 	backBuffer->Release();
 	if (FAILED(hr)) {
-		std::cerr << "ERROR: Failed to create render target view\n";
-		return hr;
+		printError("Failed to create render target view", &hr);
+		return false;
 	}
 
 	immediateContext->OMSetRenderTargets(1, &renderTargetView, nullptr);
@@ -108,8 +107,8 @@ HRESULT Device::initialize(HWND windowHandle)
 	depthDesc.MiscFlags = 0;
 	hr = d3dDevice->CreateTexture2D(&depthDesc, nullptr, &depthStencil);
 	if (FAILED(hr)) {
-		std::cerr << "ERROR: Failed to create depth stencil texture\n";
-		return hr;
+		printError("Failed to create depth stencil texture", &hr);
+		return false;
 	}
 
 	D3D11_DEPTH_STENCIL_VIEW_DESC DSVDesc;
@@ -119,8 +118,8 @@ HRESULT Device::initialize(HWND windowHandle)
 	DSVDesc.Texture2D.MipSlice = 0;
 	hr = d3dDevice->CreateDepthStencilView(depthStencil, &DSVDesc, &depthStencilView);
 	if (FAILED(hr)) {
-		std::cerr << "ERROR: Failed to create depth stencil view\n";
-		return hr;
+		printError("Failed to create depth stencil view", &hr);
+		return false;
 	}
 	immediateContext->OMSetRenderTargets(1, &renderTargetView, depthStencilView);
 
@@ -138,7 +137,7 @@ HRESULT Device::initialize(HWND windowHandle)
 	DX::renderTargetView = renderTargetView;
 	DX::swapChain = swapChain;
 
-	return S_OK;
+	return true;
 }
 
 ID3D11DepthStencilView* Device::getDepthStencilView()
