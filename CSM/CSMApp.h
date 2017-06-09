@@ -8,6 +8,7 @@
 #include <fw/Camera.h>
 #include <fw/CameraController.h>
 #include <fw/AssetManager.h>
+#include <DirectXMath.h>
 #include <d3d11.h>
 #include <memory>
 

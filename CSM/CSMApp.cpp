@@ -2,7 +2,6 @@
 #include <fw/DX.h>
 #include <fw/API.h>
 #include <fw/imgui/imgui.h>
-#include <DirectXMath.h>
 #include <vector>
 #include <iostream>
 
@@ -22,7 +21,6 @@ CSMApp::CSMApp()
 CSMApp::~CSMApp()
 {
 	fw::release(matrixBuffer);	
-	fw::release(samplerLinear);
 }
 
 bool CSMApp::initialize()

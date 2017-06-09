@@ -6,6 +6,8 @@
 #include <fw/Transformation.h>
 #include <fw/Camera.h>
 #include <fw/CameraController.h>
+#include <fw/AssetManager.h>
+#include <DirectXMath.h>
 #include <d3d11.h>
 #include <memory>
 
@@ -21,19 +23,24 @@ public:
 	virtual void gui() final;
 
 private:
+	struct MatrixData
+	{
+		DirectX::XMMATRIX world;
+		DirectX::XMMATRIX view;
+		DirectX::XMMATRIX projection;
+	};
+
 	fw::Camera camera;
 	fw::CameraController cameraController;
 	fw::Transformation trans;
 	fw::VertexShader vertexShader;
 	fw::PixelShader pixelShader;
-	ID3D11Buffer* vertexBuffer = nullptr;
-	ID3D11Buffer* indexBuffer = nullptr;
-	ID3D11Buffer* matrixBuffer = nullptr;
-	unsigned int numIndices = 0;
+	fw::AssetManager assetManager;
+	fw::AssetManager::VertexBuffer* vertexBuffer = nullptr;
 
-	ID3D11Resource* texture = nullptr;
+	ID3D11Buffer* matrixBuffer = nullptr;	
 	ID3D11ShaderResourceView* textureView = nullptr;
 	ID3D11SamplerState* samplerLinear = nullptr;
 
-	bool createBuffer();
+	bool createMatrixBuffer();
 };

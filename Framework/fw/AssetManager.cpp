@@ -25,6 +25,8 @@ AssetManager::~AssetManager()
 		release(kv.second.vertexBuffer);
 		release(kv.second.indexBuffer);
 	}
+
+	fw::release(samplerLinear);
 }
 
 ID3D11ShaderResourceView* AssetManager::getTextureView(const std::string& filename)

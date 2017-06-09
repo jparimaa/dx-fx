@@ -35,6 +35,5 @@ VS_OUTPUT VS(VS_INPUT input)
 
 float4 PS(VS_OUTPUT input) : SV_Target
 {
-    //return float4(input.Normal.x, input.Normal.y, input.Normal.z, 1.0f);
 	return diffuseTex.Sample(linearSampler, input.Tex);
 }
