@@ -24,6 +24,7 @@ public:
 	
 	ID3D11ShaderResourceView* getTextureView(const std::string& filename);
 	VertexBuffer* getVertexBuffer(const std::string& filename);
+	bool getLinearSampler(ID3D11SamplerState** sampler);
 
 private:
 	struct TextureData
@@ -34,6 +35,7 @@ private:
 
 	std::unordered_map<std::string, TextureData> textures;
 	std::unordered_map<std::string, VertexBuffer> modelBuffers;
+	ID3D11SamplerState* samplerLinear = nullptr;
 };
 
 } // fw

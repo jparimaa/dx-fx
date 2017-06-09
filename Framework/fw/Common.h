@@ -13,7 +13,7 @@
 namespace fw
 {
 
-void printHresult(HRESULT* hr, std::ostream& os);
+void printHresult(HRESULT* hr, std::wostream& os);
 void printError(const std::string& msg, HRESULT* hr = nullptr);
 void printWarning(const std::string& msg, HRESULT* hr = nullptr);
 
@@ -46,8 +46,6 @@ inline void release(T* t)
 }
 
 bool compileShaderFromFile(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderModel, ID3DBlob** blobOut);
-
-bool getLinearSampler(ID3D11SamplerState** sampler);
 
 std::vector<float> getVertexData(const fw::Model& model);
 

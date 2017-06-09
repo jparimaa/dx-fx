@@ -45,7 +45,7 @@ bool CSMApp::initialize()
 		return false;
 	}
 
-	if (!fw::getLinearSampler(&samplerLinear)) {
+	if (!assetManager.getLinearSampler(&samplerLinear)) {
 		return false;
 	}
 	
