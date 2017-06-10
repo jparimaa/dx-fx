@@ -5,6 +5,7 @@
 #include "Model.h"
 #include <d3dx11.h>
 #include <d3dcompiler.h>
+#include <DirectXMath.h>
 #include <Windows.h>
 #include <iostream>
 #include <cstdlib>
@@ -48,5 +49,7 @@ inline void release(T* t)
 bool compileShaderFromFile(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderModel, ID3DBlob** blobOut);
 
 std::vector<float> getVertexData(const fw::Model& model);
+
+void displayVector(const std::string& text, const DirectX::XMVECTOR& vector);
 
 } // fw

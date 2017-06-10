@@ -1,4 +1,5 @@
 #include "Common.h"
+#include "imgui/imgui.h"
 #include <comdef.h>
 
 namespace fw
@@ -43,6 +44,10 @@ bool compileShaderFromFile(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderMode
 	if (errorBlob) {
 		errorBlob->Release();
 	}
+	if (!(*blobOut)) {
+		printError("Shader blob is a nullptr. Probably something wrong with the shader file");
+		return false;
+	}
 
 	return !FAILED(hr);
 }
@@ -63,6 +68,13 @@ std::vector<float> getVertexData(const fw::Model& model)
 		}
 	}
 	return vertexData;
+}
+
+void displayVector(const std::string& text, const DirectX::XMVECTOR& vector)
+{
+	DirectX::XMFLOAT4 f;
+	DirectX::XMStoreFloat4(&f, vector);
+	ImGui::Text(text.c_str(), f.x, f.y, f.z, f.w);
 }
 
 } // fw

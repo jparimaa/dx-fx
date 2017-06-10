@@ -20,13 +20,12 @@ VertexShader::~VertexShader()
 bool VertexShader::create(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderModel, std::vector<D3D11_INPUT_ELEMENT_DESC> layout)
 {
 	ID3DBlob* blob = nullptr;
-	HRESULT hr = compileShaderFromFile(fileName, entryPoint, shaderModel, &blob);
-	if (FAILED(hr)) {
-		printError("Failed to compile vertex shader", &hr);
+	bool compiled = compileShaderFromFile(fileName, entryPoint, shaderModel, &blob);
+	if (!compiled) {
 		return false;
 	}
 
-	hr = DX::device->CreateVertexShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &vertexShader);
+	HRESULT hr = DX::device->CreateVertexShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &vertexShader);
 	if (FAILED(hr)) {
 		printError("Failed to create vertex shader", &hr);
 		blob->Release();

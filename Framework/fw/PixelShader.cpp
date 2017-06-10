@@ -19,13 +19,12 @@ PixelShader::~PixelShader()
 bool PixelShader::create(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderModel)
 {
 	ID3DBlob* blob = nullptr;
-	HRESULT hr = compileShaderFromFile(fileName, entryPoint, shaderModel, &blob);
-	if (FAILED(hr)) {
-		printError("Failed to compile pixel shader", &hr);
+	bool compiled = compileShaderFromFile(fileName, entryPoint, shaderModel, &blob);
+	if (!compiled) {
 		return false;
 	}
 
-	hr = DX::device->CreatePixelShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &pixelShader);
+	HRESULT hr = DX::device->CreatePixelShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &pixelShader);
 	blob->Release();
 
 	if (FAILED(hr)) {

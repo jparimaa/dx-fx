@@ -1,5 +1,6 @@
 #pragma once
 
+#include "DataTypes.h"
 #include <fw/Application.h>
 #include <fw/VertexShader.h>
 #include <fw/PixelShader.h>
@@ -8,7 +9,6 @@
 #include <fw/Camera.h>
 #include <fw/CameraController.h>
 #include <fw/AssetManager.h>
-#include <DirectXMath.h>
 #include <d3d11.h>
 #include <memory>
 
@@ -24,20 +24,6 @@ public:
 	virtual void gui() final;
 
 private:
-	struct MatrixData
-	{
-		DirectX::XMMATRIX world;
-		DirectX::XMMATRIX view;
-		DirectX::XMMATRIX projection;
-	};
-
-	struct RenderData
-	{
-		ID3D11ShaderResourceView* textureView = nullptr;
-		fw::AssetManager::VertexBuffer* vertexBuffer = nullptr;
-		fw::Transformation transformation;
-	};
-	
 	fw::Camera camera;
 	fw::CameraController cameraController;
 	fw::VertexShader vertexShader;
@@ -45,12 +31,15 @@ private:
 	fw::AssetManager assetManager;
 
 	ID3D11Buffer* matrixBuffer = nullptr;
+	ID3D11Buffer* lightBuffer = nullptr;
 	ID3D11SamplerState* samplerLinear = nullptr;
 
 	RenderData cube;
 	RenderData monkey1;
 	RenderData monkey2;
+	DirectionalLight light;
 
 	bool createMatrixBuffer();
+	bool createLightBuffer();
 	void renderObject(const RenderData& renderData);
 };
