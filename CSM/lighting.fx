@@ -10,7 +10,7 @@ cbuffer MatrixBuffer : register(b0)
 
 struct VS_INPUT
 {
-	float4 Pos : POSITION;
+	float3 Pos : POSITION;
 	float3 Normal : NORMAL;
 	float2 Tex : TEXCOORD0;
 };
@@ -25,9 +25,11 @@ struct VS_OUTPUT
 VS_OUTPUT VS(VS_INPUT input)
 {
 	VS_OUTPUT output = (VS_OUTPUT)0;
-	output.Pos = mul(input.Pos, World);
+	float4 pos = float4(input.Pos, 1.0f);
+	output.Pos = mul(pos, World);
 	output.Pos = mul(output.Pos, View);
 	output.Pos = mul(output.Pos, Projection);
+	// No support for non-uniform scaling
 	output.Normal = mul(input.Normal, (float3x3)World);
 	output.Tex = input.Tex;
 	return output;

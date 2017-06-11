@@ -39,7 +39,7 @@ private:
 	RenderData monkey2;
 	DirectionalLight light;
 
-	bool createMatrixBuffer();
-	bool createLightBuffer();
+	template <typename T>
+	bool createBuffer(ID3D11Buffer** buffer);
 	void renderObject(const RenderData& renderData);
 };

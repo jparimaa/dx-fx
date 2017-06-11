@@ -4,6 +4,7 @@
 #include <fw/Transformation.h>
 #include <DirectXMath.h>
 #include <d3d11.h>
+#include <array>
 
 struct MatrixData
 {
@@ -22,12 +23,12 @@ struct RenderData
 struct DirectionalLight
 {
 	fw::Transformation transformation;
-	DirectX::XMVECTOR color;
+	std::array<float, 4> color = {1.0f, 1.0f, 1.0f, 1.0f};
 };
 
 struct DirectionalLightData
 {
 	DirectX::XMVECTOR position;
 	DirectX::XMVECTOR direction;
-	DirectX::XMVECTOR color;
+	std::array<float, 4> color;
 };

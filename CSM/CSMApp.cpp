@@ -37,15 +37,15 @@ bool CSMApp::initialize()
 	if (!pixelShader.create(L"lighting.fx", "PS", "ps_4_0")) {
 		return false;
 	}
-
-	if (!createMatrixBuffer()) {
-		return false;
-	}
-
-	if (!createLightBuffer()) {
-		return false;
-	}
 	
+	if (!createBuffer<MatrixData>(&matrixBuffer)) {
+		return false;
+	}
+
+	if (!createBuffer<DirectionalLightData>(&lightBuffer)) {
+		return false;
+	}
+
 	if (!assetManager.getLinearSampler(&samplerLinear)) {
 		return false;
 	}
@@ -67,12 +67,13 @@ bool CSMApp::initialize()
 
 	light.transformation.position = DirectX::XMVectorSet(2.0f, 5.0f, 2.0f, 0.0f);
 	light.transformation.rotation = DirectX::XMVectorSet(0.8f, -0.8f, 0.0f, 0.0f);
-	light.color = DirectX::XMVectorSet(1.0f, 0.9f, 1.0f, 1.5f);
 
 	camera.getTransformation().position = DirectX::XMVectorSet(0.0f, 2.0f, -5.0f, 0.0f);
 	camera.getTransformation().rotate(DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f), 0.4f);
 	camera.updateViewMatrix();
 	cameraController.setCamera(&camera);
+	cameraController.setResetPosition({5.5f, 3.6f, -5.6f});
+	cameraController.setResetRotation({0.4f, -0.6f, 0.0f});
 
 	std::cout << "CSMApp initialization completed\n";
 
@@ -84,7 +85,7 @@ void CSMApp::update()
 	if (fw::API::isKeyReleased(DirectX::Keyboard::Escape)) {
 		fw::API::quit();
 	}
-
+	
 	cameraController.update();
 	camera.updateViewMatrix();
 }
@@ -115,40 +116,29 @@ void CSMApp::render()
 
 void CSMApp::gui()
 {
-	fw::displayVector("Camera position %.1f %.1f %.1f", camera.getTransformation().position);
+	fw::displayVector("Camera position %.1f, %.1f, %.1f", camera.getTransformation().position);
+	/*
+	fw::displayVector("Camera rotation %.1f %.1f %.1f", camera.getTransformation().rotation);
 	fw::displayVector("Camera direction %.1f %.1f %.1f", camera.getTransformation().getForward());
 	fw::displayVector("Light direction %.1f %.1f %.1f", light.transformation.getForward());
+	ImGui::ColorEdit3("Light color", light.color.data());
+	*/
+	ImGui::DragFloat("Light power", &light.color[3], 0.01f);	
 }
 
-bool CSMApp::createMatrixBuffer()
+template<typename T>
+bool CSMApp::createBuffer(ID3D11Buffer** buffer)
 {
 	D3D11_BUFFER_DESC bd;
 	ZeroMemory(&bd, sizeof(bd));
-	bd.ByteWidth = sizeof(MatrixData);
+	bd.ByteWidth = sizeof(T);
 	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	bd.Usage = D3D11_USAGE_DYNAMIC;
 
-	HRESULT hr = fw::DX::device->CreateBuffer(&bd, nullptr, &matrixBuffer);
+	HRESULT hr = fw::DX::device->CreateBuffer(&bd, nullptr, buffer);
 	if (FAILED(hr)) {
-		fw::printError("Failed to create matrix buffer", &hr);
-	}
-	return true;
-}
-
-bool CSMApp::createLightBuffer()
-{
-	D3D11_BUFFER_DESC bd;
-	ZeroMemory(&bd, sizeof(bd));
-	bd.ByteWidth = sizeof(DirectionalLightData);
-	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	bd.Usage = D3D11_USAGE_DYNAMIC;
-
-	HRESULT hr = fw::DX::device->CreateBuffer(&bd, nullptr, &lightBuffer);
-	if (FAILED(hr)) {
-		fw::printError("Failed to create light buffer", &hr);
-		return false;
+		fw::printError("Failed to create buffer", &hr);
 	}
 	return true;
 }

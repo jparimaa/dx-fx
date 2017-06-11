@@ -43,6 +43,16 @@ void CameraController::setSensitivity(float s)
 	sensitivity = XMConvertToRadians(s);
 }
 
+void CameraController::setResetPosition(std::array<float, 3> position)
+{
+	resetPosition = position;
+}
+
+void CameraController::setResetRotation(std::array<float, 3> rotation)
+{
+	resetRotation = rotation;
+}
+
 void CameraController::update()
 {
 	if (!camera) {
@@ -82,8 +92,8 @@ void CameraController::update()
 	}
 
 	if (API::isKeyReleased(Keyboard::R)) {
-		t.rotation = XMVectorZero();
-		t.position = XMVectorSet(0.0f, 0.0f, -2.0f, 0.0f);
+		t.rotation = XMVectorSet(resetRotation[0], resetRotation[1], resetRotation[2], 0.0f);
+		t.position = XMVectorSet(resetPosition[0], resetPosition[1], resetPosition[2], 0.0f);
 	}
 }
 
