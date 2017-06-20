@@ -53,7 +53,7 @@ bool Model::loadModel(const std::string& file)
 
 				if (aMesh->HasTextureCoords(0)) {
 					mesh.uvs.emplace_back(aMesh->mTextureCoords[0][vertexIndex].x,
-										  -aMesh->mTextureCoords[0][vertexIndex].y);
+										  aMesh->mTextureCoords[0][vertexIndex].y);
 				}
 			}
 

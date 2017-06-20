@@ -33,6 +33,7 @@ public:
 	static float getDeltaX();
 	static float getDeltaY();
 	
+	static ID3D11RenderTargetView* getRenderTargerView();
 	static ID3D11DepthStencilView* getDepthStencilView();
 
 	static void quit();

@@ -26,13 +26,19 @@ public:
 private:
 	fw::Camera camera;
 	fw::CameraController cameraController;
-	fw::VertexShader vertexShader;
-	fw::PixelShader pixelShader;
+	fw::VertexShader lightingVS;
+	fw::PixelShader lightingPS;
+	fw::VertexShader depthmapVS;
 	fw::AssetManager assetManager;
 
 	ID3D11Buffer* matrixBuffer = nullptr;
 	ID3D11Buffer* lightBuffer = nullptr;
 	ID3D11SamplerState* samplerLinear = nullptr;
+
+	ID3D11Texture2D* depthmapTexture = nullptr;
+	ID3D11DepthStencilView* depthmapDSV = nullptr;
+	ID3D11ShaderResourceView* depthmapSRV = nullptr;
+	ID3D11SamplerState* samplerShadow = nullptr;
 
 	RenderData cube;
 	RenderData monkey1;
@@ -41,5 +47,8 @@ private:
 
 	template <typename T>
 	bool createBuffer(ID3D11Buffer** buffer);
+	bool createDepthmap();
+	void renderDepthmap();
+	void renderObjects();
 	void renderObject(const RenderData& renderData);
 };

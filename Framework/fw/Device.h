@@ -14,6 +14,7 @@ public:
 
 	bool initialize(HWND windowHandle);
 	ID3D11DepthStencilView* getDepthStencilView();
+	ID3D11RenderTargetView* getRenderTargerView();
 
 private:
 	ID3D11DeviceContext* immediateContext = nullptr;

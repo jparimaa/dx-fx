@@ -89,9 +89,7 @@ bool Device::initialize(HWND windowHandle)
 		printError("Failed to create render target view", &hr);
 		return false;
 	}
-
-	immediateContext->OMSetRenderTargets(1, &renderTargetView, nullptr);
-
+	
 	D3D11_TEXTURE2D_DESC depthDesc;
 	ZeroMemory(&depthDesc, sizeof(depthDesc));
 	depthDesc.Width = width;
@@ -143,6 +141,11 @@ bool Device::initialize(HWND windowHandle)
 ID3D11DepthStencilView* Device::getDepthStencilView()
 {
 	return depthStencilView;
+}
+
+ID3D11RenderTargetView* Device::getRenderTargerView()
+{
+	return renderTargetView;
 }
 
 } // fw

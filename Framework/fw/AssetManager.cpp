@@ -46,8 +46,10 @@ ID3D11ShaderResourceView* AssetManager::getTextureView(const std::string& filena
 		return nullptr;
 	}
 	
-	TextureData d{texture, textureView};
-	textures[filename] = d;
+	TextureData td;
+	td.texture = texture;
+	td.textureView = textureView;
+	textures[filename] = td;
 	return textureView;
 }
 
