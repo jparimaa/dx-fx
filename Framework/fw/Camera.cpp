@@ -7,12 +7,20 @@ namespace fw
 
 Camera::Camera()
 {
-	updateViewMatrix();
-	updateProjectionMatrix();
 }
 
 Camera::~Camera()
 {
+}
+
+float Camera::getNearClipDistance() const
+{
+	return nearClipDistance;
+}
+
+float Camera::getFarClipDistance() const
+{
+	return farClipDistance;
 }
 
 const XMMATRIX& Camera::updateViewMatrix()
@@ -23,20 +31,9 @@ const XMMATRIX& Camera::updateViewMatrix()
 	return viewMatrix;
 }
 
-const XMMATRIX& Camera::updateProjectionMatrix()
-{
-	projectionMatrix = XMMatrixPerspectiveFovLH(FOV, ratio, nearClipDistance, farClipDistance);
-	return projectionMatrix;
-}
-
-const XMMATRIX& Camera::getViewMatrix()
+const XMMATRIX& Camera::getViewMatrix() const
 {
 	return viewMatrix;
-}
-
-const XMMATRIX& Camera::getProjectionMatrix()
-{
-	return projectionMatrix;
 }
 
 Transformation& Camera::getTransformation()

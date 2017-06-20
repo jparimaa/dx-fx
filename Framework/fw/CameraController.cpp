@@ -1,5 +1,4 @@
 #include "CameraController.h"
-#include "Transformation.h"
 #include "API.h"
 #include "Common.h"
 #include <DirectXMath.h>
@@ -28,9 +27,9 @@ CameraController::~CameraController()
 {
 }
 
-void CameraController::setCamera(Camera* c)
+void CameraController::setCameraTransformation(Transformation* t)
 {
-	camera = c;
+	transformation = t;
 }
 
 void CameraController::setMovementSpeed(float s)
@@ -55,7 +54,7 @@ void CameraController::setResetRotation(std::array<float, 3> rotation)
 
 void CameraController::update()
 {
-	if (!camera) {
+	if (!transformation) {
 		printWarning("Camera is not set for camera controller");
 		return;
 	}
@@ -65,35 +64,34 @@ void CameraController::update()
 		return;
 	}
 
-	Transformation& t = camera->getTransformation();
 	float speed = movementSpeed * API::getTimeDelta();
 	
 	if (kb.W) {
-		t.move(t.getForward() * speed);
+		transformation->move(transformation->getForward() * speed);
 	}
 	if (kb.S) {
-		t.move(-t.getForward() * speed);
+		transformation->move(-transformation->getForward() * speed);
 	}
 	if (kb.A) {
-		t.move(t.getLeft() * speed);
+		transformation->move(transformation->getLeft() * speed);
 	}
 	if (kb.D) {
-		t.move(-t.getLeft() * speed);
+		transformation->move(-transformation->getLeft() * speed);
 	}
 
 	if (API::getMouseState().leftButton == Mouse::ButtonStateTracker::HELD) {
-		t.rotate(Transformation::UP, API::getDeltaX() * sensitivity);
-		t.rotate(Transformation::LEFT, -API::getDeltaY() * sensitivity);
+		transformation->rotate(Transformation::UP, API::getDeltaX() * sensitivity);
+		transformation->rotate(Transformation::LEFT, -API::getDeltaY() * sensitivity);
 		XMFLOAT3 r;
-		XMStoreFloat3(&r, t.rotation);
+		XMStoreFloat3(&r, transformation->rotation);
 		r.x = std::min(r.x, ROTATION_LIMIT);
 		r.x = std::max(r.x, -ROTATION_LIMIT);
-		t.rotation = XMLoadFloat3(&r);
+		transformation->rotation = XMLoadFloat3(&r);
 	}
 
 	if (API::isKeyReleased(Keyboard::R)) {
-		t.rotation = XMVectorSet(resetRotation[0], resetRotation[1], resetRotation[2], 0.0f);
-		t.position = XMVectorSet(resetPosition[0], resetPosition[1], resetPosition[2], 0.0f);
+		transformation->rotation = XMVectorSet(resetRotation[0], resetRotation[1], resetRotation[2], 0.0f);
+		transformation->position = XMVectorSet(resetPosition[0], resetPosition[1], resetPosition[2], 0.0f);
 	}
 }
 

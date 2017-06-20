@@ -24,9 +24,6 @@
     <ClCompile Include="fw\Application.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="fw\Camera.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="fw\Device.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -78,15 +75,21 @@
     <ClCompile Include="fw\AssetManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="fw\PerspectiveCamera.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fw\OrthographicCamera.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fw\Camera.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="fw\API.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="fw\Application.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="fw\Camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="fw\Common.h">
@@ -147,6 +150,15 @@
       <Filter>imgui</Filter>
     </ClInclude>
     <ClInclude Include="fw\AssetManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="fw\PerspectiveCamera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="fw\OrthographicCamera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="fw\Camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

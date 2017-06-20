@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Camera.h"
+#include "Transformation.h"
 #include <array>
 
 namespace fw
@@ -12,7 +12,7 @@ public:
 	CameraController();
 	~CameraController();
 
-	void setCamera(Camera* c);
+	void setCameraTransformation(Transformation* t);
 	void setMovementSpeed(float s);
 	void setSensitivity(float s);
 	void setResetPosition(std::array<float, 3> position);
@@ -20,7 +20,7 @@ public:
 	void update();
 
 private:
-	Camera* camera = nullptr;
+	Transformation* transformation = nullptr;
 	float movementSpeed;
 	float sensitivity;
 	std::array<float, 3> resetPosition = {0.0f, 0.0f, 0.0f};

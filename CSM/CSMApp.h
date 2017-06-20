@@ -6,7 +6,7 @@
 #include <fw/PixelShader.h>
 #include <fw/Common.h>
 #include <fw/Transformation.h>
-#include <fw/Camera.h>
+#include <fw/PerspectiveCamera.h>
 #include <fw/CameraController.h>
 #include <fw/AssetManager.h>
 #include <d3d11.h>
@@ -24,7 +24,7 @@ public:
 	virtual void gui() final;
 
 private:
-	fw::Camera camera;
+	fw::PerspectiveCamera camera;
 	fw::CameraController cameraController;
 	fw::VertexShader lightingVS;
 	fw::PixelShader lightingPS;

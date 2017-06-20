@@ -8,26 +8,26 @@ namespace fw
 
 class Camera
 {
-public:
+public:	
 	Camera();
-	~Camera();
+	virtual ~Camera();
+
+	float getNearClipDistance() const;
+	float getFarClipDistance() const;
 
 	const DirectX::XMMATRIX& updateViewMatrix();
-	const DirectX::XMMATRIX& updateProjectionMatrix();
+	virtual const DirectX::XMMATRIX& updateProjectionMatrix() = 0;
 
-	const DirectX::XMMATRIX& getViewMatrix();
-	const DirectX::XMMATRIX& getProjectionMatrix();
-
+	const DirectX::XMMATRIX& getViewMatrix() const;
+	virtual const DirectX::XMMATRIX& getProjectionMatrix() = 0;
+	
 	Transformation& getTransformation();
 
-private:
-	float FOV = DirectX::XM_PIDIV4;
-	float ratio = 1.33333f;
+private:	
 	float nearClipDistance = 0.1f;
 	float farClipDistance = 100.0f;
 
-	DirectX::XMMATRIX viewMatrix;
-	DirectX::XMMATRIX projectionMatrix;
+	DirectX::XMMATRIX viewMatrix;	
 	Transformation transformation;
 };
 

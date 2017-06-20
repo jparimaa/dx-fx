@@ -4,7 +4,7 @@
 #include <fw/VertexShader.h>
 #include <fw/PixelShader.h>
 #include <fw/Transformation.h>
-#include <fw/Camera.h>
+#include <fw/PerspectiveCamera.h>
 #include <fw/CameraController.h>
 #include <fw/AssetManager.h>
 #include <DirectXMath.h>
@@ -30,7 +30,7 @@ private:
 		DirectX::XMMATRIX projection;
 	};
 
-	fw::Camera camera;
+	fw::PerspectiveCamera camera;
 	fw::CameraController cameraController;
 	fw::Transformation trans;
 	fw::VertexShader vertexShader;

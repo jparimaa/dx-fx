@@ -53,7 +53,7 @@ bool ExampleApp::initialize()
 	camera.getTransformation().position = XMVectorSet(0.0f, 2.0f, -5.0f, 0.0f);
 	camera.getTransformation().rotate(XMFLOAT3(1.0f, 0.0f, 0.0f), 0.4f);
 	camera.updateViewMatrix();
-	cameraController.setCamera(&camera);
+	cameraController.setCameraTransformation(&camera.getTransformation());
 
 	trans.position = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 	trans.updateWorldMatrix();

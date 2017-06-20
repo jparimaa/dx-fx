@@ -141,6 +141,8 @@
     <ClCompile Include="fw\Application.cpp" />
     <ClCompile Include="fw\AssetManager.cpp" />
     <ClCompile Include="fw\Camera.cpp" />
+    <ClCompile Include="fw\OrthographicCamera.cpp" />
+    <ClCompile Include="fw\PerspectiveCamera.cpp" />
     <ClCompile Include="fw\CameraController.cpp" />
     <ClCompile Include="fw\Common.cpp" />
     <ClCompile Include="fw\Device.cpp" />
@@ -163,6 +165,8 @@
     <ClInclude Include="fw\Application.h" />
     <ClInclude Include="fw\AssetManager.h" />
     <ClInclude Include="fw\Camera.h" />
+    <ClInclude Include="fw\OrthographicCamera.h" />
+    <ClInclude Include="fw\PerspectiveCamera.h" />
     <ClInclude Include="fw\CameraController.h" />
     <ClInclude Include="fw\Common.h" />
     <ClInclude Include="fw\Device.h" />

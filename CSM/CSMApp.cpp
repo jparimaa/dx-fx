@@ -62,7 +62,7 @@ bool CSMApp::initialize()
 	if (!assetManager.getLinearSampler(&samplerLinear)) {
 		return false;
 	}
-
+	
 	monkey1.textureView = assetManager.getTextureView("../Assets/checker.png");
 	monkey1.vertexBuffer = assetManager.getVertexBuffer("../Assets/monkey.3ds");
 	monkey1.transformation.position = DirectX::XMVectorSet(4.0f, 1.0f, 0.0f, 0.0f);
@@ -84,7 +84,7 @@ bool CSMApp::initialize()
 	camera.getTransformation().position = DirectX::XMVectorSet(0.0f, 2.0f, -5.0f, 0.0f);
 	camera.getTransformation().rotate(DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f), 0.4f);
 	camera.updateViewMatrix();
-	cameraController.setCamera(&camera);
+	cameraController.setCameraTransformation(&camera.getTransformation());
 	cameraController.setResetPosition({5.5f, 3.6f, -5.6f});
 	cameraController.setResetRotation({0.4f, -0.6f, 0.0f});
 	cameraController.setMovementSpeed(2.0f);
