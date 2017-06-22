@@ -14,11 +14,11 @@ public:
 	virtual ~OrthographicCamera() final;
 
 	virtual const DirectX::XMMATRIX& updateProjectionMatrix() final;
-	virtual const DirectX::XMMATRIX& getProjectionMatrix() final;
+	virtual const DirectX::XMMATRIX& getProjectionMatrix() const final;
 
 private:
-	float width = 800.0f;
-	float height = 600.0f;
+	float width = 28.0f;
+	float height = 21.0f;
 
 	DirectX::XMMATRIX projectionMatrix;
 };

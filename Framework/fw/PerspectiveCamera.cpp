@@ -21,7 +21,7 @@ const XMMATRIX& PerspectiveCamera::updateProjectionMatrix()
 	return projectionMatrix;
 }
 
-const XMMATRIX& PerspectiveCamera::getProjectionMatrix()
+const XMMATRIX& PerspectiveCamera::getProjectionMatrix() const
 {
 	return projectionMatrix;
 }

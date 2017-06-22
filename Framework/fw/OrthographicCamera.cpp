@@ -21,7 +21,7 @@ const XMMATRIX& OrthographicCamera::updateProjectionMatrix()
 	return projectionMatrix;
 }
 
-const DirectX::XMMATRIX& OrthographicCamera::getProjectionMatrix()
+const DirectX::XMMATRIX& OrthographicCamera::getProjectionMatrix() const
 {
 	return projectionMatrix;
 }

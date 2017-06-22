@@ -20,11 +20,11 @@ CSMApp::CSMApp()
 CSMApp::~CSMApp()
 {
 	fw::release(matrixBuffer);
+	fw::release(lightMatrixBuffer);
 	fw::release(lightBuffer);
 	fw::release(depthmapTexture);
 	fw::release(depthmapDSV);
 	fw::release(depthmapSRV);
-	fw::release(samplerShadow);
 }
 
 bool CSMApp::initialize()
@@ -55,6 +55,10 @@ bool CSMApp::initialize()
 		return false;
 	}
 
+	if (!createBuffer<LightMatrixData>(&lightMatrixBuffer)) {
+		return false;
+	}
+
 	if (!createBuffer<DirectionalLightData>(&lightBuffer)) {
 		return false;
 	}
@@ -62,7 +66,7 @@ bool CSMApp::initialize()
 	if (!assetManager.getLinearSampler(&samplerLinear)) {
 		return false;
 	}
-	
+
 	monkey1.textureView = assetManager.getTextureView("../Assets/checker.png");
 	monkey1.vertexBuffer = assetManager.getVertexBuffer("../Assets/monkey.3ds");
 	monkey1.transformation.position = DirectX::XMVectorSet(4.0f, 1.0f, 0.0f, 0.0f);
@@ -78,16 +82,28 @@ bool CSMApp::initialize()
 	cube.transformation.scale = DirectX::XMVectorSet(10.0f, 0.01f, 10.0f, 0.0f);
 	cube.transformation.updateWorldMatrix();
 
-	light.transformation.position = DirectX::XMVectorSet(2.0f, 5.0f, 2.0f, 0.0f);
-	light.transformation.rotation = DirectX::XMVectorSet(0.8f, -0.8f, 0.0f, 0.0f);
-
-	camera.getTransformation().position = DirectX::XMVectorSet(0.0f, 2.0f, -5.0f, 0.0f);
-	camera.getTransformation().rotate(DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f), 0.4f);
-	camera.updateViewMatrix();
-	cameraController.setCameraTransformation(&camera.getTransformation());
-	cameraController.setResetPosition({5.5f, 3.6f, -5.6f});
-	cameraController.setResetRotation({0.4f, -0.6f, 0.0f});
+	viewCamera.getTransformation().position = DirectX::XMVectorSet(0.0f, 2.0f, -5.0f, 0.0f);
+	viewCamera.getTransformation().rotate(DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f), 0.4f);
+	viewCamera.updateViewMatrix();
+	cameraController.setCameraTransformation(&viewCamera.getTransformation());
+	cameraController.setResetPosition({6.0f, 6.0f, -6.0f});
+	cameraController.setResetRotation({0.8f, -0.8f, 0.0f});
 	cameraController.setMovementSpeed(2.0f);
+
+	light.transformation.position = DirectX::XMVectorSet(6.0f, 6.0f, -6.0f, 0.0f);
+	light.transformation.rotation = DirectX::XMVectorSet(0.8f, -0.8f, 0.0f, 0.0f);
+	lightCamera.getTransformation().position = light.transformation.position;
+	lightCamera.getTransformation().rotation = light.transformation.rotation;
+	lightCamera.updateViewMatrix();
+	lightCamera.updateProjectionMatrix();
+
+	fw::DX::context->VSSetShader(lightingVS.get(), nullptr, 0);
+	D3D11_MAPPED_SUBRESOURCE mappedResource;
+	fw::DX::context->Map(lightMatrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	LightMatrixData* lightMatrixData = (LightMatrixData*)mappedResource.pData;
+	lightMatrixData->viewProjection = lightCamera.getViewMatrix() * lightCamera.getProjectionMatrix();
+	fw::DX::context->Unmap(lightMatrixBuffer, 0);
+	fw::DX::context->VSSetConstantBuffers(1, 1, &lightMatrixBuffer);
 
 	std::cout << "CSMApp initialization completed\n";
 
@@ -99,9 +115,12 @@ void CSMApp::update()
 	if (fw::API::isKeyReleased(DirectX::Keyboard::Escape)) {
 		fw::API::quit();
 	}
+	
+	monkey1.transformation.rotate(DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f), DirectX::XM_2PI * fw::API::getTimeDelta() * 0.1f);
+	monkey1.transformation.updateWorldMatrix();
 
 	cameraController.update();
-	camera.updateViewMatrix();
+	viewCamera.updateViewMatrix();
 }
 
 void CSMApp::render()
@@ -115,7 +134,7 @@ void CSMApp::render()
 
 void CSMApp::gui()
 {
-	fw::displayVector("Camera position %.1f, %.1f, %.1f", camera.getTransformation().position);
+	fw::displayVector("Camera position %.1f, %.1f, %.1f", viewCamera.getTransformation().position);
 	/*
 	fw::displayVector("Camera rotation %.1f %.1f %.1f", camera.getTransformation().rotation);
 	fw::displayVector("Camera direction %.1f %.1f %.1f", camera.getTransformation().getForward());
@@ -144,17 +163,17 @@ bool CSMApp::createBuffer(ID3D11Buffer** buffer)
 
 bool CSMApp::createDepthmap()
 {
-	D3D11_TEXTURE2D_DESC shadowmapDesc;
-	shadowmapDesc.Width = 800;
-	shadowmapDesc.Height = 600;
-	shadowmapDesc.MipLevels = 1;
-	shadowmapDesc.ArraySize = 1;
-	shadowmapDesc.Format = DXGI_FORMAT_R32_TYPELESS;
-	shadowmapDesc.SampleDesc = DXGI_SAMPLE_DESC{1, 0};
-	shadowmapDesc.Usage = D3D11_USAGE_DEFAULT;
-	shadowmapDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
-	shadowmapDesc.CPUAccessFlags = 0;
-	shadowmapDesc.MiscFlags = 0;
+	D3D11_TEXTURE2D_DESC shadowmapDesc = {
+		800, 600, // Width, height
+		1, // Miplevels
+		1, // ArraySize
+		DXGI_FORMAT_R32_TYPELESS,
+		DXGI_SAMPLE_DESC{1, 0},
+		D3D11_USAGE_DEFAULT,
+		D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE, // Bind flags
+		0, // CPU access flag
+		0 // Misc flags
+	};
 	fw::DX::device->CreateTexture2D(&shadowmapDesc, nullptr, &depthmapTexture);
 
 	D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilVD = {
@@ -173,21 +192,6 @@ bool CSMApp::createDepthmap()
 	shaderResourceVD.Texture2D.MipLevels = 1;
 	fw::DX::device->CreateShaderResourceView(depthmapTexture, &shaderResourceVD, &depthmapSRV);
 
-	D3D11_SAMPLER_DESC samplerDesc =
-	{
-		D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT,// D3D11_FILTER Filter;
-		D3D11_TEXTURE_ADDRESS_BORDER, //D3D11_TEXTURE_ADDRESS_MODE AddressU;
-		D3D11_TEXTURE_ADDRESS_BORDER, //D3D11_TEXTURE_ADDRESS_MODE AddressV;
-		D3D11_TEXTURE_ADDRESS_BORDER, //D3D11_TEXTURE_ADDRESS_MODE AddressW;
-		0,//FLOAT MipLODBias;
-		0,//UINT MaxAnisotropy;
-		D3D11_COMPARISON_LESS , //D3D11_COMPARISON_FUNC ComparisonFunc;
-		0.0,0.0,0.0,0.0,//FLOAT BorderColor[ 4 ];
-		0,//FLOAT MinLOD;
-		0//FLOAT MaxLOD;   
-	};
-	fw::DX::device->CreateSamplerState(&samplerDesc, &samplerShadow);
-
 	return true;
 }
 
@@ -200,9 +204,9 @@ void CSMApp::renderDepthmap()
 	fw::DX::context->VSSetShader(depthmapVS.get(), nullptr, 0);
 	fw::DX::context->PSSetShader(nullptr, nullptr, 0);
 
-	renderObject(monkey1);
-	renderObject(monkey2);
-	renderObject(cube);
+	renderObject(monkey1, lightCamera);
+	renderObject(monkey2, lightCamera);
+	renderObject(cube, lightCamera);
 
 	fw::DX::context->OMSetRenderTargets(1, &nullView, nullptr);
 }
@@ -218,7 +222,6 @@ void CSMApp::renderObjects()
 
 	fw::DX::context->PSSetShader(lightingPS.get(), nullptr, 0);
 	fw::DX::context->PSSetSamplers(0, 1, &samplerLinear);
-	fw::DX::context->PSSetSamplers(1, 1, &samplerShadow);
 	fw::DX::context->PSSetShaderResources(1, 1, &depthmapSRV);
 
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
@@ -228,14 +231,14 @@ void CSMApp::renderObjects()
 	lightData->direction = light.transformation.getForward();
 	lightData->color = light.color;
 	fw::DX::context->Unmap(lightBuffer, 0);
-	fw::DX::context->PSSetConstantBuffers(1, 1, &lightBuffer);
+	fw::DX::context->PSSetConstantBuffers(2, 1, &lightBuffer);
 
-	renderObject(monkey1);
-	renderObject(monkey2);
-	renderObject(cube);
+	renderObject(monkey1, viewCamera);
+	renderObject(monkey2, viewCamera);
+	renderObject(cube, viewCamera);
 }
 
-void CSMApp::renderObject(const RenderData& renderData)
+void CSMApp::renderObject(const RenderData& renderData, const fw::Camera& camera)
 {
 	fw::AssetManager::VertexBuffer* vb = renderData.vertexBuffer;
 	fw::DX::context->IASetVertexBuffers(0, 1, &vb->vertexBuffer, &vb->stride, &vb->offset);

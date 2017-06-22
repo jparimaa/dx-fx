@@ -58,9 +58,9 @@ XMVECTOR Transformation::getLeft() const
 const XMMATRIX& Transformation::updateWorldMatrix()
 {
 	worldMatrix =
-		XMMatrixTranslationFromVector(position) *
+		XMMatrixScalingFromVector(scale) *
 		XMMatrixRotationRollPitchYawFromVector(rotation) *
-		XMMatrixScalingFromVector(scale);
+		XMMatrixTranslationFromVector(position);
 	return worldMatrix;
 }
 

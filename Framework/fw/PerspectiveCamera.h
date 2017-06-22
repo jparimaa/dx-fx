@@ -14,8 +14,7 @@ public:
 	virtual ~PerspectiveCamera() final;
 
 	virtual const DirectX::XMMATRIX& updateProjectionMatrix() final;
-	virtual const DirectX::XMMATRIX& getProjectionMatrix() final;
-
+	virtual const DirectX::XMMATRIX& getProjectionMatrix() const final;
 
 private:
 	float FOV = DirectX::XM_PIDIV4;

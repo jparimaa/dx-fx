@@ -19,7 +19,7 @@ public:
 	virtual const DirectX::XMMATRIX& updateProjectionMatrix() = 0;
 
 	const DirectX::XMMATRIX& getViewMatrix() const;
-	virtual const DirectX::XMMATRIX& getProjectionMatrix() = 0;
+	virtual const DirectX::XMMATRIX& getProjectionMatrix() const = 0;
 	
 	Transformation& getTransformation();
 

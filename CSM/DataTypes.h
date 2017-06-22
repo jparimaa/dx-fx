@@ -13,6 +13,11 @@ struct MatrixData
 	DirectX::XMMATRIX projection;
 };
 
+struct LightMatrixData
+{
+	DirectX::XMMATRIX viewProjection;
+};
+
 struct RenderData
 {
 	ID3D11ShaderResourceView* textureView = nullptr;

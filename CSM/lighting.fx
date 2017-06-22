@@ -1,13 +1,17 @@
 Texture2D diffuseTex : register(t0);
 Texture2D depthmapTex : register(t1);
 SamplerState linearSampler : register(s0);
-SamplerState shadowSampler : register(s1);
 
 cbuffer MatrixBuffer : register(b0)
 {
 	matrix World;
 	matrix View;
 	matrix Projection;
+}
+
+cbuffer LightBuffer : register(b1)
+{
+	matrix LightViewProjection;
 }
 
 struct VS_INPUT
@@ -23,6 +27,7 @@ struct VS_OUTPUT
 	float3 Normal : NORMAL;
 	float2 Tex : TEXCOORD0;
 	float4 ScreenPos : TEXCOORD1;
+	float4 Pos_Light : POSITIONT;
 };
 
 VS_OUTPUT VS(VS_INPUT input)
@@ -32,14 +37,16 @@ VS_OUTPUT VS(VS_INPUT input)
 	output.Pos = mul(pos, World);
 	output.Pos = mul(output.Pos, View);
 	output.Pos = mul(output.Pos, Projection);
-	output.ScreenPos = output.Pos;
 	// No support for non-uniform scaling
 	output.Normal = mul(input.Normal, (float3x3)World);
-	output.Tex = input.Tex;	
+	output.Tex = input.Tex;
+	output.ScreenPos = output.Pos;
+	output.Pos_Light = mul(pos, World);
+	output.Pos_Light = mul(output.Pos_Light, LightViewProjection);
 	return output;
 }
 
-cbuffer LightBuffer : register(b1)
+cbuffer LightBuffer : register(b2)
 {
 	float4 LightPosition : POSITION;
 	float4 LightDirection;
@@ -48,15 +55,25 @@ cbuffer LightBuffer : register(b1)
 
 float4 PS(VS_OUTPUT input) : SV_Target
 {
-	float2 screenPos = ((input.ScreenPos.xy / input.ScreenPos.w) + (1,1)) / 2.0;
-	screenPos.y = 1.0 - screenPos.y;
-	float depth = depthmapTex.Sample(linearSampler, screenPos).r;
-	depth = pow(depth, 8);
-	//return float4(depth, depth, depth, 1.0);
+	float shadow = 1.0;
+    float3 NDC = input.Pos_Light.xyz;// input.Pos_Light.w; // w == 1
+	float projectedDepth = NDC.z;
+	if (projectedDepth > 1.0) {
+		return float4(1.0, 0.0, 0.0, 1.0); // for debug
+		shadow = 0.0;
+	} else {
+		float3 projectedCoordinates = NDC * 0.5 + 0.5;		
+		float2 shadowmapUV;
+		shadowmapUV.x = projectedCoordinates.x;
+		shadowmapUV.y = 1.0 - projectedCoordinates.y;
+		float shadowmapDepth = depthmapTex.Sample(linearSampler, shadowmapUV).r;
+		float bias = 0.002;		
+		shadow = projectedDepth - bias > shadowmapDepth ? 0.0 : 1.0;
+	}
 	
 	float diff = max(dot(normalize(input.Normal.xyz), float3(normalize(-LightDirection.xyz))), 0.0);
 	float3 texColor = diffuseTex.Sample(linearSampler, input.Tex).xyz;
-	float3 outColor = texColor * diff * LightColor.xyz * LightColor.w;
-	
+	float3 outColor = texColor * diff * LightColor.xyz * LightColor.w * shadow;
+
 	return float4(outColor, 1.0);
 }

@@ -6,7 +6,9 @@
 #include <fw/PixelShader.h>
 #include <fw/Common.h>
 #include <fw/Transformation.h>
+#include <fw/Camera.h>
 #include <fw/PerspectiveCamera.h>
+#include <fw/OrthographicCamera.h>
 #include <fw/CameraController.h>
 #include <fw/AssetManager.h>
 #include <d3d11.h>
@@ -24,7 +26,8 @@ public:
 	virtual void gui() final;
 
 private:
-	fw::PerspectiveCamera camera;
+	fw::PerspectiveCamera viewCamera;
+	fw::OrthographicCamera lightCamera;
 	fw::CameraController cameraController;
 	fw::VertexShader lightingVS;
 	fw::PixelShader lightingPS;
@@ -32,13 +35,13 @@ private:
 	fw::AssetManager assetManager;
 
 	ID3D11Buffer* matrixBuffer = nullptr;
+	ID3D11Buffer* lightMatrixBuffer = nullptr;
 	ID3D11Buffer* lightBuffer = nullptr;
 	ID3D11SamplerState* samplerLinear = nullptr;
 
 	ID3D11Texture2D* depthmapTexture = nullptr;
 	ID3D11DepthStencilView* depthmapDSV = nullptr;
 	ID3D11ShaderResourceView* depthmapSRV = nullptr;
-	ID3D11SamplerState* samplerShadow = nullptr;
 
 	RenderData cube;
 	RenderData monkey1;
@@ -50,5 +53,5 @@ private:
 	bool createDepthmap();
 	void renderDepthmap();
 	void renderObjects();
-	void renderObject(const RenderData& renderData);
+	void renderObject(const RenderData& renderData, const fw::Camera& camera);
 };
