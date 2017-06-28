@@ -55,22 +55,16 @@ cbuffer LightBuffer : register(b2)
 
 float4 PS(VS_OUTPUT input) : SV_Target
 {
-	float shadow = 1.0;
-    float3 NDC = input.Pos_Light.xyz;// input.Pos_Light.w; // w == 1
+    float3 NDC = input.Pos_Light.xyz;// / input.Pos_Light.w; // w == 1
 	float projectedDepth = NDC.z;
-	if (projectedDepth > 1.0) {
-		return float4(1.0, 0.0, 0.0, 1.0); // for debug
-		shadow = 0.0;
-	} else {
-		float3 projectedCoordinates = NDC * 0.5 + 0.5;		
-		float2 shadowmapUV;
-		shadowmapUV.x = projectedCoordinates.x;
-		shadowmapUV.y = 1.0 - projectedCoordinates.y;
-		float shadowmapDepth = depthmapTex.Sample(linearSampler, shadowmapUV).r;
-		float bias = 0.002;		
-		shadow = projectedDepth - bias > shadowmapDepth ? 0.0 : 1.0;
-	}
-	
+	float3 projectedCoordinates = NDC * 0.5 + 0.5;		
+	float2 shadowmapUV;
+	shadowmapUV.x = projectedCoordinates.x;
+	shadowmapUV.y = 1.0 - projectedCoordinates.y;
+	float shadowmapDepth = depthmapTex.Sample(linearSampler, shadowmapUV).r;
+	float bias = 0.002;		
+	float shadow = projectedDepth - bias > shadowmapDepth ? 0.0 : 1.0;
+		
 	float diff = max(dot(normalize(input.Normal.xyz), float3(normalize(-LightDirection.xyz))), 0.0);
 	float3 texColor = diffuseTex.Sample(linearSampler, input.Tex).xyz;
 	float3 outColor = texColor * diff * LightColor.xyz * LightColor.w * shadow;

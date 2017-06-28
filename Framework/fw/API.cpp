@@ -6,6 +6,7 @@ namespace fw
 
 Framework* API::framework = nullptr;
 Device* API::device = nullptr;
+const Window* API::window = nullptr;
 const Timer* API::timer = nullptr;
 const Input* API::input = nullptr;
 
@@ -15,17 +16,27 @@ void API::initialize(Framework* fw)
 		return;
 	}
 	framework = fw;
-	timer = fw->getTimer();
-	input = fw->getInput();
 	device = fw->getDevice();
+	window = fw->getWindow();
+	timer = fw->getTimer();
+	input = fw->getInput();	
 }
 
 float API::getWindowRatio()
 {
-	const Window& w = *(framework->getWindow());
-	float width = static_cast<float>(w.getWidth());
-	float height = static_cast<float>(w.getHeight());
+	float width = static_cast<float>(window->getWidth());
+	float height = static_cast<float>(window->getHeight());
 	return width / height;
+}
+
+int API::getWindowWidth()
+{
+	return static_cast<int>(window->getWidth());
+}
+
+int API::getWindowHeight()
+{
+	return static_cast<int>(window->getHeight());
 }
 
 HWND API::getWindowHandle()

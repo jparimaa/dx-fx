@@ -15,6 +15,16 @@ OrthographicCamera::~OrthographicCamera()
 {
 }
 
+void OrthographicCamera::setWidth(float w)
+{
+	width = w;
+}
+
+void OrthographicCamera::setHeight(float h)
+{
+	height = h;
+}
+
 const XMMATRIX& OrthographicCamera::updateProjectionMatrix()
 {
 	projectionMatrix = XMMatrixOrthographicLH(width, height, getNearClipDistance(), getFarClipDistance());

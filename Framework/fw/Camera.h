@@ -13,7 +13,10 @@ public:
 	virtual ~Camera();
 
 	float getNearClipDistance() const;
+	float setNearClipDistance(float near);
+
 	float getFarClipDistance() const;
+	float setFarClipDistance(float far);
 
 	const DirectX::XMMATRIX& updateViewMatrix();
 	virtual const DirectX::XMMATRIX& updateProjectionMatrix() = 0;

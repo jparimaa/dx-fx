@@ -13,6 +13,7 @@
 #include <fw/AssetManager.h>
 #include <d3d11.h>
 #include <memory>
+#include <array>
 
 class CSMApp : public fw::Application
 {
@@ -48,10 +49,14 @@ private:
 	RenderData monkey2;
 	DirectionalLight light;
 
+	std::array<float, 2> cascadeFarClipPlanes = {20.0f, 40.0f};
+	std::array<fw::OrthographicCamera, 3> cascadeCameras;
+
 	template <typename T>
 	bool createBuffer(ID3D11Buffer** buffer);
 	bool createDepthmap();
 	void renderDepthmap();
 	void renderObjects();
 	void renderObject(const RenderData& renderData, const fw::Camera& camera);
+	fw::OrthographicCamera getCascadedCamera(float nearPlane, float farPlane);
 };

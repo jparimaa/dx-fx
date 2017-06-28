@@ -1,8 +1,9 @@
 #pragma once
 
+#include "Device.h"
+#include "Window.h"
 #include "Timer.h"
 #include "Input.h"
-#include "Device.h"
 #include <Keyboard.h>
 #include <d3d11.h>
 #include <windows.h>
@@ -20,6 +21,8 @@ public:
 	static void initialize(Framework* fw);
 
 	static float getWindowRatio();
+	static int getWindowWidth();
+	static int getWindowHeight();
 	static HWND getWindowHandle();
 
 	static float getTimeSinceStart();
@@ -41,8 +44,9 @@ public:
 private:
 	static Framework* framework;
 	static Device* device;
+	static const Window* window;
 	static const Timer* timer;
-	static const Input* input;	
+	static const Input* input;
 };
 
-}
+} // fw

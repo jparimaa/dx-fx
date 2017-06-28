@@ -13,6 +13,9 @@ public:
 	OrthographicCamera();
 	virtual ~OrthographicCamera() final;
 
+	void setWidth(float w);
+	void setHeight(float h);
+
 	virtual const DirectX::XMMATRIX& updateProjectionMatrix() final;
 	virtual const DirectX::XMMATRIX& getProjectionMatrix() const final;
 

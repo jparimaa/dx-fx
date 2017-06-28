@@ -18,9 +18,19 @@ float Camera::getNearClipDistance() const
 	return nearClipDistance;
 }
 
+float Camera::setNearClipDistance(float near)
+{
+	return nearClipDistance = near;
+}
+
 float Camera::getFarClipDistance() const
 {
 	return farClipDistance;
+}
+
+float Camera::setFarClipDistance(float far)
+{
+	return farClipDistance = far;
 }
 
 const XMMATRIX& Camera::updateViewMatrix()

@@ -3,6 +3,7 @@
 #include <fw/API.h>
 #include <fw/imgui/imgui.h>
 #include <DirectXMath.h>
+#include <DirectXCollision.h>
 #include <vector>
 #include <iostream>
 
@@ -164,7 +165,8 @@ bool CSMApp::createBuffer(ID3D11Buffer** buffer)
 bool CSMApp::createDepthmap()
 {
 	D3D11_TEXTURE2D_DESC shadowmapDesc = {
-		800, 600, // Width, height
+		fw::API::getWindowWidth(), 
+		fw::API::getWindowHeight(),
 		1, // Miplevels
 		1, // ArraySize
 		DXGI_FORMAT_R32_TYPELESS,
@@ -256,4 +258,36 @@ void CSMApp::renderObject(const RenderData& renderData, const fw::Camera& camera
 
 	fw::DX::context->PSSetShaderResources(0, 1, &renderData.textureView);
 	fw::DX::context->DrawIndexed(vb->numIndices, 0, 0);
+}
+
+fw::OrthographicCamera CSMApp::getCascadedCamera(float nearPlane, float farPlane)
+{
+	fw::PerspectiveCamera frustumCamera = viewCamera;
+	frustumCamera.setNearClipDistance(nearPlane);
+	frustumCamera.setFarClipDistance(farPlane);
+	frustumCamera.updateProjectionMatrix();
+
+	DirectX::BoundingFrustum frustum;
+	DirectX::BoundingFrustum::CreateFromMatrix(frustum, frustumCamera.getProjectionMatrix());
+	DirectX::XMMATRIX inverseViewMatrix = DirectX::XMMatrixInverse(nullptr, frustumCamera.getViewMatrix());
+	frustum.Transform(frustum, inverseViewMatrix);	
+	frustum.Transform(frustum, lightCamera.getViewMatrix());
+
+	std::array<DirectX::XMFLOAT3, 8> frustumCorners;
+	frustum.GetCorners(frustumCorners.data());
+	DirectX::BoundingBox boundingBox;
+	DirectX::BoundingBox::CreateFromPoints(boundingBox, frustumCorners.size(), frustumCorners.data(), sizeof(DirectX::XMFLOAT3));
+
+	fw::OrthographicCamera cascadeCamera;
+	float NCP = 0.001f;
+	cascadeCamera.setNearClipDistance(NCP);
+	cascadeCamera.setFarClipDistance(boundingBox.Extents.z * 2.0f);
+	
+	DirectX::XMFLOAT3 center = boundingBox.Center;
+	center.z -= (boundingBox.Extents.z + NCP);
+	cascadeCamera.getTransformation().position = DirectX::XMLoadFloat3(&center);
+	cascadeCamera.setWidth(boundingBox.Extents.z * 2.0f);
+	cascadeCamera.setHeight(boundingBox.Extents.y * 2.0f);
+	
+	return cascadeCamera;
 }
