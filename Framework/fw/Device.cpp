@@ -143,7 +143,7 @@ ID3D11DepthStencilView* Device::getDepthStencilView()
 	return depthStencilView;
 }
 
-ID3D11RenderTargetView* Device::getRenderTargerView()
+ID3D11RenderTargetView* Device::getRenderTargetView()
 {
 	return renderTargetView;
 }

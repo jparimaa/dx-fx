@@ -5,6 +5,14 @@
 namespace fw
 {
 
+VertexBuffer::~VertexBuffer()
+{
+	if (releaseOnDestruction) {
+		release(vertexBuffer);
+		release(indexBuffer);
+	}
+}
+
 void printHresult(HRESULT* hr, std::wostream& os)
 {
 	if (hr) {

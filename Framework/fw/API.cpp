@@ -89,9 +89,9 @@ float API::getDeltaY()
 	return input->getDeltaY();
 }
 
-ID3D11RenderTargetView* API::getRenderTargerView()
+ID3D11RenderTargetView* API::getRenderTargetView()
 {
-	return device->getRenderTargerView();
+	return device->getRenderTargetView();
 }
 
 ID3D11DepthStencilView* API::getDepthStencilView()

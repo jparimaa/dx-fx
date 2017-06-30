@@ -30,21 +30,33 @@ CSMApp::~CSMApp()
 
 bool CSMApp::initialize()
 {
-	std::vector<D3D11_INPUT_ELEMENT_DESC> layout = {
+	std::vector<D3D11_INPUT_ELEMENT_DESC> defaultLayout = {
 		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
 		{"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
 		{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0}
 	};
 
-	if (!lightingVS.create(L"lighting.fx", "VS", "vs_4_0", layout)) {
+	if (!lightingVS.create(L"lighting.fx", "VS", "vs_4_0", defaultLayout)) {
 		return false;
 	}
 
 	if (!lightingPS.create(L"lighting.fx", "PS", "ps_4_0")) {
 		return false;
 	}
+	
+	if (!depthmapVS.create(L"depthmap.fx", "VS", "vs_4_0", defaultLayout)) {
+		return false;
+	}
 
-	if (!depthmapVS.create(L"depthmap.fx", "VS", "vs_4_0", layout)) {
+	std::vector<D3D11_INPUT_ELEMENT_DESC> frustumLayout = {
+		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0}
+	};
+
+	if (!frustumVS.create(L"frustum.fx", "VS", "vs_4_0", frustumLayout)) {
+		return false;
+	}
+
+	if (!frustumPS.create(L"frustum.fx", "PS", "ps_4_0")) {
 		return false;
 	}
 
@@ -106,6 +118,12 @@ bool CSMApp::initialize()
 	fw::DX::context->Unmap(lightMatrixBuffer, 0);
 	fw::DX::context->VSSetConstantBuffers(1, 1, &lightMatrixBuffer);
 
+	DirectX::BoundingFrustum frustum;
+	DirectX::BoundingFrustum::CreateFromMatrix(frustum, viewCamera.getProjectionMatrix());
+	DirectX::XMMATRIX inverseViewMatrix = DirectX::XMMatrixInverse(nullptr, viewCamera.getViewMatrix());
+	frustum.Transform(frustum, inverseViewMatrix);
+	frustum.GetCorners(corners.data());
+
 	std::cout << "CSMApp initialization completed\n";
 
 	return true;
@@ -125,9 +143,11 @@ void CSMApp::update()
 }
 
 void CSMApp::render()
-{
+{	
 	renderDepthmap();
 	renderObjects();
+	
+	drawFrustumLines(corners);
 
 	ID3D11ShaderResourceView* nv[] = {nullptr};
 	fw::DX::context->PSSetShaderResources(1, 1, nv);
@@ -203,6 +223,7 @@ void CSMApp::renderDepthmap()
 	ID3D11RenderTargetView* nullView = nullptr;
 	// Set a null render target to not render color.
 	fw::DX::context->OMSetRenderTargets(1, &nullView, depthmapDSV);
+	fw::DX::context->IASetInputLayout(depthmapVS.getVertexLayout());
 	fw::DX::context->VSSetShader(depthmapVS.get(), nullptr, 0);
 	fw::DX::context->PSSetShader(nullptr, nullptr, 0);
 
@@ -215,11 +236,12 @@ void CSMApp::renderDepthmap()
 
 void CSMApp::renderObjects()
 {
-	ID3D11RenderTargetView* renderTarget = fw::API::getRenderTargerView();
+	ID3D11RenderTargetView* renderTarget = fw::API::getRenderTargetView();
 	fw::DX::context->OMSetRenderTargets(1, &renderTarget, fw::API::getDepthStencilView());
 	fw::DX::context->ClearRenderTargetView(fw::DX::renderTargetView, clearColor);
 	fw::DX::context->ClearDepthStencilView(fw::API::getDepthStencilView(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
+	fw::DX::context->IASetInputLayout(lightingVS.getVertexLayout());
 	fw::DX::context->VSSetShader(lightingVS.get(), nullptr, 0);
 
 	fw::DX::context->PSSetShader(lightingPS.get(), nullptr, 0);
@@ -242,7 +264,7 @@ void CSMApp::renderObjects()
 
 void CSMApp::renderObject(const RenderData& renderData, const fw::Camera& camera)
 {
-	fw::AssetManager::VertexBuffer* vb = renderData.vertexBuffer;
+	fw::VertexBuffer* vb = renderData.vertexBuffer;
 	fw::DX::context->IASetVertexBuffers(0, 1, &vb->vertexBuffer, &vb->stride, &vb->offset);
 	fw::DX::context->IASetIndexBuffer(vb->indexBuffer, DXGI_FORMAT_R16_UINT, 0);
 	fw::DX::context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -290,4 +312,63 @@ fw::OrthographicCamera CSMApp::getCascadedCamera(float nearPlane, float farPlane
 	cascadeCamera.setHeight(boundingBox.Extents.y * 2.0f);
 	
 	return cascadeCamera;
+}
+
+void CSMApp::drawFrustumLines(const std::array<DirectX::XMFLOAT3, 8>& points)
+{
+	fw::VertexBuffer buffer;
+	buffer.releaseOnDestruction = true;
+
+	D3D11_BUFFER_DESC bd;
+	ZeroMemory(&bd, sizeof(bd));
+	bd.Usage = D3D11_USAGE_DEFAULT;
+	bd.ByteWidth = sizeof(DirectX::XMFLOAT3) * points.size();
+	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	bd.CPUAccessFlags = 0;
+
+	D3D11_SUBRESOURCE_DATA data;
+	ZeroMemory(&data, sizeof(data));
+	data.pSysMem = points.data();
+
+	HRESULT hr = fw::DX::device->CreateBuffer(&bd, &data, &buffer.vertexBuffer);
+	if (FAILED(hr)) {
+		fw::printError("ERROR: Failed to create vertex buffer in frustum line drawing", &hr);
+		return;
+	}
+
+	std::vector<WORD> indices{0, 1, 2, 3, 0, 4, 5, 6, 7, 4, 5, 1, 2, 6, 7, 3};
+	
+	bd.Usage = D3D11_USAGE_DEFAULT;
+	bd.ByteWidth = sizeof(WORD) * indices.size();
+	bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	bd.CPUAccessFlags = 0;
+
+	data.pSysMem = indices.data();
+
+	hr = fw::DX::device->CreateBuffer(&bd, &data, &buffer.indexBuffer);
+	if (FAILED(hr)) {
+		fw::printError("ERROR: Failed to create index buffer", &hr);
+		return;
+	}
+
+	buffer.stride = sizeof(DirectX::XMFLOAT3);
+	ID3D11RenderTargetView* renderTarget = fw::API::getRenderTargetView();
+	fw::DX::context->OMSetRenderTargets(1, &renderTarget, fw::API::getDepthStencilView());
+	fw::DX::context->IASetInputLayout(frustumVS.getVertexLayout());
+	fw::DX::context->VSSetShader(frustumVS.get(), nullptr, 0);
+	fw::DX::context->PSSetShader(frustumPS.get(), nullptr, 0);
+	fw::DX::context->IASetVertexBuffers(0, 1, &buffer.vertexBuffer, &buffer.stride, &buffer.offset);
+	fw::DX::context->IASetIndexBuffer(buffer.indexBuffer, DXGI_FORMAT_R16_UINT, 0);
+	fw::DX::context->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINESTRIP);
+
+	D3D11_MAPPED_SUBRESOURCE mappedResource;
+	fw::DX::context->Map(matrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	MatrixData* matrixData = (MatrixData*)mappedResource.pData;
+	matrixData->world = DirectX::XMMATRIX();
+	matrixData->view = viewCamera.getViewMatrix();
+	matrixData->projection = viewCamera.getProjectionMatrix();
+	fw::DX::context->Unmap(matrixBuffer, 0);
+	fw::DX::context->VSSetConstantBuffers(0, 1, &matrixBuffer);
+	
+	fw::DX::context->DrawIndexed(indices.size(), 0, 0);
 }

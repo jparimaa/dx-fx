@@ -14,6 +14,18 @@
 namespace fw
 {
 
+struct VertexBuffer
+{
+	ID3D11Buffer* vertexBuffer = nullptr;
+	UINT stride = 8 * sizeof(float);
+	UINT offset = 0;
+	ID3D11Buffer* indexBuffer = nullptr;
+	unsigned int numIndices = 0;
+	bool releaseOnDestruction = false;
+
+	~VertexBuffer();
+};
+
 void printHresult(HRESULT* hr, std::wostream& os);
 void printError(const std::string& msg, HRESULT* hr = nullptr);
 void printWarning(const std::string& msg, HRESULT* hr = nullptr);

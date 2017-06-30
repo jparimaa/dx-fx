@@ -53,7 +53,7 @@ ID3D11ShaderResourceView* AssetManager::getTextureView(const std::string& filena
 	return textureView;
 }
 
-AssetManager::VertexBuffer* AssetManager::getVertexBuffer(const std::string& filename)
+VertexBuffer* AssetManager::getVertexBuffer(const std::string& filename)
 {
 	auto find = modelBuffers.find(filename);
 	if (find != modelBuffers.end()) {

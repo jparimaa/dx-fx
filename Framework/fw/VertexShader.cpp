@@ -49,4 +49,9 @@ ID3D11VertexShader* VertexShader::get() const
 	return vertexShader;
 }
 
+ID3D11InputLayout* VertexShader::getVertexLayout() const
+{
+	return vertexLayout;
+}
+
 } // fw

@@ -14,6 +14,7 @@ public:
 
 	bool create(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderModel, std::vector<D3D11_INPUT_ELEMENT_DESC> layout);
 	ID3D11VertexShader* get() const;
+	ID3D11InputLayout* getVertexLayout() const;
 
 private:
 	ID3D11VertexShader* vertexShader = nullptr;

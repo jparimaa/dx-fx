@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Common.h"
 #include <d3d11.h>
 #include <unordered_map>
 #include <string>
@@ -10,15 +11,6 @@ namespace fw
 class AssetManager
 {
 public:
-	struct VertexBuffer
-	{
-		ID3D11Buffer* vertexBuffer = nullptr;
-		UINT stride = 8 * sizeof(float);
-		UINT offset = 0;
-		ID3D11Buffer* indexBuffer = nullptr;
-		unsigned int numIndices = 0;
-	};
-
 	AssetManager();
 	~AssetManager();
 	

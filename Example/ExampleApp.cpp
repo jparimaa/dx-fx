@@ -88,7 +88,7 @@ void ExampleApp::render()
 	fw::DX::context->PSSetShader(pixelShader.get(), nullptr, 0);	
 	fw::DX::context->PSSetSamplers(0, 1, &samplerLinear);
 	
-	fw::AssetManager::VertexBuffer* vb = vertexBuffer;
+	fw::VertexBuffer* vb = vertexBuffer;
 	fw::DX::context->IASetVertexBuffers(0, 1, &vb->vertexBuffer, &vb->stride, &vb->offset);
 	fw::DX::context->IASetIndexBuffer(vb->indexBuffer, DXGI_FORMAT_R16_UINT, 0);
 	fw::DX::context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

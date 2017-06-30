@@ -7,6 +7,7 @@
 #include <fw/PerspectiveCamera.h>
 #include <fw/CameraController.h>
 #include <fw/AssetManager.h>
+#include <fw/Common.h>
 #include <DirectXMath.h>
 #include <d3d11.h>
 #include <memory>
@@ -36,7 +37,7 @@ private:
 	fw::VertexShader vertexShader;
 	fw::PixelShader pixelShader;
 	fw::AssetManager assetManager;
-	fw::AssetManager::VertexBuffer* vertexBuffer = nullptr;
+	fw::VertexBuffer* vertexBuffer = nullptr;
 
 	ID3D11Buffer* matrixBuffer = nullptr;	
 	ID3D11ShaderResourceView* textureView = nullptr;

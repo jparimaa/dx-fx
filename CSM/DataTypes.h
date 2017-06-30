@@ -1,6 +1,6 @@
 #pragma once
 
-#include <fw/AssetManager.h>
+#include <fw/Common.h>
 #include <fw/Transformation.h>
 #include <DirectXMath.h>
 #include <d3d11.h>
@@ -21,7 +21,7 @@ struct LightMatrixData
 struct RenderData
 {
 	ID3D11ShaderResourceView* textureView = nullptr;
-	fw::AssetManager::VertexBuffer* vertexBuffer = nullptr;
+	fw::VertexBuffer* vertexBuffer = nullptr;
 	fw::Transformation transformation;
 };
 

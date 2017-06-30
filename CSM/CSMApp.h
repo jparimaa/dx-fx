@@ -33,8 +33,10 @@ private:
 	fw::VertexShader lightingVS;
 	fw::PixelShader lightingPS;
 	fw::VertexShader depthmapVS;
+	fw::VertexShader frustumVS;
+	fw::PixelShader frustumPS;
 	fw::AssetManager assetManager;
-
+	
 	ID3D11Buffer* matrixBuffer = nullptr;
 	ID3D11Buffer* lightMatrixBuffer = nullptr;
 	ID3D11Buffer* lightBuffer = nullptr;
@@ -48,9 +50,11 @@ private:
 	RenderData monkey1;
 	RenderData monkey2;
 	DirectionalLight light;
-
+	
 	std::array<float, 2> cascadeFarClipPlanes = {20.0f, 40.0f};
 	std::array<fw::OrthographicCamera, 3> cascadeCameras;
+
+	std::array<DirectX::XMFLOAT3, 8> corners;
 
 	template <typename T>
 	bool createBuffer(ID3D11Buffer** buffer);
@@ -59,4 +63,5 @@ private:
 	void renderObjects();
 	void renderObject(const RenderData& renderData, const fw::Camera& camera);
 	fw::OrthographicCamera getCascadedCamera(float nearPlane, float farPlane);
+	void drawFrustumLines(const std::array<DirectX::XMFLOAT3, 8>& points);
 };
