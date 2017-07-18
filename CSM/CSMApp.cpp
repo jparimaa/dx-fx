@@ -12,6 +12,23 @@ namespace
 
 float clearColor[4] = {0.0f, 0.125f, 0.3f, 1.0f};
 
+template <typename T>
+std::array<DirectX::XMFLOAT3, 8> getFrustumCorners(const T& camera, float nearClip, float farClip)
+{
+	T cam = camera;
+	cam.setNearClipDistance(nearClip);
+	cam.setFarClipDistance(farClip);
+	cam.updateViewMatrix();
+	cam.updateProjectionMatrix();
+	DirectX::BoundingFrustum frustum;
+	DirectX::BoundingFrustum::CreateFromMatrix(frustum, cam.getProjectionMatrix());
+	DirectX::XMMATRIX inverseViewMatrix = DirectX::XMMatrixInverse(nullptr, cam.getViewMatrix());
+	frustum.Transform(frustum, inverseViewMatrix);
+	std::array<DirectX::XMFLOAT3, 8> corners;
+	frustum.GetCorners(corners.data());
+	return corners;
+}
+
 } // anonymous
 
 CSMApp::CSMApp()
@@ -43,7 +60,7 @@ bool CSMApp::initialize()
 	if (!lightingPS.create(L"lighting.fx", "PS", "ps_4_0")) {
 		return false;
 	}
-	
+
 	if (!depthmapVS.create(L"depthmap.fx", "VS", "vs_4_0", defaultLayout)) {
 		return false;
 	}
@@ -118,12 +135,15 @@ bool CSMApp::initialize()
 	fw::DX::context->Unmap(lightMatrixBuffer, 0);
 	fw::DX::context->VSSetConstantBuffers(1, 1, &lightMatrixBuffer);
 
-	DirectX::BoundingFrustum frustum;
-	DirectX::BoundingFrustum::CreateFromMatrix(frustum, viewCamera.getProjectionMatrix());
-	DirectX::XMMATRIX inverseViewMatrix = DirectX::XMMatrixInverse(nullptr, viewCamera.getViewMatrix());
-	frustum.Transform(frustum, inverseViewMatrix);
-	frustum.GetCorners(corners.data());
-
+	viewCameraFrustumCorners.push_back(getFrustumCorners(viewCamera, viewCamera.getNearClipDistance(), frustumDivisions[0]));
+	viewCameraFrustumCorners.push_back(getFrustumCorners(viewCamera, frustumDivisions[0], frustumDivisions[1]));
+	viewCameraFrustumCorners.push_back(getFrustumCorners(viewCamera, frustumDivisions[0], viewCamera.getFarClipDistance()));
+		
+	fw::OrthographicCamera orthoCam;
+	orthoCam = getCascadedCamera(viewCamera.getNearClipDistance(), frustumDivisions[0]);
+	// This does not work for ortho cameras.
+	shadowMapFrustumCorners.push_back(getFrustumCorners(orthoCam, orthoCam.getNearClipDistance(), orthoCam.getFarClipDistance()));
+	
 	std::cout << "CSMApp initialization completed\n";
 
 	return true;
@@ -134,7 +154,7 @@ void CSMApp::update()
 	if (fw::API::isKeyReleased(DirectX::Keyboard::Escape)) {
 		fw::API::quit();
 	}
-	
+
 	monkey1.transformation.rotate(DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f), DirectX::XM_2PI * fw::API::getTimeDelta() * 0.1f);
 	monkey1.transformation.updateWorldMatrix();
 
@@ -143,11 +163,15 @@ void CSMApp::update()
 }
 
 void CSMApp::render()
-{	
+{
 	renderDepthmap();
 	renderObjects();
-	
-	drawFrustumLines(corners);
+
+	drawFrustumLines(viewCameraFrustumCorners[0]);
+	drawFrustumLines(viewCameraFrustumCorners[1]);
+	drawFrustumLines(viewCameraFrustumCorners[2]);
+
+	drawFrustumLines(shadowMapFrustumCorners[0]);
 
 	ID3D11ShaderResourceView* nv[] = {nullptr};
 	fw::DX::context->PSSetShaderResources(1, 1, nv);
@@ -185,7 +209,7 @@ bool CSMApp::createBuffer(ID3D11Buffer** buffer)
 bool CSMApp::createDepthmap()
 {
 	D3D11_TEXTURE2D_DESC shadowmapDesc = {
-		fw::API::getWindowWidth(), 
+		fw::API::getWindowWidth(),
 		fw::API::getWindowHeight(),
 		1, // Miplevels
 		1, // ArraySize
@@ -291,29 +315,28 @@ fw::OrthographicCamera CSMApp::getCascadedCamera(float nearPlane, float farPlane
 
 	DirectX::BoundingFrustum frustum;
 	DirectX::BoundingFrustum::CreateFromMatrix(frustum, frustumCamera.getProjectionMatrix());
-	DirectX::XMMATRIX inverseViewMatrix = DirectX::XMMatrixInverse(nullptr, frustumCamera.getViewMatrix());
-	frustum.Transform(frustum, inverseViewMatrix);	
+	DirectX::XMMATRIX inverseViewMatrix = DirectX::XMMatrixInverse(nullptr, frustumCamera.getViewMatrix());	
+	frustum.Transform(frustum, inverseViewMatrix);
 	frustum.Transform(frustum, lightCamera.getViewMatrix());
-
-	std::array<DirectX::XMFLOAT3, 8> frustumCorners;
-	frustum.GetCorners(frustumCorners.data());
-	DirectX::BoundingBox boundingBox;
-	DirectX::BoundingBox::CreateFromPoints(boundingBox, frustumCorners.size(), frustumCorners.data(), sizeof(DirectX::XMFLOAT3));
-
-	fw::OrthographicCamera cascadeCamera;
-	float NCP = 0.001f;
-	cascadeCamera.setNearClipDistance(NCP);
-	cascadeCamera.setFarClipDistance(boundingBox.Extents.z * 2.0f);
 	
-	DirectX::XMFLOAT3 center = boundingBox.Center;
-	center.z -= (boundingBox.Extents.z + NCP);
-	cascadeCamera.getTransformation().position = DirectX::XMLoadFloat3(&center);
-	cascadeCamera.setWidth(boundingBox.Extents.z * 2.0f);
-	cascadeCamera.setHeight(boundingBox.Extents.y * 2.0f);
+	std::array<DirectX::XMFLOAT3, 8> corners;	
+	frustum.GetCorners(corners.data());
+	DirectX::BoundingBox boundingBox;
+	DirectX::BoundingBox::CreateFromPoints(boundingBox, corners.size(), corners.data(), sizeof(DirectX::XMFLOAT3));
+	
+	fw::OrthographicCamera cascadeCamera = lightCamera;
+	float x = boundingBox.Extents.x;
+	float y = boundingBox.Extents.y;
+	float farClipPlane = 0.0f;
+	for (int i = 0; i < 8; ++i) {
+		farClipPlane = max(farClipPlane, corners[i].z);
+	}
+	cascadeCamera.setViewBox(-x, x, -y, y, 0.001f, farClipPlane);
 	
 	return cascadeCamera;
 }
 
+// This is slow, use only for debug purposes.
 void CSMApp::drawFrustumLines(const std::array<DirectX::XMFLOAT3, 8>& points)
 {
 	fw::VertexBuffer buffer;
@@ -337,7 +360,7 @@ void CSMApp::drawFrustumLines(const std::array<DirectX::XMFLOAT3, 8>& points)
 	}
 
 	std::vector<WORD> indices{0, 1, 2, 3, 0, 4, 5, 6, 7, 4, 5, 1, 2, 6, 7, 3};
-	
+
 	bd.Usage = D3D11_USAGE_DEFAULT;
 	bd.ByteWidth = sizeof(WORD) * indices.size();
 	bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
@@ -369,6 +392,6 @@ void CSMApp::drawFrustumLines(const std::array<DirectX::XMFLOAT3, 8>& points)
 	matrixData->projection = viewCamera.getProjectionMatrix();
 	fw::DX::context->Unmap(matrixBuffer, 0);
 	fw::DX::context->VSSetConstantBuffers(0, 1, &matrixBuffer);
-	
+
 	fw::DX::context->DrawIndexed(indices.size(), 0, 0);
 }

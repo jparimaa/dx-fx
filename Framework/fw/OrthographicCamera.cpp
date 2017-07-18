@@ -15,19 +15,19 @@ OrthographicCamera::~OrthographicCamera()
 {
 }
 
-void OrthographicCamera::setWidth(float w)
+void OrthographicCamera::setViewBox(float viewLeft, float viewRight, float viewBottom, float viewTop, float viewNearZ, float viewFarZ)
 {
-	width = w;
-}
-
-void OrthographicCamera::setHeight(float h)
-{
-	height = h;
+	left = viewLeft;
+	right = viewRight;
+	bottom = viewBottom;
+	top = viewTop;
+	setNearClipDistance(viewNearZ);
+	setFarClipDistance(viewFarZ);
 }
 
 const XMMATRIX& OrthographicCamera::updateProjectionMatrix()
 {
-	projectionMatrix = XMMatrixOrthographicLH(width, height, getNearClipDistance(), getFarClipDistance());
+	projectionMatrix = XMMatrixOrthographicOffCenterLH(left, right, bottom, top, getNearClipDistance(), getFarClipDistance());
 	return projectionMatrix;
 }
 

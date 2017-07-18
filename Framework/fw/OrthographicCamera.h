@@ -13,16 +13,16 @@ public:
 	OrthographicCamera();
 	virtual ~OrthographicCamera() final;
 
-	void setWidth(float w);
-	void setHeight(float h);
+	void setViewBox(float viewLeft, float viewRight, float viewBottom, float viewTop, float viewNearZ, float viewFarZ);
 
 	virtual const DirectX::XMMATRIX& updateProjectionMatrix() final;
 	virtual const DirectX::XMMATRIX& getProjectionMatrix() const final;
 
 private:
-	float width = 28.0f;
-	float height = 21.0f;
-
+	float left = -10.0f;
+	float right = 10.0f;
+	float bottom = -10.0f;
+	float top = 10.0f;
 	DirectX::XMMATRIX projectionMatrix;
 };
 

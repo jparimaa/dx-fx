@@ -51,10 +51,12 @@ private:
 	RenderData monkey2;
 	DirectionalLight light;
 	
-	std::array<float, 2> cascadeFarClipPlanes = {20.0f, 40.0f};
+	std::array<float, 2> frustumDivisions = {5.0f, 15.0f};
 	std::array<fw::OrthographicCamera, 3> cascadeCameras;
 
-	std::array<DirectX::XMFLOAT3, 8> corners;
+	using FrustumCorners = std::array<DirectX::XMFLOAT3, 8>;
+	std::vector<FrustumCorners> viewCameraFrustumCorners;
+	std::vector<FrustumCorners> shadowMapFrustumCorners;
 
 	template <typename T>
 	bool createBuffer(ID3D11Buffer** buffer);
