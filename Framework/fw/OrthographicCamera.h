@@ -3,6 +3,7 @@
 #include "Camera.h"
 #include "Transformation.h"
 #include <DirectXMath.h>
+#include <array>
 
 namespace fw
 {
@@ -17,6 +18,8 @@ public:
 
 	virtual const DirectX::XMMATRIX& updateProjectionMatrix() final;
 	virtual const DirectX::XMMATRIX& getProjectionMatrix() const final;
+
+	std::array<DirectX::XMFLOAT3, 8> getFrustumCorners() const;
 
 private:
 	float left = -10.0f;

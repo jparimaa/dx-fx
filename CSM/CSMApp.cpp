@@ -1,3 +1,4 @@
+#define NOMINMAX
 #include "CSMApp.h"
 #include <fw/DX.h>
 #include <fw/API.h>
@@ -6,16 +7,17 @@
 #include <DirectXCollision.h>
 #include <vector>
 #include <iostream>
+#include <limits>
+#include <algorithm>
 
 namespace
 {
 
 float clearColor[4] = {0.0f, 0.125f, 0.3f, 1.0f};
 
-template <typename T>
-std::array<DirectX::XMFLOAT3, 8> getFrustumCorners(const T& camera, float nearClip, float farClip)
+std::array<DirectX::XMFLOAT3, 8> getFrustumCorners(const fw::PerspectiveCamera& camera, float nearClip, float farClip)
 {
-	T cam = camera;
+	fw::PerspectiveCamera cam = camera;
 	cam.setNearClipDistance(nearClip);
 	cam.setFarClipDistance(farClip);
 	cam.updateViewMatrix();
@@ -118,7 +120,7 @@ bool CSMApp::initialize()
 	cameraController.setCameraTransformation(&viewCamera.getTransformation());
 	cameraController.setResetPosition({6.0f, 6.0f, -6.0f});
 	cameraController.setResetRotation({0.8f, -0.8f, 0.0f});
-	cameraController.setMovementSpeed(2.0f);
+	cameraController.setMovementSpeed(4.0f);
 
 	light.transformation.position = DirectX::XMVectorSet(6.0f, 6.0f, -6.0f, 0.0f);
 	light.transformation.rotation = DirectX::XMVectorSet(0.8f, -0.8f, 0.0f, 0.0f);
@@ -141,8 +143,11 @@ bool CSMApp::initialize()
 		
 	fw::OrthographicCamera orthoCam;
 	orthoCam = getCascadedCamera(viewCamera.getNearClipDistance(), frustumDivisions[0]);
-	// This does not work for ortho cameras.
-	shadowMapFrustumCorners.push_back(getFrustumCorners(orthoCam, orthoCam.getNearClipDistance(), orthoCam.getFarClipDistance()));
+	shadowMapFrustumCorners.push_back(orthoCam.getFrustumCorners());
+	orthoCam = getCascadedCamera(frustumDivisions[0], frustumDivisions[1]);
+	shadowMapFrustumCorners.push_back(orthoCam.getFrustumCorners());
+	orthoCam = getCascadedCamera(frustumDivisions[1], viewCamera.getFarClipDistance());
+	shadowMapFrustumCorners.push_back(orthoCam.getFrustumCorners());
 	
 	std::cout << "CSMApp initialization completed\n";
 
@@ -172,6 +177,8 @@ void CSMApp::render()
 	drawFrustumLines(viewCameraFrustumCorners[2]);
 
 	drawFrustumLines(shadowMapFrustumCorners[0]);
+	drawFrustumLines(shadowMapFrustumCorners[1]);
+	drawFrustumLines(shadowMapFrustumCorners[2]);
 
 	ID3D11ShaderResourceView* nv[] = {nullptr};
 	fw::DX::context->PSSetShaderResources(1, 1, nv);
@@ -324,14 +331,20 @@ fw::OrthographicCamera CSMApp::getCascadedCamera(float nearPlane, float farPlane
 	DirectX::BoundingBox boundingBox;
 	DirectX::BoundingBox::CreateFromPoints(boundingBox, corners.size(), corners.data(), sizeof(DirectX::XMFLOAT3));
 	
-	fw::OrthographicCamera cascadeCamera = lightCamera;
-	float x = boundingBox.Extents.x;
-	float y = boundingBox.Extents.y;
-	float farClipPlane = 0.0f;
+	fw::OrthographicCamera cascadeCamera = lightCamera;	
+	float left = std::numeric_limits<float>::max();
+	float right = std::numeric_limits<float>::lowest();
+	float bottom = std::numeric_limits<float>::max();
+	float top = std::numeric_limits<float>::lowest();
+	float farClipPlane = std::numeric_limits<float>::lowest();
 	for (int i = 0; i < 8; ++i) {
-		farClipPlane = max(farClipPlane, corners[i].z);
+		left = std::min(left, corners[i].x);
+		right = std::max(right, corners[i].x);
+		bottom = std::min(bottom, corners[i].y);
+		top = std::max(top, corners[i].y);
+		farClipPlane = std::max(farClipPlane, corners[i].z);
 	}
-	cascadeCamera.setViewBox(-x, x, -y, y, 0.001f, farClipPlane);
+	cascadeCamera.setViewBox(left, right, bottom, top, 0.001f, farClipPlane);
 	
 	return cascadeCamera;
 }

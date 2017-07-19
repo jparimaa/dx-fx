@@ -36,4 +36,28 @@ const DirectX::XMMATRIX& OrthographicCamera::getProjectionMatrix() const
 	return projectionMatrix;
 }
 
+std::array<DirectX::XMFLOAT3, 8> OrthographicCamera::getFrustumCorners() const
+{
+	float near = getNearClipDistance();
+	float far = getFarClipDistance();
+	std::array<DirectX::XMVECTOR, 8> cornerVectors = {
+		DirectX::XMVectorSet(left,  top,    near, 1.0f),
+		DirectX::XMVectorSet(right, top,    near, 1.0f),
+		DirectX::XMVectorSet(right, bottom, near, 1.0f),
+		DirectX::XMVectorSet(left,  bottom, near, 1.0f),
+		DirectX::XMVectorSet(left,  top,    far,  1.0f),
+		DirectX::XMVectorSet(right, top,    far,  1.0f),
+		DirectX::XMVectorSet(right, bottom, far,  1.0f),
+		DirectX::XMVectorSet(left,  bottom, far,  1.0f)
+	};
+	
+	std::array<DirectX::XMFLOAT3, 8> corners;
+	DirectX::XMMATRIX inverse = DirectX::XMMatrixInverse(nullptr, getViewMatrix());
+	for (int i = 0; i < 8; ++i) {
+		DirectX::XMStoreFloat3(&corners[i], DirectX::XMVector4Transform(cornerVectors[i], inverse));
+	}
+
+	return corners;
+}
+
 } // fw
