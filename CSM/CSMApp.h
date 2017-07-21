@@ -41,27 +41,29 @@ private:
 	ID3D11Buffer* lightMatrixBuffer = nullptr;
 	ID3D11Buffer* lightBuffer = nullptr;
 	ID3D11SamplerState* samplerLinear = nullptr;
+	
+	RenderData cube;
+	RenderData monkey1;
+	RenderData monkey2;
+	DirectionalLight light;
 
 	ID3D11Texture2D* depthmapTexture = nullptr;
 	ID3D11DepthStencilView* depthmapDSV = nullptr;
 	ID3D11ShaderResourceView* depthmapSRV = nullptr;
 
-	RenderData cube;
-	RenderData monkey1;
-	RenderData monkey2;
-	DirectionalLight light;
-	
-	std::array<float, 2> frustumDivisions = {5.0f, 15.0f};
-	std::array<fw::OrthographicCamera, 3> cascadeCameras;
+	static const int NUM_CASCADES = 3;	
+	std::array<float, NUM_CASCADES - 1> frustumDivisions = {5.0f, 15.0f};	
+	std::array<fw::OrthographicCamera, NUM_CASCADES> cascadeCameras;
+	std::array<D3D11_VIEWPORT, NUM_CASCADES> viewports;
 
 	using FrustumCorners = std::array<DirectX::XMFLOAT3, 8>;
 	std::vector<FrustumCorners> viewCameraFrustumCorners;
 	std::vector<FrustumCorners> shadowMapFrustumCorners;
 
 	template <typename T>
-	bool createBuffer(ID3D11Buffer** buffer);
+	bool createBuffer(ID3D11Buffer** buffer, int numBuffers = 1);
 	bool createDepthmap();
-	void renderDepthmap();
+	void renderDepthmaps();
 	void renderObjects();
 	void renderObject(const RenderData& renderData, const fw::Camera& camera);
 	fw::OrthographicCamera getCascadedCamera(float nearPlane, float farPlane);

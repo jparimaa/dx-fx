@@ -87,7 +87,7 @@ bool CSMApp::initialize()
 		return false;
 	}
 
-	if (!createBuffer<LightMatrixData>(&lightMatrixBuffer)) {
+	if (!createBuffer<LightMatrixData>(&lightMatrixBuffer, 3)) {
 		return false;
 	}
 
@@ -129,6 +129,7 @@ bool CSMApp::initialize()
 	lightCamera.updateViewMatrix();
 	lightCamera.updateProjectionMatrix();
 
+#ifdef DRAW_DEBUG_LINES
 	fw::DX::context->VSSetShader(lightingVS.get(), nullptr, 0);
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	fw::DX::context->Map(lightMatrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
@@ -140,7 +141,7 @@ bool CSMApp::initialize()
 	viewCameraFrustumCorners.push_back(getFrustumCorners(viewCamera, viewCamera.getNearClipDistance(), frustumDivisions[0]));
 	viewCameraFrustumCorners.push_back(getFrustumCorners(viewCamera, frustumDivisions[0], frustumDivisions[1]));
 	viewCameraFrustumCorners.push_back(getFrustumCorners(viewCamera, frustumDivisions[0], viewCamera.getFarClipDistance()));
-		
+
 	fw::OrthographicCamera orthoCam;
 	orthoCam = getCascadedCamera(viewCamera.getNearClipDistance(), frustumDivisions[0]);
 	shadowMapFrustumCorners.push_back(orthoCam.getFrustumCorners());
@@ -148,7 +149,17 @@ bool CSMApp::initialize()
 	shadowMapFrustumCorners.push_back(orthoCam.getFrustumCorners());
 	orthoCam = getCascadedCamera(frustumDivisions[1], viewCamera.getFarClipDistance());
 	shadowMapFrustumCorners.push_back(orthoCam.getFrustumCorners());
-	
+#endif
+
+	for (unsigned int i = 0; i < NUM_CASCADES; ++i) {
+		viewports[i].Height = static_cast<float>(fw::API::getWindowHeight());
+		viewports[i].Width = static_cast<float>(fw::API::getWindowWidth());
+		viewports[i].MaxDepth = 1.0f;
+		viewports[i].MinDepth = 0.0f;
+		viewports[i].TopLeftX = static_cast<float>(fw::API::getWindowWidth() * i);
+		viewports[i].TopLeftY = 0.0f;
+	}
+
 	std::cout << "CSMApp initialization completed\n";
 
 	return true;
@@ -165,13 +176,20 @@ void CSMApp::update()
 
 	cameraController.update();
 	viewCamera.updateViewMatrix();
+
+	for (int i = 0; i < NUM_CASCADES; ++i) {
+		float nearPlane = i == 0 ? viewCamera.getNearClipDistance() : frustumDivisions[i - 1];
+		float farPlane = i == NUM_CASCADES - 1 ? viewCamera.getFarClipDistance() : frustumDivisions[i];
+		cascadeCameras[i] = getCascadedCamera(nearPlane, farPlane);
+	}
 }
 
 void CSMApp::render()
 {
-	renderDepthmap();
+	renderDepthmaps();
 	renderObjects();
 
+#ifdef DRAW_DEBUG_LINES
 	drawFrustumLines(viewCameraFrustumCorners[0]);
 	drawFrustumLines(viewCameraFrustumCorners[1]);
 	drawFrustumLines(viewCameraFrustumCorners[2]);
@@ -179,6 +197,7 @@ void CSMApp::render()
 	drawFrustumLines(shadowMapFrustumCorners[0]);
 	drawFrustumLines(shadowMapFrustumCorners[1]);
 	drawFrustumLines(shadowMapFrustumCorners[2]);
+#endif
 
 	ID3D11ShaderResourceView* nv[] = {nullptr};
 	fw::DX::context->PSSetShaderResources(1, 1, nv);
@@ -187,21 +206,21 @@ void CSMApp::render()
 void CSMApp::gui()
 {
 	fw::displayVector("Camera position %.1f, %.1f, %.1f", viewCamera.getTransformation().position);
-	/*
+#ifdef GUI_ROTATION
 	fw::displayVector("Camera rotation %.1f %.1f %.1f", camera.getTransformation().rotation);
 	fw::displayVector("Camera direction %.1f %.1f %.1f", camera.getTransformation().getForward());
 	fw::displayVector("Light direction %.1f %.1f %.1f", light.transformation.getForward());
 	ImGui::ColorEdit3("Light color", light.color.data());
-	*/
+#endif
 	ImGui::DragFloat("Light power", &light.color[3], 0.01f);
 }
 
 template<typename T>
-bool CSMApp::createBuffer(ID3D11Buffer** buffer)
+bool CSMApp::createBuffer(ID3D11Buffer** buffer, int numBuffers)
 {
 	D3D11_BUFFER_DESC bd;
 	ZeroMemory(&bd, sizeof(bd));
-	bd.ByteWidth = sizeof(T);
+	bd.ByteWidth = sizeof(T) * numBuffers;
 	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	bd.Usage = D3D11_USAGE_DYNAMIC;
@@ -216,7 +235,7 @@ bool CSMApp::createBuffer(ID3D11Buffer** buffer)
 bool CSMApp::createDepthmap()
 {
 	D3D11_TEXTURE2D_DESC shadowmapDesc = {
-		fw::API::getWindowWidth(),
+		fw::API::getWindowWidth() * NUM_CASCADES,
 		fw::API::getWindowHeight(),
 		1, // Miplevels
 		1, // ArraySize
@@ -248,7 +267,7 @@ bool CSMApp::createDepthmap()
 	return true;
 }
 
-void CSMApp::renderDepthmap()
+void CSMApp::renderDepthmaps()
 {
 	fw::DX::context->ClearDepthStencilView(depthmapDSV, D3D11_CLEAR_DEPTH, 1.0, 0);
 	ID3D11RenderTargetView* nullView = nullptr;
@@ -258,11 +277,16 @@ void CSMApp::renderDepthmap()
 	fw::DX::context->VSSetShader(depthmapVS.get(), nullptr, 0);
 	fw::DX::context->PSSetShader(nullptr, nullptr, 0);
 
-	renderObject(monkey1, lightCamera);
-	renderObject(monkey2, lightCamera);
-	renderObject(cube, lightCamera);
+	for (unsigned int i = 0; i < NUM_CASCADES; ++i) {
+		fw::DX::context->RSSetViewports(1, &viewports[i]);
+		const fw::OrthographicCamera& camera = cascadeCameras[i];
+		renderObject(monkey1, camera);
+		renderObject(monkey2, camera);
+		renderObject(cube, camera);
+	}
 
 	fw::DX::context->OMSetRenderTargets(1, &nullView, nullptr);
+	fw::DX::context->RSSetViewports(1, &viewports[0]);
 }
 
 void CSMApp::renderObjects()
@@ -272,21 +296,32 @@ void CSMApp::renderObjects()
 	fw::DX::context->ClearRenderTargetView(fw::DX::renderTargetView, clearColor);
 	fw::DX::context->ClearDepthStencilView(fw::API::getDepthStencilView(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
+	// VS
 	fw::DX::context->IASetInputLayout(lightingVS.getVertexLayout());
 	fw::DX::context->VSSetShader(lightingVS.get(), nullptr, 0);
 
+	D3D11_MAPPED_SUBRESOURCE mappedResource;
+	fw::DX::context->Map(lightMatrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	LightMatrixData* lightMatrixData = (LightMatrixData*)mappedResource.pData;
+	for (int i = 0; i < NUM_CASCADES; ++i) {
+		lightMatrixData->viewProjection = cascadeCameras[i].getViewMatrix() * cascadeCameras[i].getProjectionMatrix();
+		++lightMatrixData;
+	}
+	fw::DX::context->Unmap(lightMatrixBuffer, 0);
+	fw::DX::context->VSSetConstantBuffers(1, 1, &lightMatrixBuffer);
+
+	// PS
 	fw::DX::context->PSSetShader(lightingPS.get(), nullptr, 0);
-	fw::DX::context->PSSetSamplers(0, 1, &samplerLinear);
+	fw::DX::context->PSSetSamplers(0, 1, &samplerLinear);	
 	fw::DX::context->PSSetShaderResources(1, 1, &depthmapSRV);
 
-	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	fw::DX::context->Map(lightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
 	DirectionalLightData* lightData = (DirectionalLightData*)mappedResource.pData;
 	lightData->position = light.transformation.position;
 	lightData->direction = light.transformation.getForward();
 	lightData->color = light.color;
 	fw::DX::context->Unmap(lightBuffer, 0);
-	fw::DX::context->PSSetConstantBuffers(2, 1, &lightBuffer);
+	fw::DX::context->PSSetConstantBuffers(0, 1, &lightBuffer);
 
 	renderObject(monkey1, viewCamera);
 	renderObject(monkey2, viewCamera);
@@ -322,16 +357,16 @@ fw::OrthographicCamera CSMApp::getCascadedCamera(float nearPlane, float farPlane
 
 	DirectX::BoundingFrustum frustum;
 	DirectX::BoundingFrustum::CreateFromMatrix(frustum, frustumCamera.getProjectionMatrix());
-	DirectX::XMMATRIX inverseViewMatrix = DirectX::XMMatrixInverse(nullptr, frustumCamera.getViewMatrix());	
+	DirectX::XMMATRIX inverseViewMatrix = DirectX::XMMatrixInverse(nullptr, frustumCamera.getViewMatrix());
 	frustum.Transform(frustum, inverseViewMatrix);
 	frustum.Transform(frustum, lightCamera.getViewMatrix());
-	
-	std::array<DirectX::XMFLOAT3, 8> corners;	
+
+	std::array<DirectX::XMFLOAT3, 8> corners;
 	frustum.GetCorners(corners.data());
 	DirectX::BoundingBox boundingBox;
 	DirectX::BoundingBox::CreateFromPoints(boundingBox, corners.size(), corners.data(), sizeof(DirectX::XMFLOAT3));
-	
-	fw::OrthographicCamera cascadeCamera = lightCamera;	
+
+	fw::OrthographicCamera cascadeCamera = lightCamera;
 	float left = std::numeric_limits<float>::max();
 	float right = std::numeric_limits<float>::lowest();
 	float bottom = std::numeric_limits<float>::max();
@@ -345,7 +380,9 @@ fw::OrthographicCamera CSMApp::getCascadedCamera(float nearPlane, float farPlane
 		farClipPlane = std::max(farClipPlane, corners[i].z);
 	}
 	cascadeCamera.setViewBox(left, right, bottom, top, 0.001f, farClipPlane);
-	
+	cascadeCamera.updateViewMatrix();
+	cascadeCamera.updateProjectionMatrix();
+
 	return cascadeCamera;
 }
 
