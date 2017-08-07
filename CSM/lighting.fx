@@ -25,33 +25,25 @@ struct VS_OUTPUT
 	float3 Normal : NORMAL;
 	float2 Tex : TEXCOORD0;
 	float4 ScreenPos : TEXCOORD1;
-	float4 Pos_Light : POSITIONT;
-	int CascadeIndex : INDEX;
+	float4 Pos_Light[NUM_CASCADES] : POSITIONS;
+	float Depth : DEPTH;
 };
-
-// Temporal
-int getCascadeIndex(float z)
-{
-	if (z < 5.0) return 0;
-	if (z < 15.0) return 1;
-	return 2;
-}
 
 VS_OUTPUT VS(VS_INPUT input)
 {
 	VS_OUTPUT output = (VS_OUTPUT)0;
-	float4 pos = float4(input.Pos, 1.0f);
-	output.Pos = mul(pos, World);
-	output.Pos = mul(output.Pos, View);
-	float z = output.Pos.z;
+	float4 pos_World = mul(float4(input.Pos, 1.0f), World);
+	output.Pos = mul(pos_World, View);
+	output.Depth = output.Pos.z;
 	output.Pos = mul(output.Pos, Projection);
 	// No support for non-uniform scaling
 	output.Normal = mul(input.Normal, (float3x3)World);
 	output.Tex = input.Tex;
 	output.ScreenPos = output.Pos;
-	output.Pos_Light = mul(pos, World);
-	output.CascadeIndex = getCascadeIndex(z);
-	output.Pos_Light = mul(output.Pos_Light, LightViewProjection[output.CascadeIndex]);
+	
+	for (int i = 0; i < NUM_CASCADES; ++i) {
+		output.Pos_Light[i] = mul(pos_World, LightViewProjection[i]);
+	}	
 	return output;
 }
 
@@ -66,14 +58,23 @@ Texture2D diffuseTex : register(t0);
 Texture2D depthmapTex : register(t1);
 SamplerState linearSampler : register(s0);
 
+// Temporal
+int getCascadeIndex(float z)
+{
+	if (z < 5.0) return 0;
+	if (z < 15.0) return 1;
+	return 2;
+}
+
 float4 PS(VS_OUTPUT input) : SV_Target
 {
-    float3 NDC = input.Pos_Light.xyz;// / input.Pos_Light.w; // w == 1
+	int cascadeIndex = getCascadeIndex(input.Depth);
+    float3 NDC = input.Pos_Light[cascadeIndex].xyz;// / input.Pos_Light.w; // w == 1
 	float projectedDepth = NDC.z;
 	float3 projectedCoordinates = NDC * 0.5 + 0.5;		
 	float2 shadowmapUV;
-	float offset = 1.0f / NUM_CASCADES;
-	shadowmapUV.x = input.CascadeIndex * offset + projectedCoordinates.x * offset;
+	float offset = 1.0f / NUM_CASCADES;	
+	shadowmapUV.x = cascadeIndex * offset + projectedCoordinates.x * offset;
 	shadowmapUV.y = 1.0 - projectedCoordinates.y;
 	float shadowmapDepth = depthmapTex.Sample(linearSampler, shadowmapUV).r;
 	float bias = 0.002;		
