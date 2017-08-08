@@ -160,6 +160,8 @@ bool CSMApp::initialize()
 		viewports[i].TopLeftY = 0.0f;
 	}
 
+	cascadeLimits = {5.0f, 15.0f, viewCamera.getFarClipDistance()};
+
 	std::cout << "CSMApp initialization completed\n";
 
 	return true;
@@ -178,8 +180,8 @@ void CSMApp::update()
 	viewCamera.updateViewMatrix();
 
 	for (int i = 0; i < NUM_CASCADES; ++i) {
-		float nearPlane = i == 0 ? viewCamera.getNearClipDistance() : frustumDivisions[i - 1];
-		float farPlane = i == NUM_CASCADES - 1 ? viewCamera.getFarClipDistance() : frustumDivisions[i];
+		float nearPlane = i == 0 ? viewCamera.getNearClipDistance() : cascadeLimits[i - 1];
+		float farPlane = cascadeLimits[i];
 		cascadeCameras[i] = getCascadedCamera(nearPlane, farPlane);
 	}
 }
@@ -210,8 +212,8 @@ void CSMApp::gui()
 	fw::displayVector("Camera rotation %.1f %.1f %.1f", camera.getTransformation().rotation);
 	fw::displayVector("Camera direction %.1f %.1f %.1f", camera.getTransformation().getForward());
 	fw::displayVector("Light direction %.1f %.1f %.1f", light.transformation.getForward());
-	ImGui::ColorEdit3("Light color", light.color.data());
 #endif
+	ImGui::ColorEdit3("Light color", light.color.data());
 	ImGui::DragFloat("Light power", &light.color[3], 0.01f);
 }
 
@@ -320,6 +322,9 @@ void CSMApp::renderObjects()
 	lightData->position = light.transformation.position;
 	lightData->direction = light.transformation.getForward();
 	lightData->color = light.color;
+	for (int i = 0; i < NUM_CASCADES; ++i) {
+		lightData->cascadeLimits[i] = cascadeLimits[i];
+	}
 	fw::DX::context->Unmap(lightBuffer, 0);
 	fw::DX::context->PSSetConstantBuffers(0, 1, &lightBuffer);
 

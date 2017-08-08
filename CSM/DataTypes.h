@@ -6,6 +6,8 @@
 #include <d3d11.h>
 #include <array>
 
+static const int NUM_CASCADES = 3;
+
 struct MatrixData
 {
 	DirectX::XMMATRIX world;
@@ -36,4 +38,5 @@ struct DirectionalLightData
 	DirectX::XMVECTOR position;
 	DirectX::XMVECTOR direction;
 	std::array<float, 4> color;
+	std::array<float, NUM_CASCADES> cascadeLimits;
 };

@@ -50,9 +50,8 @@ private:
 	ID3D11Texture2D* depthmapTexture = nullptr;
 	ID3D11DepthStencilView* depthmapDSV = nullptr;
 	ID3D11ShaderResourceView* depthmapSRV = nullptr;
-
-	static const int NUM_CASCADES = 3;	
-	std::array<float, NUM_CASCADES - 1> frustumDivisions = {5.0f, 15.0f};	
+	
+	std::array<float, NUM_CASCADES> cascadeLimits;
 	std::array<fw::OrthographicCamera, NUM_CASCADES> cascadeCameras;
 	std::array<D3D11_VIEWPORT, NUM_CASCADES> viewports;
 

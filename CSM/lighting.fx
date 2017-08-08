@@ -50,25 +50,25 @@ VS_OUTPUT VS(VS_INPUT input)
 cbuffer LightBuffer : register(b0)
 {
 	float4 LightPosition : POSITION;
-	float4 LightDirection;
+	float4 LightDirection : DIRECTION;
 	float4 LightColor : COLOR;
+	float4 CascadeLimits[NUM_CASCADES / 4 + 1] : LIMITS;
 }
 
 Texture2D diffuseTex : register(t0);
 Texture2D depthmapTex : register(t1);
 SamplerState linearSampler : register(s0);
 
-// Temporal
-int getCascadeIndex(float z)
-{
-	if (z < 5.0) return 0;
-	if (z < 15.0) return 1;
-	return 2;
-}
-
 float4 PS(VS_OUTPUT input) : SV_Target
 {
-	int cascadeIndex = getCascadeIndex(input.Depth);
+	int cascadeIndex = NUM_CASCADES - 1;
+    for (int i = 0; i < NUM_CASCADES; ++i) {
+		if (input.Depth < CascadeLimits[i / 4][i % 4]) {
+			cascadeIndex = i;
+			break;
+		}
+	}
+
     float3 NDC = input.Pos_Light[cascadeIndex].xyz;// / input.Pos_Light.w; // w == 1
 	float projectedDepth = NDC.z;
 	float3 projectedCoordinates = NDC * 0.5 + 0.5;		
@@ -83,6 +83,12 @@ float4 PS(VS_OUTPUT input) : SV_Target
 	float diff = max(dot(normalize(input.Normal.xyz), float3(normalize(-LightDirection.xyz))), 0.0);
 	float3 texColor = diffuseTex.Sample(linearSampler, input.Tex).xyz;
 	float3 outColor = texColor * diff * LightColor.xyz * LightColor.w * shadow;
+
+	// Debug purposes
+	int channel = cascadeIndex % 3;
+	if (channel == 0) outColor.r += 0.3f;
+	if (channel == 1) outColor.g += 0.3f;
+	if (channel == 2) outColor.b += 0.3f;
 
 	return float4(outColor, 1.0);
 }
