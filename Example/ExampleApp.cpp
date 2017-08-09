@@ -34,11 +34,11 @@ bool ExampleApp::initialize()
 		{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0}
 	};
 
-	if (!vertexShader.create(L"example.fx", "VS", "vs_4_0", layout)) {
+	if (!vertexShader.create(L"example.hlsl", "VS", "vs_4_0", layout)) {
 		return false;
 	}
 
-	if (!pixelShader.create(L"example.fx", "PS", "ps_4_0")) {
+	if (!pixelShader.create(L"example.hlsl", "PS", "ps_4_0")) {
 		return false;
 	}
 
@@ -52,7 +52,6 @@ bool ExampleApp::initialize()
 
 	camera.getTransformation().position = XMVectorSet(0.0f, 2.0f, -5.0f, 0.0f);
 	camera.getTransformation().rotate(XMFLOAT3(1.0f, 0.0f, 0.0f), 0.4f);
-	camera.updateViewMatrix();
 	cameraController.setCameraTransformation(&camera.getTransformation());
 
 	trans.position = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);

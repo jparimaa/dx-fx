@@ -55,15 +55,15 @@ bool CSMApp::initialize()
 		{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0}
 	};
 
-	if (!lightingVS.create(L"lighting.fx", "VS", "vs_4_0", defaultLayout)) {
+	if (!lightingVS.create(L"lighting.hlsl", "VS", "vs_4_0", defaultLayout)) {
 		return false;
 	}
 
-	if (!lightingPS.create(L"lighting.fx", "PS", "ps_4_0")) {
+	if (!lightingPS.create(L"lighting.hlsl", "PS", "ps_4_0")) {
 		return false;
 	}
 
-	if (!depthmapVS.create(L"depthmap.fx", "VS", "vs_4_0", defaultLayout)) {
+	if (!depthmapVS.create(L"depthmap.hlsl", "VS", "vs_4_0", defaultLayout)) {
 		return false;
 	}
 
@@ -71,11 +71,11 @@ bool CSMApp::initialize()
 		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0}
 	};
 
-	if (!frustumVS.create(L"frustum.fx", "VS", "vs_4_0", frustumLayout)) {
+	if (!frustumVS.create(L"frustum.hlsl", "VS", "vs_4_0", frustumLayout)) {
 		return false;
 	}
 
-	if (!frustumPS.create(L"frustum.fx", "PS", "ps_4_0")) {
+	if (!frustumPS.create(L"frustum.hlsl", "PS", "ps_4_0")) {
 		return false;
 	}
 
