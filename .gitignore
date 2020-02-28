@@ -3,6 +3,7 @@
 
 # My custom
 *.ini
+[Bb]uild/
 
 # User-specific files
 *.suo
