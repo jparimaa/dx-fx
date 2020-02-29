@@ -4,7 +4,7 @@ project(DirectXTK VERSION 0.0.1 LANGUAGES CXX)
 
 file(GLOB SOURCES DirectXTK/Src/* DirectXTK/Inc/*)
 
-add_library(DirectXTK 
+add_library(DirectXTK STATIC 
     DirectXTK/Src/AlignedNew.h
     DirectXTK/Src/AlphaTestEffect.cpp
     DirectXTK/Src/BasicEffect.cpp

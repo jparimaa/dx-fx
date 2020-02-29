@@ -4,5 +4,5 @@
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPWSTR /*lpCmdLine*/, int nCmdShow)
 {
-	return fw::executeGenericMain<ExampleApp>(hInstance, nCmdShow, 800, 600);
+    return fw::executeGenericMain<ExampleApp>(hInstance, nCmdShow, 800, 600);
 }
