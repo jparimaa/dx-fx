@@ -3,6 +3,7 @@
 #include <fw/Common.h>
 #include <fw/DX.h>
 #include <fw/API.h>
+#include <fw/WcharHelper.h>
 #include <fw/imgui/imgui.h>
 #include <WICTextureLoader.h>
 #include <vector>
@@ -31,17 +32,16 @@ bool ExampleApp::initialize()
         {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0}};
 
     std::string shaderFile = ROOT_PATH + std::string("Examples/Example/example.hlsl");
-    WCHAR* wpath = fw::toWchar(shaderFile.c_str());
-    if (!vertexShader.create(wpath, "VS", "vs_4_0", layout))
+    fw::WcharHelper wcharHelper(shaderFile);
+    if (!vertexShader.create(wcharHelper.getWchar(), "VS", "vs_4_0", layout))
     {
         return false;
     }
 
-    if (!pixelShader.create(wpath, "PS", "ps_4_0"))
+    if (!pixelShader.create(wcharHelper.getWchar(), "PS", "ps_4_0"))
     {
         return false;
     }
-    delete wpath;
 
     if (!createMatrixBuffer())
     {
