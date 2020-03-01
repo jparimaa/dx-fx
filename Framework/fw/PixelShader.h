@@ -4,18 +4,17 @@
 
 namespace fw
 {
-
 class PixelShader
 {
 public:
-	PixelShader();
-	~PixelShader();
+    PixelShader();
+    ~PixelShader();
 
-	bool create(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderModel);
-	ID3D11PixelShader* get() const;
+    bool create(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderModel);
+    ID3D11PixelShader* get() const;
 
 private:
-	ID3D11PixelShader* pixelShader = nullptr;
+    ID3D11PixelShader* pixelShader = nullptr;
 };
 
-} // fw
+} // namespace fw
