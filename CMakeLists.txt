@@ -64,5 +64,5 @@ function(ADD_PROJECT_WITH_DEFAULT_SETTINGS PROJECT_NAME)
 endfunction()
 
 add_subdirectory(Framework)
-add_subdirectory(Examples/Example)
+add_subdirectory(Examples/Minimal)
 add_subdirectory(Examples/CSM)
