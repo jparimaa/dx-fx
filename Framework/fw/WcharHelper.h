@@ -4,14 +4,25 @@
 
 namespace fw
 {
-class WcharHelper
+class ToWchar
 {
 public:
-    WcharHelper(const std::string& s);
-    ~WcharHelper();
+    ToWchar(const std::string& s);
+    ~ToWchar();
     wchar_t* getWchar() const;
 
 private:
-    wchar_t* wideChar;
+    wchar_t* wideChar = nullptr;
+};
+
+class ToChar
+{
+public:
+    ToChar(const wchar_t* s);
+    ~ToChar();
+    char* getChar() const;
+
+private:
+    char* mbChar = nullptr;
 };
 } // namespace fw

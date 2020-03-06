@@ -32,7 +32,7 @@ bool ExampleApp::initialize()
         {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0}};
 
     std::string shaderFile = ROOT_PATH + std::string("Examples/Minimal/example.hlsl");
-    fw::WcharHelper wcharHelper(shaderFile);
+    fw::ToWchar wcharHelper(shaderFile);
     if (!vertexShader.create(wcharHelper.getWchar(), "VS", "vs_4_0", layout))
     {
         return false;
@@ -62,6 +62,8 @@ bool ExampleApp::initialize()
 
     textureView = assetManager.getTextureView(ROOT_PATH + std::string("/Assets/green_square.png"));
     vertexBuffer = assetManager.getVertexBuffer(ROOT_PATH + std::string("/Assets/monkey.3ds"));
+    assert(textureView != nullptr);
+    assert(vertexBuffer != nullptr);
 
     std::cout << "ExampleApp initialization completed\n";
 
@@ -93,6 +95,7 @@ void ExampleApp::render()
 
     fw::VertexBuffer* vb = vertexBuffer;
     fw::DX::context->IASetVertexBuffers(0, 1, &vb->vertexBuffer, &vb->stride, &vb->offset);
+    fw::DX::context->IASetInputLayout(vertexShader.getVertexLayout());
     fw::DX::context->IASetIndexBuffer(vb->indexBuffer, DXGI_FORMAT_R16_UINT, 0);
     fw::DX::context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 

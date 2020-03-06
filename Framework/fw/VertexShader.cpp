@@ -40,7 +40,6 @@ bool VertexShader::create(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderModel
         return false;
     }
 
-    DX::context->IASetInputLayout(vertexLayout);
     return true;
 }
 

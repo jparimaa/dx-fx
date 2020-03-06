@@ -56,7 +56,7 @@ bool CSMApp::initialize()
         {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0}};
 
     std::string lightingFileStr = ROOT_PATH + std::string("Examples/CSM/lighting.hlsl");
-    fw::WcharHelper lightingWchar(lightingFileStr);
+    fw::ToWchar lightingWchar(lightingFileStr);
 
     if (!lightingVS.create(lightingWchar.getWchar(), "VS", "vs_4_0", defaultLayout))
     {
@@ -69,7 +69,7 @@ bool CSMApp::initialize()
     }
 
     std::string depthmapFileStr = ROOT_PATH + std::string("Examples/CSM/depthmap.hlsl");
-    fw::WcharHelper depthmapWchar(depthmapFileStr);
+    fw::ToWchar depthmapWchar(depthmapFileStr);
 
     if (!depthmapVS.create(depthmapWchar.getWchar(), "VS", "vs_4_0", defaultLayout))
     {
@@ -79,7 +79,7 @@ bool CSMApp::initialize()
     std::vector<D3D11_INPUT_ELEMENT_DESC> frustumLayout = {{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0}};
 
     std::string frustumFileStr = ROOT_PATH + std::string("Examples/CSM/frustum.hlsl");
-    fw::WcharHelper frustumWchar(frustumFileStr);
+    fw::ToWchar frustumWchar(frustumFileStr);
 
     if (!frustumVS.create(frustumWchar.getWchar(), "VS", "vs_4_0", frustumLayout))
     {
@@ -120,16 +120,22 @@ bool CSMApp::initialize()
     monkey1.vertexBuffer = assetManager.getVertexBuffer(ASSETS_PATH + std::string("monkey.3ds"));
     monkey1.transformation.position = DirectX::XMVectorSet(4.0f, 1.0f, 0.0f, 0.0f);
     monkey1.transformation.updateWorldMatrix();
+    assert(monkey1.textureView != nullptr);
+    assert(monkey1.vertexBuffer != nullptr);
 
     monkey2.textureView = assetManager.getTextureView(ASSETS_PATH + std::string("green_square.png"));
     monkey2.vertexBuffer = assetManager.getVertexBuffer(ASSETS_PATH + std::string("monkey.3ds"));
     monkey2.transformation.position = DirectX::XMVectorSet(-2.0f, 1.0f, 0.0f, 0.0f);
     monkey2.transformation.updateWorldMatrix();
+    assert(monkey2.textureView != nullptr);
+    assert(monkey2.vertexBuffer != nullptr);
 
     cube.textureView = assetManager.getTextureView(ASSETS_PATH + std::string("checker.png"));
     cube.vertexBuffer = assetManager.getVertexBuffer(ASSETS_PATH + std::string("cube.obj"));
     cube.transformation.scale = DirectX::XMVectorSet(10.0f, 0.01f, 10.0f, 0.0f);
     cube.transformation.updateWorldMatrix();
+    assert(cube.textureView != nullptr);
+    assert(cube.vertexBuffer != nullptr);
 
     viewCamera.getTransformation().position = DirectX::XMVectorSet(0.0f, 2.0f, -5.0f, 0.0f);
     viewCamera.getTransformation().rotate(DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f), 0.4f);

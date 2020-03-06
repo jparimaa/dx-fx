@@ -1,6 +1,8 @@
 #include "Common.h"
+#include "WcharHelper.h"
 #include "imgui/imgui.h"
 #include <comdef.h>
+#include <sstream>
 
 namespace fw
 {
@@ -33,8 +35,31 @@ void printWarning(const std::string& msg, HRESULT* hr)
     printHresult(hr, std::wcerr);
 }
 
+bool fileExists(const char* fileName)
+{
+    if (GetFileAttributes(fileName) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND)
+    {
+        return false;
+    }
+    return true;
+}
+
+bool fileExists(const WCHAR* fileName)
+{
+    ToChar helper(fileName);
+    return fileExists(helper.getChar());
+}
+
 bool compileShaderFromFile(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderModel, ID3DBlob** blobOut)
 {
+    if (!fileExists(fileName))
+    {
+        ToChar t(fileName);
+        std::stringstream ss;
+        ss << "File not found: " << t.getChar() << "\n";
+        printError(ss.str());
+        return false;
+    }
     HRESULT hr = S_OK;
 
     DWORD shaderFlags = D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_PACK_MATRIX_ROW_MAJOR;

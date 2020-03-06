@@ -60,13 +60,8 @@ inline void release(T* t)
     }
 }
 
-inline wchar_t* toWchar(const char* c)
-{
-    const size_t size = strlen(c) + 1;
-    wchar_t* wc = new wchar_t[size];
-    mbstowcs(wc, c, size);
-    return wc;
-}
+bool fileExists(const char* fileName);
+bool fileExists(const WCHAR* fileName);
 
 bool compileShaderFromFile(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderModel, ID3DBlob** blobOut);
 

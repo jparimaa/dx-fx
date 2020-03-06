@@ -2,10 +2,12 @@
 #include "DX.h"
 #include "Common.h"
 #include "Model.h"
+#include "WcharHelper.h"
 #include <WICTextureLoader.h>
 #include <iostream>
 #include <locale>
 #include <codecvt>
+#include <sstream>
 
 namespace fw
 {
@@ -38,6 +40,14 @@ ID3D11ShaderResourceView* AssetManager::getTextureView(const std::string& filena
         return find->second.textureView;
     }
 
+    if (!fw::fileExists(filename.c_str()))
+    {
+        std::stringstream ss;
+        ss << "File not found: " << filename << "\n";
+        printError(ss.str());
+        return nullptr;
+    }
+
     std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
     std::wstring ws = converter.from_bytes(filename);
     ID3D11Resource* texture = nullptr;
@@ -62,6 +72,14 @@ VertexBuffer* AssetManager::getVertexBuffer(const std::string& filename)
     if (find != modelBuffers.end())
     {
         return &find->second;
+    }
+
+    if (!fw::fileExists(filename.c_str()))
+    {
+        std::stringstream ss;
+        ss << "File not found: " << filename << "\n";
+        printError(ss.str());
+        return nullptr;
     }
 
     fw::Model model;
