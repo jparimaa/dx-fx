@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <iostream>
+#include <thread>
 
 namespace
 {
@@ -80,6 +81,13 @@ bool MultithreadApp::initialize()
     hr = fw::DX::device->CreateDeferredContext(0, &deferredContext2);
     assert(SUCCEEDED(hr));
 
+    viewport.Height = static_cast<float>(fw::API::getWindowHeight());
+    viewport.Width = static_cast<float>(fw::API::getWindowWidth());
+    viewport.MaxDepth = 1.0f;
+    viewport.MinDepth = 0.0f;
+    viewport.TopLeftX = 0.0f;
+    viewport.TopLeftY = 0.0f;
+
     return true;
 }
 
@@ -105,20 +113,31 @@ void MultithreadApp::update()
 
 void MultithreadApp::render()
 {
-    ID3D11CommandList* commandList1 = nullptr;
-    ID3D11CommandList* commandList2 = nullptr;
-
-    renderMonkey(deferredContext1, commandList1, monkeyData1);
-    renderMonkey(deferredContext2, commandList2, monkeyData2);
-
     fw::DX::context->ClearRenderTargetView(fw::DX::renderTargetView, clearColor);
     fw::DX::context->ClearDepthStencilView(fw::API::getDepthStencilView(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
-    fw::DX::context->ExecuteCommandList(commandList1, true);
-    fw::DX::context->ExecuteCommandList(commandList2, true);
+    ID3D11CommandList* commandList1 = nullptr;
+    ID3D11CommandList* commandList2 = nullptr;
+
+    // It doesn't make much sense to launch threads on every render call, thread pool would be better
+    // Also creating a deferred context for a single draw context is inefficient
+    // Or using multithreaded command list generation for two draw calls at all
+    // Or recreating the same command list every time
+    // But for the sake of simplicity & example, let's go with this
+    std::thread t1(&MultithreadApp::renderMonkey, this, deferredContext1, std::ref(commandList1), std::ref(monkeyData1));
+    std::thread t2(&MultithreadApp::renderMonkey, this, deferredContext2, std::ref(commandList2), std::ref(monkeyData2));
+
+    t1.join();
+    fw::DX::context->ExecuteCommandList(commandList1, false);
+    t2.join();
+    fw::DX::context->ExecuteCommandList(commandList2, false);
 
     fw::release(commandList1);
     fw::release(commandList2);
+
+    // For GUI
+    ID3D11RenderTargetView* renderTarget = fw::API::getRenderTargetView();
+    fw::DX::context->OMSetRenderTargets(1, &renderTarget, fw::API::getDepthStencilView());
 }
 
 void MultithreadApp::gui()
@@ -156,20 +175,20 @@ void MultithreadApp::updateMatrixBuffer(const TransformData& td)
 
 void MultithreadApp::renderMonkey(ID3D11DeviceContext* context, ID3D11CommandList*& commandList, const TransformData& t)
 {
-    ID3D11RenderTargetView* renderTarget = fw::API::getRenderTargetView();
-    context->OMSetRenderTargets(1, &renderTarget, fw::API::getDepthStencilView());
-
-    context->VSSetShader(vertexShader.get(), nullptr, 0);
-    context->PSSetShader(pixelShader.get(), nullptr, 0);
-    context->PSSetSamplers(0, 1, &samplerLinear);
-
     fw::VertexBuffer* vb = vertexBuffer;
     context->IASetVertexBuffers(0, 1, &vb->vertexBuffer, &vb->stride, &vb->offset);
     context->IASetInputLayout(vertexShader.getVertexLayout());
     context->IASetIndexBuffer(vb->indexBuffer, DXGI_FORMAT_R16_UINT, 0);
     context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     context->VSSetConstantBuffers(0, 1, &t.matrixBuffer);
+    context->VSSetShader(vertexShader.get(), nullptr, 0);
+    context->RSSetViewports(1, &viewport);
+    context->PSSetShader(pixelShader.get(), nullptr, 0);
+    context->PSSetSamplers(0, 1, &samplerLinear);
     context->PSSetShaderResources(0, 1, &textureView);
+    ID3D11RenderTargetView* renderTarget = fw::API::getRenderTargetView();
+    context->OMSetRenderTargets(1, &renderTarget, fw::API::getDepthStencilView());
+
     context->DrawIndexed(static_cast<UINT>(vb->numIndices), 0, 0);
 
     HRESULT hr = context->FinishCommandList(false, &commandList);

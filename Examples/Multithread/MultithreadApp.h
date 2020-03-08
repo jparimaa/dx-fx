@@ -50,6 +50,7 @@ private:
     fw::PixelShader pixelShader;
     fw::AssetManager assetManager;
     fw::VertexBuffer* vertexBuffer = nullptr;
+    D3D11_VIEWPORT viewport;
 
     ID3D11ShaderResourceView* textureView = nullptr;
     ID3D11SamplerState* samplerLinear = nullptr;
