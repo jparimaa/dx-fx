@@ -31,17 +31,33 @@ private:
         DirectX::XMMATRIX projection;
     };
 
+    struct TransformData
+    {
+        fw::Transformation transform;
+        ID3D11Buffer* matrixBuffer = nullptr;
+
+        ~TransformData()
+        {
+            fw::release(matrixBuffer);
+        }
+    };
+
     fw::PerspectiveCamera camera;
     fw::CameraController cameraController;
-    fw::Transformation trans;
+    TransformData monkeyData1;
+    TransformData monkeyData2;
     fw::VertexShader vertexShader;
     fw::PixelShader pixelShader;
     fw::AssetManager assetManager;
     fw::VertexBuffer* vertexBuffer = nullptr;
 
-    ID3D11Buffer* matrixBuffer = nullptr;
     ID3D11ShaderResourceView* textureView = nullptr;
     ID3D11SamplerState* samplerLinear = nullptr;
 
-    bool createMatrixBuffer();
+    ID3D11DeviceContext* deferredContext1;
+    ID3D11DeviceContext* deferredContext2;
+
+    bool createMatrixBuffer(ID3D11Buffer*& matrixBuffer);
+    void updateMatrixBuffer(const TransformData& td);
+    void renderMonkey(ID3D11DeviceContext* context, ID3D11CommandList*& commandList, const TransformData& t);
 };

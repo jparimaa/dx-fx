@@ -20,7 +20,8 @@ MultithreadApp::MultithreadApp()
 
 MultithreadApp::~MultithreadApp()
 {
-    fw::release(matrixBuffer);
+    fw::release(deferredContext1);
+    fw::release(deferredContext2);
 }
 
 bool MultithreadApp::initialize()
@@ -42,7 +43,7 @@ bool MultithreadApp::initialize()
         return false;
     }
 
-    if (!createMatrixBuffer())
+    if (!createMatrixBuffer(monkeyData1.matrixBuffer) || !createMatrixBuffer(monkeyData2.matrixBuffer))
     {
         return false;
     }
@@ -56,8 +57,10 @@ bool MultithreadApp::initialize()
     camera.getTransformation().rotate(DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f), 0.4f);
     cameraController.setCameraTransformation(&camera.getTransformation());
 
-    trans.position = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-    trans.updateWorldMatrix();
+    monkeyData1.transform.position = DirectX::XMVectorSet(-1.0f, 0.0f, 0.0f, 0.0f);
+    monkeyData1.transform.updateWorldMatrix();
+    monkeyData2.transform.position = DirectX::XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+    monkeyData2.transform.updateWorldMatrix();
 
     textureView = assetManager.getTextureView(ROOT_PATH + std::string("/Assets/green_square.png"));
     vertexBuffer = assetManager.getVertexBuffer(ROOT_PATH + std::string("/Assets/monkey.3ds"));
@@ -65,6 +68,17 @@ bool MultithreadApp::initialize()
     assert(vertexBuffer != nullptr);
 
     std::cout << "MultithreadApp initialization completed\n";
+
+    D3D11_FEATURE_DATA_THREADING featureData{};
+    HRESULT hr = fw::DX::device->CheckFeatureSupport(D3D11_FEATURE_THREADING, &featureData, sizeof(featureData));
+    assert(SUCCEEDED(hr));
+    std::cout << "Concurrent resource creation supported: " << featureData.DriverConcurrentCreates << "\n"
+              << "Command lists supported: " << featureData.DriverCommandLists << "\n";
+
+    hr = fw::DX::device->CreateDeferredContext(0, &deferredContext1);
+    assert(SUCCEEDED(hr));
+    hr = fw::DX::device->CreateDeferredContext(0, &deferredContext2);
+    assert(SUCCEEDED(hr));
 
     return true;
 }
@@ -79,36 +93,32 @@ void MultithreadApp::update()
     cameraController.update();
     camera.updateViewMatrix();
 
-    trans.rotate(DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f), DirectX::XM_2PI * fw::API::getTimeDelta() * 0.1f);
-    trans.updateWorldMatrix();
+    monkeyData1.transform.rotate(DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f), DirectX::XM_2PI * fw::API::getTimeDelta() * 0.1f);
+    monkeyData1.transform.updateWorldMatrix();
+
+    monkeyData2.transform.rotate(DirectX::XMFLOAT3(0.5f, 1.0f, 0.0f), DirectX::XM_2PI * fw::API::getTimeDelta() * -0.05f);
+    monkeyData2.transform.updateWorldMatrix();
+
+    updateMatrixBuffer(monkeyData1);
+    updateMatrixBuffer(monkeyData2);
 }
 
 void MultithreadApp::render()
 {
+    ID3D11CommandList* commandList1 = nullptr;
+    ID3D11CommandList* commandList2 = nullptr;
+
+    renderMonkey(deferredContext1, commandList1, monkeyData1);
+    renderMonkey(deferredContext2, commandList2, monkeyData2);
+
     fw::DX::context->ClearRenderTargetView(fw::DX::renderTargetView, clearColor);
     fw::DX::context->ClearDepthStencilView(fw::API::getDepthStencilView(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
-    fw::DX::context->VSSetShader(vertexShader.get(), nullptr, 0);
-    fw::DX::context->PSSetShader(pixelShader.get(), nullptr, 0);
-    fw::DX::context->PSSetSamplers(0, 1, &samplerLinear);
+    fw::DX::context->ExecuteCommandList(commandList1, true);
+    fw::DX::context->ExecuteCommandList(commandList2, true);
 
-    fw::VertexBuffer* vb = vertexBuffer;
-    fw::DX::context->IASetVertexBuffers(0, 1, &vb->vertexBuffer, &vb->stride, &vb->offset);
-    fw::DX::context->IASetInputLayout(vertexShader.getVertexLayout());
-    fw::DX::context->IASetIndexBuffer(vb->indexBuffer, DXGI_FORMAT_R16_UINT, 0);
-    fw::DX::context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-    D3D11_MAPPED_SUBRESOURCE MappedResource;
-    fw::DX::context->Map(matrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource);
-    MatrixData* matrixData = (MatrixData*)MappedResource.pData;
-    matrixData->world = trans.getWorldMatrix();
-    matrixData->view = camera.getViewMatrix();
-    matrixData->projection = camera.getProjectionMatrix();
-    fw::DX::context->Unmap(matrixBuffer, 0);
-
-    fw::DX::context->VSSetConstantBuffers(0, 1, &matrixBuffer);
-    fw::DX::context->PSSetShaderResources(0, 1, &textureView);
-    fw::DX::context->DrawIndexed(static_cast<UINT>(vb->numIndices), 0, 0);
+    fw::release(commandList1);
+    fw::release(commandList2);
 }
 
 void MultithreadApp::gui()
@@ -116,7 +126,7 @@ void MultithreadApp::gui()
     ImGui::Text("Hello, world!");
 }
 
-bool MultithreadApp::createMatrixBuffer()
+bool MultithreadApp::createMatrixBuffer(ID3D11Buffer*& matrixBuffer)
 {
     D3D11_BUFFER_DESC bd{};
     bd.ByteWidth = sizeof(DirectX::XMMATRIX) * 3;
@@ -131,4 +141,37 @@ bool MultithreadApp::createMatrixBuffer()
         return false;
     }
     return true;
+}
+
+void MultithreadApp::updateMatrixBuffer(const TransformData& td)
+{
+    D3D11_MAPPED_SUBRESOURCE MappedResource;
+    fw::DX::context->Map(td.matrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource);
+    MatrixData* matrixData = (MatrixData*)MappedResource.pData;
+    matrixData->world = td.transform.getWorldMatrix();
+    matrixData->view = camera.getViewMatrix();
+    matrixData->projection = camera.getProjectionMatrix();
+    fw::DX::context->Unmap(td.matrixBuffer, 0);
+}
+
+void MultithreadApp::renderMonkey(ID3D11DeviceContext* context, ID3D11CommandList*& commandList, const TransformData& t)
+{
+    ID3D11RenderTargetView* renderTarget = fw::API::getRenderTargetView();
+    context->OMSetRenderTargets(1, &renderTarget, fw::API::getDepthStencilView());
+
+    context->VSSetShader(vertexShader.get(), nullptr, 0);
+    context->PSSetShader(pixelShader.get(), nullptr, 0);
+    context->PSSetSamplers(0, 1, &samplerLinear);
+
+    fw::VertexBuffer* vb = vertexBuffer;
+    context->IASetVertexBuffers(0, 1, &vb->vertexBuffer, &vb->stride, &vb->offset);
+    context->IASetInputLayout(vertexShader.getVertexLayout());
+    context->IASetIndexBuffer(vb->indexBuffer, DXGI_FORMAT_R16_UINT, 0);
+    context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    context->VSSetConstantBuffers(0, 1, &t.matrixBuffer);
+    context->PSSetShaderResources(0, 1, &textureView);
+    context->DrawIndexed(static_cast<UINT>(vb->numIndices), 0, 0);
+
+    HRESULT hr = context->FinishCommandList(false, &commandList);
+    assert(SUCCEEDED(hr));
 }
