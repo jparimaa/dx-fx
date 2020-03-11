@@ -8,23 +8,23 @@ cbuffer ConstantBuffer : register(b[0])
 	matrix Projection;
 }
 
-struct VS_INPUT
+struct VSData
 {
 	float4 Pos : POSITION;
 	float4 Normal : NORMAL;
 	float2 Tex : TEXCOORD0;
 };
 
-struct VS_OUTPUT
+struct PSData
 {
 	float4 Pos : SV_POSITION;
 	float4 Normal : NORMAL;	
 	float2 Tex : TEXCOORD0;
 };
 
-VS_OUTPUT VS(VS_INPUT input)
+PSData VS(VSData input)
 {
-	VS_OUTPUT output = (VS_OUTPUT)0;
+	PSData output = (PSData)0;
 	output.Pos = mul(input.Pos, World);
 	output.Pos = mul(output.Pos, View);
 	output.Pos = mul(output.Pos, Projection);
@@ -33,7 +33,17 @@ VS_OUTPUT VS(VS_INPUT input)
 	return output;
 }
 
-float4 PS(VS_OUTPUT input) : SV_Target
+struct ShaderOut
 {
-	return diffuseTex.Sample(linearSampler, input.Tex);
+	float4 t1: SV_Target0;
+	float4 t2: SV_Target1;
+};
+
+ShaderOut PS(PSData input)
+{
+	float4 output = diffuseTex.Sample(linearSampler, input.Tex);
+	ShaderOut shaderOut;
+	shaderOut.t1 = output;
+	shaderOut.t2 = output;
+	return shaderOut;
 }

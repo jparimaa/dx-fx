@@ -63,11 +63,20 @@ private:
     ID3D11ShaderResourceView* glassTextureView = nullptr;
     ID3D11SamplerState* samplerLinear = nullptr;
 
-    ID3D11Texture2D* renderTargetTexture = nullptr;
-    ID3D11RenderTargetView* renderTargetView = nullptr;
-    ID3D11ShaderResourceView* renderTargetSRV = nullptr;
+    ID3D11Texture2D* depthmapTexture = nullptr;
+    ID3D11DepthStencilView* depthmapDSV = nullptr;
+    ID3D11ShaderResourceView* depthmapSRV = nullptr;
+
+    ID3D11Texture2D* sceneInputTexture = nullptr;
+    ID3D11RenderTargetView* sceneInputRTV = nullptr;
+    ID3D11ShaderResourceView* sceneInputSRV = nullptr;
+
+    ID3D11Texture2D* outputTexture = nullptr;
+    ID3D11RenderTargetView* outputRTV = nullptr;
+    ID3D11ShaderResourceView* outputSRV = nullptr;
 
     bool createMatrixBuffer(ID3D11Buffer*& matrixBuffer);
     void updateMatrixBuffer(const TransformData& td);
-    bool createRenderTarget();
+    bool createDepthMap();
+    bool createRenderTarget(ID3D11Texture2D*& sceneInputTexture, ID3D11RenderTargetView*& sceneInputView, ID3D11ShaderResourceView*& sceneInputSRV);
 };

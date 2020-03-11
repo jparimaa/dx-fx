@@ -36,7 +36,7 @@ PSData VS(VSData input)
 
 float4 PS(PSData input) : SV_Target
 {
-	float4 output = scene.Sample(linearSampler, input.Tex);
+	float4 output = normalMap.Sample(linearSampler, input.Tex) + scene.Sample(linearSampler, input.Tex) * 0.1;
 	output.a = 0.5;
 	return output;
 }

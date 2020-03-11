@@ -41,9 +41,15 @@ BrokenGlassApp::BrokenGlassApp()
 
 BrokenGlassApp::~BrokenGlassApp()
 {
-    fw::release(renderTargetTexture);
-    fw::release(renderTargetView);
-    fw::release(renderTargetSRV);
+    fw::release(depthmapTexture);
+    fw::release(depthmapDSV);
+    fw::release(depthmapSRV);
+    fw::release(sceneInputTexture);
+    fw::release(sceneInputRTV);
+    fw::release(sceneInputSRV);
+    fw::release(outputTexture);
+    fw::release(outputRTV);
+    fw::release(outputSRV);
 }
 
 bool BrokenGlassApp::initialize()
@@ -86,6 +92,15 @@ bool BrokenGlassApp::initialize()
 
     cubeVertexBuffer = assetManager.getVertexBuffer(ROOT_PATH + std::string("/Assets/cube.obj"));
     assert(cubeVertexBuffer != nullptr);
+
+    status = createDepthMap();
+    assert(status);
+
+    status = createRenderTarget(sceneInputTexture, sceneInputRTV, sceneInputSRV);
+    assert(status);
+
+    status = createRenderTarget(outputTexture, outputRTV, outputSRV);
+    assert(status);
 
     std::cout << "BrokenGlassApp initialization completed\n";
 
@@ -136,8 +151,9 @@ void BrokenGlassApp::update()
 
 void BrokenGlassApp::render()
 {
-    fw::DX::context->ClearRenderTargetView(fw::DX::renderTargetView, clearColor);
-    fw::DX::context->ClearDepthStencilView(fw::API::getDepthStencilView(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+    fw::DX::context->ClearRenderTargetView(sceneInputRTV, clearColor);
+    fw::DX::context->ClearRenderTargetView(outputRTV, clearColor);
+    fw::DX::context->ClearDepthStencilView(depthmapDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
     fw::VertexBuffer* vb = monkeyVertexBuffer;
     fw::DX::context->IASetVertexBuffers(0, 1, &vb->vertexBuffer, &vb->stride, &vb->offset);
@@ -146,12 +162,13 @@ void BrokenGlassApp::render()
     fw::DX::context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     fw::DX::context->VSSetConstantBuffers(0, 1, &monkeyData.matrixBuffer);
     fw::DX::context->VSSetShader(diffuseShader.vertexShader.get(), nullptr, 0);
-    fw::DX::context->RSSetViewports(1, &viewport);
+    D3D11_VIEWPORT viewports[2] = {viewport, viewport};
+    fw::DX::context->RSSetViewports(2, viewports);
     fw::DX::context->PSSetShader(diffuseShader.pixelShader.get(), nullptr, 0);
     fw::DX::context->PSSetSamplers(0, 1, &samplerLinear);
     fw::DX::context->PSSetShaderResources(0, 1, &diffuseTextureView);
-    ID3D11RenderTargetView* renderTarget = fw::API::getRenderTargetView();
-    fw::DX::context->OMSetRenderTargets(1, &renderTarget, fw::API::getDepthStencilView());
+    ID3D11RenderTargetView* renderTargets[2] = {sceneInputRTV, outputRTV};
+    fw::DX::context->OMSetRenderTargets(2, renderTargets, depthmapDSV);
 
     fw::DX::context->DrawIndexed(static_cast<UINT>(vb->numIndices), 0, 0);
 
@@ -165,15 +182,15 @@ void BrokenGlassApp::render()
     fw::DX::context->RSSetViewports(1, &viewport);
     fw::DX::context->PSSetShader(warpedShader.pixelShader.get(), nullptr, 0);
     fw::DX::context->PSSetSamplers(0, 1, &samplerLinear);
-    fw::DX::context->PSSetShaderResources(0, 1, &glassTextureView);
-    fw::DX::context->OMSetRenderTargets(1, &renderTarget, fw::API::getDepthStencilView());
+    ID3D11ShaderResourceView* textures[2] = {sceneInputSRV, glassTextureView};
+    fw::DX::context->OMSetRenderTargets(1, &outputRTV, depthmapDSV);
+    fw::DX::context->PSSetShaderResources(0, 2, textures);
 
     fw::DX::context->DrawIndexed(static_cast<UINT>(vb->numIndices), 0, 0);
 
-    /*
-    ID3D11RenderTargetView* renderTarget = fw::API::getRenderTargetView();
-    fw::DX::context->OMSetRenderTargets(1, &renderTarget, fw::API::getDepthStencilView());
-    */
+    ID3D11RenderTargetView* backBuffer = fw::API::getRenderTargetView();
+    fw::DX::context->ClearRenderTargetView(backBuffer, clearColor);
+    fw::DX::context->OMSetRenderTargets(1, &backBuffer, fw::API::getDepthStencilView());
 }
 
 void BrokenGlassApp::gui()
@@ -209,7 +226,40 @@ void BrokenGlassApp::updateMatrixBuffer(const TransformData& td)
     fw::DX::context->Unmap(td.matrixBuffer, 0);
 }
 
-bool BrokenGlassApp::createRenderTarget()
+bool BrokenGlassApp::createDepthMap()
+{
+    D3D11_TEXTURE2D_DESC shadowmapDesc = {
+        static_cast<UINT>(fw::API::getWindowWidth()),
+        static_cast<UINT>(fw::API::getWindowHeight()),
+        1, // Miplevels
+        1, // ArraySize
+        DXGI_FORMAT_R32_TYPELESS,
+        DXGI_SAMPLE_DESC{1, 0},
+        D3D11_USAGE_DEFAULT,
+        D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE, // Bind flags
+        0, // CPU access flag
+        0 // Misc flags
+    };
+    fw::DX::device->CreateTexture2D(&shadowmapDesc, nullptr, &depthmapTexture);
+
+    D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc = {
+        DXGI_FORMAT_D32_FLOAT,
+        D3D11_DSV_DIMENSION_TEXTURE2D,
+        0};
+    fw::DX::device->CreateDepthStencilView(depthmapTexture, &depthStencilViewDesc, &depthmapDSV);
+
+    D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc = {
+        DXGI_FORMAT_R32_FLOAT,
+        D3D11_SRV_DIMENSION_TEXTURE2D,
+        0,
+        0};
+    shaderResourceViewDesc.Texture2D.MipLevels = 1;
+    fw::DX::device->CreateShaderResourceView(depthmapTexture, &shaderResourceViewDesc, &depthmapSRV);
+
+    return true;
+}
+
+bool BrokenGlassApp::createRenderTarget(ID3D11Texture2D*& texture, ID3D11RenderTargetView*& rtv, ID3D11ShaderResourceView*& srv)
 {
     D3D11_TEXTURE2D_DESC textureDesc{};
     textureDesc.Width = fw::API::getWindowWidth();
@@ -222,20 +272,20 @@ bool BrokenGlassApp::createRenderTarget()
     textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
     textureDesc.CPUAccessFlags = 0;
     textureDesc.MiscFlags = 0;
-    fw::DX::device->CreateTexture2D(&textureDesc, NULL, &renderTargetTexture);
+    fw::DX::device->CreateTexture2D(&textureDesc, NULL, &texture);
 
     D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc{};
     renderTargetViewDesc.Format = textureDesc.Format;
     renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
     renderTargetViewDesc.Texture2D.MipSlice = 0;
-    fw::DX::device->CreateRenderTargetView(renderTargetTexture, &renderTargetViewDesc, &renderTargetView);
+    fw::DX::device->CreateRenderTargetView(texture, &renderTargetViewDesc, &rtv);
 
     D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc{};
     SRVDesc.Format = textureDesc.Format;
     SRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
     SRVDesc.Texture2D.MostDetailedMip = 0;
     SRVDesc.Texture2D.MipLevels = 1;
-    fw::DX::device->CreateShaderResourceView(renderTargetTexture, &SRVDesc, &renderTargetSRV);
+    fw::DX::device->CreateShaderResourceView(texture, &SRVDesc, &srv);
 
     return true;
 }
