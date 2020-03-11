@@ -15,6 +15,12 @@
 class BrokenGlassApp : public fw::Application
 {
 public:
+    struct ShaderProgram
+    {
+        fw::VertexShader vertexShader;
+        fw::PixelShader pixelShader;
+    };
+
     BrokenGlassApp();
     virtual ~BrokenGlassApp();
 
@@ -45,15 +51,23 @@ private:
     fw::PerspectiveCamera camera;
     fw::CameraController cameraController;
     TransformData monkeyData;
-    fw::VertexShader vertexShader;
-    fw::PixelShader pixelShader;
+    TransformData cubeData;
+    ShaderProgram diffuseShader;
+    ShaderProgram warpedShader;
     fw::AssetManager assetManager;
-    fw::VertexBuffer* vertexBuffer = nullptr;
+    fw::VertexBuffer* monkeyVertexBuffer = nullptr;
+    fw::VertexBuffer* cubeVertexBuffer = nullptr;
     D3D11_VIEWPORT viewport;
 
-    ID3D11ShaderResourceView* textureView = nullptr;
+    ID3D11ShaderResourceView* diffuseTextureView = nullptr;
+    ID3D11ShaderResourceView* glassTextureView = nullptr;
     ID3D11SamplerState* samplerLinear = nullptr;
+
+    ID3D11Texture2D* renderTargetTexture = nullptr;
+    ID3D11RenderTargetView* renderTargetView = nullptr;
+    ID3D11ShaderResourceView* renderTargetSRV = nullptr;
 
     bool createMatrixBuffer(ID3D11Buffer*& matrixBuffer);
     void updateMatrixBuffer(const TransformData& td);
+    bool createRenderTarget();
 };
