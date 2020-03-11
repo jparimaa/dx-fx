@@ -41,29 +41,10 @@ function(ADD_PROJECT_WITH_DEFAULT_SETTINGS PROJECT_NAME)
         "${CMAKE_BINARY_DIR}/External/assimp/code/debug/assimp-vc140-mt.dll"
         $<TARGET_FILE_DIR:${PROJECT_NAME}>
     )
-
-    # if(WIN32)
-    #     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    #         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    #             "${ASSIMP_PATH}/bin/x64/assimp-vc140-mt.dll"
-    #             $<TARGET_FILE_DIR:${PROJECT_NAME}>
-    #     )
-
-    #     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    #     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    #         "${SDL2_PATH}/lib/x64/SDL2.dll"
-    #         $<TARGET_FILE_DIR:${PROJECT_NAME}>
-    #     )
-
-    #     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    #     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    #         "${GLEW_PATH}/bin/Release/x64/glew32.dll"
-    #         $<TARGET_FILE_DIR:${PROJECT_NAME}>
-    #     )
-    # endif()
 endfunction()
 
 add_subdirectory(Framework)
 add_subdirectory(Examples/Minimal)
 add_subdirectory(Examples/CSM)
 add_subdirectory(Examples/Multithread)
+add_subdirectory(Examples/BrokenGlass)
