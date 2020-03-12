@@ -1,5 +1,6 @@
 Texture2D scene : register(t0);
 Texture2D normalMap : register(t1);
+Texture2D additiveMap : register(t2);
 SamplerState linearSampler : register(s0);
 
 cbuffer ConstantBuffer : register(b0)
@@ -71,5 +72,6 @@ float4 PS(PSData input) : SV_Target
 	screenPos.y = 1.0 - screenPos.y;
 	float2 refractedUv = screenPos + screenRefracted.xy * 0.04;	
 	float4 output = scene.Sample(linearSampler, refractedUv);
+	output.rgb += additiveMap.Sample(linearSampler, input.Tex).rgb * 0.2;
 	return output;
 }

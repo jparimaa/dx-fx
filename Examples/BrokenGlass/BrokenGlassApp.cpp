@@ -52,7 +52,6 @@ BrokenGlassApp::~BrokenGlassApp()
     fw::release(outputTexture);
     fw::release(outputRTV);
     fw::release(outputSRV);
-    fw::release(blendEnabledState);
     fw::release(blendDisabledState);
 }
 
@@ -91,8 +90,11 @@ bool BrokenGlassApp::initialize()
     diffuseTextureView = assetManager.getTextureView(ROOT_PATH + std::string("/Assets/green_square.png"));
     assert(diffuseTextureView != nullptr);
 
-    glassTextureView = assetManager.getTextureView(ROOT_PATH + std::string("/Assets/broken_glass.jpg"));
-    assert(glassTextureView != nullptr);
+    glassNormalTextureView = assetManager.getTextureView(ROOT_PATH + std::string("/Assets/broken_glass_normal.jpg"));
+    assert(glassNormalTextureView != nullptr);
+
+    glassAdditiveTextureView = assetManager.getTextureView(ROOT_PATH + std::string("/Assets/broken_glass_add.jpg"));
+    assert(glassAdditiveTextureView != nullptr);
 
     monkeyVertexBuffer = assetManager.getVertexBuffer(ROOT_PATH + std::string("/Assets/monkey.3ds"));
     assert(monkeyVertexBuffer != nullptr);
@@ -119,7 +121,6 @@ bool BrokenGlassApp::initialize()
     viewport.TopLeftY = 0.0f;
 
     D3D11_BLEND_DESC blendStateDesc{};
-    blendStateDesc.RenderTarget[0].BlendEnable = TRUE;
     blendStateDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
     blendStateDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
     blendStateDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
@@ -127,11 +128,9 @@ bool BrokenGlassApp::initialize()
     blendStateDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
     blendStateDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
     blendStateDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-
-    fw::DX::device->CreateBlendState(&blendStateDesc, &blendEnabledState);
-
     blendStateDesc.RenderTarget[0].BlendEnable = FALSE;
     fw::DX::device->CreateBlendState(&blendStateDesc, &blendDisabledState);
+    fw::DX::context->OMSetBlendState(blendDisabledState, blendFactor, sampleMask);
 
     return true;
 }
@@ -171,8 +170,6 @@ void BrokenGlassApp::render()
     fw::DX::context->ClearRenderTargetView(outputRTV, clearColor);
     fw::DX::context->ClearDepthStencilView(depthmapDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
-    fw::DX::context->OMSetBlendState(blendDisabledState, blendFactor, sampleMask);
-
     fw::VertexBuffer* vb = monkeyVertexBuffer;
     fw::DX::context->IASetVertexBuffers(0, 1, &vb->vertexBuffer, &vb->stride, &vb->offset);
     fw::DX::context->IASetInputLayout(diffuseShader.vertexShader.getVertexLayout());
@@ -190,8 +187,6 @@ void BrokenGlassApp::render()
 
     fw::DX::context->DrawIndexed(static_cast<UINT>(vb->numIndices), 0, 0);
 
-    fw::DX::context->OMSetBlendState(blendEnabledState, blendFactor, sampleMask);
-
     vb = cubeVertexBuffer;
     fw::DX::context->IASetVertexBuffers(0, 1, &vb->vertexBuffer, &vb->stride, &vb->offset);
     fw::DX::context->IASetInputLayout(warpedShader.vertexShader.getVertexLayout());
@@ -203,13 +198,11 @@ void BrokenGlassApp::render()
     fw::DX::context->PSSetShader(warpedShader.pixelShader.get(), nullptr, 0);
     fw::DX::context->PSSetConstantBuffers(1, 1, &cameraPositionBuffer);
     fw::DX::context->PSSetSamplers(0, 1, &samplerLinear);
-    ID3D11ShaderResourceView* textures[2] = {sceneInputSRV, glassTextureView};
+    ID3D11ShaderResourceView* textures[3] = {sceneInputSRV, glassNormalTextureView, glassAdditiveTextureView};
     fw::DX::context->OMSetRenderTargets(1, &outputRTV, depthmapDSV);
-    fw::DX::context->PSSetShaderResources(0, 2, textures);
+    fw::DX::context->PSSetShaderResources(0, 3, textures);
 
     fw::DX::context->DrawIndexed(static_cast<UINT>(vb->numIndices), 0, 0);
-
-    fw::DX::context->OMSetBlendState(blendDisabledState, blendFactor, sampleMask);
 
     ID3D11RenderTargetView* backBuffer = fw::API::getRenderTargetView();
     blitter.blit(outputSRV, backBuffer);

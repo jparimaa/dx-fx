@@ -67,7 +67,8 @@ private:
     D3D11_VIEWPORT viewport;
 
     ID3D11ShaderResourceView* diffuseTextureView = nullptr;
-    ID3D11ShaderResourceView* glassTextureView = nullptr;
+    ID3D11ShaderResourceView* glassNormalTextureView = nullptr;
+    ID3D11ShaderResourceView* glassAdditiveTextureView = nullptr;
     ID3D11SamplerState* samplerLinear = nullptr;
 
     ID3D11Texture2D* depthmapTexture = nullptr;
@@ -82,7 +83,6 @@ private:
     ID3D11RenderTargetView* outputRTV = nullptr;
     ID3D11ShaderResourceView* outputSRV = nullptr;
 
-    ID3D11BlendState* blendEnabledState = nullptr;
     ID3D11BlendState* blendDisabledState = nullptr;
 
     ID3D11Buffer* cameraPositionBuffer = nullptr;
