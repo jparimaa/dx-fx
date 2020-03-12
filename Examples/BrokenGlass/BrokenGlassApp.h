@@ -38,6 +38,12 @@ private:
         DirectX::XMMATRIX projection;
     };
 
+    struct CameraData
+    {
+        DirectX::XMMATRIX viewProjection;
+        float cameraPos[4];
+    };
+
     struct TransformData
     {
         fw::Transformation transform;
@@ -61,7 +67,8 @@ private:
     D3D11_VIEWPORT viewport;
 
     ID3D11ShaderResourceView* diffuseTextureView = nullptr;
-    ID3D11ShaderResourceView* glassTextureView = nullptr;
+    ID3D11ShaderResourceView* glassNormalTextureView = nullptr;
+    ID3D11ShaderResourceView* glassAdditiveTextureView = nullptr;
     ID3D11SamplerState* samplerLinear = nullptr;
 
     ID3D11Texture2D* depthmapTexture = nullptr;
@@ -76,12 +83,13 @@ private:
     ID3D11RenderTargetView* outputRTV = nullptr;
     ID3D11ShaderResourceView* outputSRV = nullptr;
 
-    ID3D11BlendState* blendEnabledState = nullptr;
     ID3D11BlendState* blendDisabledState = nullptr;
+
+    ID3D11Buffer* cameraPositionBuffer = nullptr;
 
     fw::Blitter blitter;
 
-    bool createMatrixBuffer(ID3D11Buffer*& matrixBuffer);
+    bool createConstantBuffer(ID3D11Buffer*& matrixBuffer, UINT size);
     void updateMatrixBuffer(const TransformData& td);
     bool createDepthMap();
     bool createRenderTarget(ID3D11Texture2D*& sceneInputTexture, ID3D11RenderTargetView*& sceneInputView, ID3D11ShaderResourceView*& sceneInputSRV);
