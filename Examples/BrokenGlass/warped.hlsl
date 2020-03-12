@@ -67,8 +67,9 @@ float4 PS(PSData input) : SV_Target
 	float3 cameraToPixel = normalize(input.Pos.xyz - cameraPos.xyz);
 	float3 refracted = refract(normal, cameraToPixel, 1.0);
 	float3 screenRefracted = normalize(mul(float4(refracted, 0.0), viewProj).xyz);
-	float2 refractedUv = input.ScreenPos.xy + screenRefracted.xy;	
+	float2 screenPos = ((input.ScreenPos.xy / input.ScreenPos.w) * 0.5) + 0.5;
+	screenPos.y = 1.0 - screenPos.y;
+	float2 refractedUv = screenPos + screenRefracted.xy * 0.04;	
 	float4 output = scene.Sample(linearSampler, refractedUv);
-	//output.xyz = float3(input.ScreenPos.xy, 0.0);
 	return output;
 }
