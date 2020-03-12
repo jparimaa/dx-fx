@@ -2,7 +2,7 @@ Texture2D scene : register(t0);
 Texture2D normalMap : register(t1);
 SamplerState linearSampler : register(s0);
 
-cbuffer ConstantBuffer : register(b[0])
+cbuffer ConstantBuffer : register(b0)
 {
 	matrix World;
 	matrix View;
@@ -30,14 +30,14 @@ PSData VS(VSData input)
 	output.Pos = mul(input.Pos, World);
 	output.Pos = mul(output.Pos, View);
 	output.Pos = mul(output.Pos, Projection);
-	output.Normal = mul(input.Normal, World);
+	output.Normal = input.Normal;
 	output.ScreenPos = output.Pos;
 	output.Tex = input.Tex;
 	return output;
 }
 
 
-cbuffer ConstantBuffer : register(b[1])
+cbuffer ConstantBuffer : register(b1)
 {
 	matrix viewProj;
 	float4 cameraPos;
@@ -57,7 +57,7 @@ float3 perturbNormal(PSData input)
 	float3x3 TBN = float3x3(T, B, N);
 
 	float3 tangentNormal = normalMap.Sample(linearSampler, input.Tex).xyz * 2.0 - 1.0;
-	float3 unnormalized = mul(TBN, tangentNormal);
+	float3 unnormalized = mul(tangentNormal, TBN);
 	return normalize(unnormalized);
 }
 
@@ -69,5 +69,6 @@ float4 PS(PSData input) : SV_Target
 	float3 screenRefracted = normalize(mul(float4(refracted, 0.0), viewProj).xyz);
 	float2 refractedUv = input.ScreenPos.xy + screenRefracted.xy;	
 	float4 output = scene.Sample(linearSampler, refractedUv);
+	//output.xyz = float3(input.ScreenPos.xy, 0.0);
 	return output;
 }

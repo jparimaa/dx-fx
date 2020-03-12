@@ -197,11 +197,11 @@ void BrokenGlassApp::render()
     fw::DX::context->IASetInputLayout(warpedShader.vertexShader.getVertexLayout());
     fw::DX::context->IASetIndexBuffer(vb->indexBuffer, DXGI_FORMAT_R16_UINT, 0);
     fw::DX::context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    ID3D11Buffer* constantBuffers[] = {cubeData.matrixBuffer, cameraPositionBuffer};
-    fw::DX::context->VSSetConstantBuffers(0, 2, constantBuffers);
+    fw::DX::context->VSSetConstantBuffers(0, 1, &cubeData.matrixBuffer);
     fw::DX::context->VSSetShader(warpedShader.vertexShader.get(), nullptr, 0);
     fw::DX::context->RSSetViewports(1, &viewport);
     fw::DX::context->PSSetShader(warpedShader.pixelShader.get(), nullptr, 0);
+    fw::DX::context->PSSetConstantBuffers(1, 1, &cameraPositionBuffer);
     fw::DX::context->PSSetSamplers(0, 1, &samplerLinear);
     ID3D11ShaderResourceView* textures[2] = {sceneInputSRV, glassTextureView};
     fw::DX::context->OMSetRenderTargets(1, &outputRTV, depthmapDSV);
