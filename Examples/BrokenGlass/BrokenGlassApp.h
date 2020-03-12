@@ -8,6 +8,7 @@
 #include <fw/CameraController.h>
 #include <fw/AssetManager.h>
 #include <fw/Common.h>
+#include <fw/Blitter.h>
 
 #include <DirectXMath.h>
 #include <d3d11.h>
@@ -74,6 +75,11 @@ private:
     ID3D11Texture2D* outputTexture = nullptr;
     ID3D11RenderTargetView* outputRTV = nullptr;
     ID3D11ShaderResourceView* outputSRV = nullptr;
+
+    ID3D11BlendState* blendEnabledState = nullptr;
+    ID3D11BlendState* blendDisabledState = nullptr;
+
+    fw::Blitter blitter;
 
     bool createMatrixBuffer(ID3D11Buffer*& matrixBuffer);
     void updateMatrixBuffer(const TransformData& td);

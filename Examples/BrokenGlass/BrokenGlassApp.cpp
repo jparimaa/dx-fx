@@ -12,6 +12,8 @@
 namespace
 {
 float clearColor[4] = {0.0f, 0.0f, 0.1f, 1.0f};
+float blendFactor[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+UINT sampleMask = 0xffffffff;
 
 bool createShader(const std::string& filename, BrokenGlassApp::ShaderProgram& shaderProgram)
 {
@@ -50,6 +52,8 @@ BrokenGlassApp::~BrokenGlassApp()
     fw::release(outputTexture);
     fw::release(outputRTV);
     fw::release(outputSRV);
+    fw::release(blendEnabledState);
+    fw::release(blendDisabledState);
 }
 
 bool BrokenGlassApp::initialize()
@@ -121,13 +125,10 @@ bool BrokenGlassApp::initialize()
     blendStateDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
     blendStateDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 
-    ID3D11BlendState* blendState = nullptr;
-    fw::DX::device->CreateBlendState(&blendStateDesc, &blendState);
+    fw::DX::device->CreateBlendState(&blendStateDesc, &blendEnabledState);
 
-    float blendFactor[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-    UINT sampleMask = 0xffffffff;
-    fw::DX::context->OMSetBlendState(blendState, blendFactor, sampleMask);
-    fw::release(blendState);
+    blendStateDesc.RenderTarget[0].BlendEnable = FALSE;
+    fw::DX::device->CreateBlendState(&blendStateDesc, &blendDisabledState);
 
     return true;
 }
@@ -155,6 +156,8 @@ void BrokenGlassApp::render()
     fw::DX::context->ClearRenderTargetView(outputRTV, clearColor);
     fw::DX::context->ClearDepthStencilView(depthmapDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
+    fw::DX::context->OMSetBlendState(blendDisabledState, blendFactor, sampleMask);
+
     fw::VertexBuffer* vb = monkeyVertexBuffer;
     fw::DX::context->IASetVertexBuffers(0, 1, &vb->vertexBuffer, &vb->stride, &vb->offset);
     fw::DX::context->IASetInputLayout(diffuseShader.vertexShader.getVertexLayout());
@@ -172,6 +175,8 @@ void BrokenGlassApp::render()
 
     fw::DX::context->DrawIndexed(static_cast<UINT>(vb->numIndices), 0, 0);
 
+    fw::DX::context->OMSetBlendState(blendEnabledState, blendFactor, sampleMask);
+
     vb = cubeVertexBuffer;
     fw::DX::context->IASetVertexBuffers(0, 1, &vb->vertexBuffer, &vb->stride, &vb->offset);
     fw::DX::context->IASetInputLayout(warpedShader.vertexShader.getVertexLayout());
@@ -188,8 +193,12 @@ void BrokenGlassApp::render()
 
     fw::DX::context->DrawIndexed(static_cast<UINT>(vb->numIndices), 0, 0);
 
+    fw::DX::context->OMSetBlendState(blendDisabledState, blendFactor, sampleMask);
+
     ID3D11RenderTargetView* backBuffer = fw::API::getRenderTargetView();
-    fw::DX::context->ClearRenderTargetView(backBuffer, clearColor);
+    blitter.blit(outputSRV, backBuffer);
+
+    // For GUI
     fw::DX::context->OMSetRenderTargets(1, &backBuffer, fw::API::getDepthStencilView());
 }
 
@@ -228,31 +237,29 @@ void BrokenGlassApp::updateMatrixBuffer(const TransformData& td)
 
 bool BrokenGlassApp::createDepthMap()
 {
-    D3D11_TEXTURE2D_DESC shadowmapDesc = {
-        static_cast<UINT>(fw::API::getWindowWidth()),
-        static_cast<UINT>(fw::API::getWindowHeight()),
-        1, // Miplevels
-        1, // ArraySize
-        DXGI_FORMAT_R32_TYPELESS,
-        DXGI_SAMPLE_DESC{1, 0},
-        D3D11_USAGE_DEFAULT,
-        D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE, // Bind flags
-        0, // CPU access flag
-        0 // Misc flags
-    };
+    D3D11_TEXTURE2D_DESC shadowmapDesc{};
+    shadowmapDesc.Width = static_cast<UINT>(fw::API::getWindowWidth());
+    shadowmapDesc.Height = static_cast<UINT>(fw::API::getWindowHeight());
+    shadowmapDesc.MipLevels = 1;
+    shadowmapDesc.ArraySize = 1;
+    shadowmapDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+    shadowmapDesc.SampleDesc = DXGI_SAMPLE_DESC{1, 0};
+    shadowmapDesc.Usage = D3D11_USAGE_DEFAULT;
+    shadowmapDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
+    shadowmapDesc.CPUAccessFlags = 0;
+    shadowmapDesc.MiscFlags = 0;
     fw::DX::device->CreateTexture2D(&shadowmapDesc, nullptr, &depthmapTexture);
 
-    D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc = {
-        DXGI_FORMAT_D32_FLOAT,
-        D3D11_DSV_DIMENSION_TEXTURE2D,
-        0};
+    D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc{};
+    depthStencilViewDesc.Format = DXGI_FORMAT_D32_FLOAT;
+    depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+    depthStencilViewDesc.Flags = 0;
     fw::DX::device->CreateDepthStencilView(depthmapTexture, &depthStencilViewDesc, &depthmapDSV);
 
-    D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc = {
-        DXGI_FORMAT_R32_FLOAT,
-        D3D11_SRV_DIMENSION_TEXTURE2D,
-        0,
-        0};
+    D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc{};
+    shaderResourceViewDesc.Format = DXGI_FORMAT_R32_FLOAT;
+    shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
     shaderResourceViewDesc.Texture2D.MipLevels = 1;
     fw::DX::device->CreateShaderResourceView(depthmapTexture, &shaderResourceViewDesc, &depthmapSRV);
 
