@@ -59,10 +59,13 @@ BrokenGlassApp::~BrokenGlassApp()
 bool BrokenGlassApp::initialize()
 {
     bool status = true;
-    status = createMatrixBuffer(monkeyData.matrixBuffer);
+    status = createConstantBuffer(monkeyData.matrixBuffer, sizeof(MatrixData));
     assert(status);
 
-    status = createMatrixBuffer(cubeData.matrixBuffer);
+    status = createConstantBuffer(cubeData.matrixBuffer, sizeof(MatrixData));
+    assert(status);
+
+    status = createConstantBuffer(cameraPositionBuffer, sizeof(CameraData));
     assert(status);
 
     status = assetManager.getLinearSampler(&samplerLinear);
@@ -148,6 +151,18 @@ void BrokenGlassApp::update()
 
     updateMatrixBuffer(monkeyData);
     updateMatrixBuffer(cubeData);
+
+    DirectX::XMFLOAT4 camPos;
+    DirectX::XMStoreFloat4(&camPos, camera.getTransformation().position);
+
+    D3D11_MAPPED_SUBRESOURCE MappedResource;
+    fw::DX::context->Map(cameraPositionBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource);
+    CameraData* cameraData = (CameraData*)MappedResource.pData;
+    cameraData->cameraPos[0] = camPos.x;
+    cameraData->cameraPos[1] = camPos.y;
+    cameraData->cameraPos[2] = camPos.z;
+    cameraData->viewProjection = DirectX::XMMatrixMultiply(camera.getViewMatrix(), camera.getProjectionMatrix());
+    fw::DX::context->Unmap(cameraPositionBuffer, 0);
 }
 
 void BrokenGlassApp::render()
@@ -182,7 +197,8 @@ void BrokenGlassApp::render()
     fw::DX::context->IASetInputLayout(warpedShader.vertexShader.getVertexLayout());
     fw::DX::context->IASetIndexBuffer(vb->indexBuffer, DXGI_FORMAT_R16_UINT, 0);
     fw::DX::context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    fw::DX::context->VSSetConstantBuffers(0, 1, &cubeData.matrixBuffer);
+    ID3D11Buffer* constantBuffers[] = {cubeData.matrixBuffer, cameraPositionBuffer};
+    fw::DX::context->VSSetConstantBuffers(0, 2, constantBuffers);
     fw::DX::context->VSSetShader(warpedShader.vertexShader.get(), nullptr, 0);
     fw::DX::context->RSSetViewports(1, &viewport);
     fw::DX::context->PSSetShader(warpedShader.pixelShader.get(), nullptr, 0);
@@ -207,10 +223,10 @@ void BrokenGlassApp::gui()
     ImGui::Text("Hello, world!");
 }
 
-bool BrokenGlassApp::createMatrixBuffer(ID3D11Buffer*& matrixBuffer)
+bool BrokenGlassApp::createConstantBuffer(ID3D11Buffer*& matrixBuffer, UINT size)
 {
     D3D11_BUFFER_DESC bd{};
-    bd.ByteWidth = sizeof(DirectX::XMMATRIX) * 3;
+    bd.ByteWidth = size;
     bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     bd.Usage = D3D11_USAGE_DYNAMIC;

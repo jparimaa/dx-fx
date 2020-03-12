@@ -20,7 +20,8 @@ struct PSData
 {
 	float4 Pos : SV_POSITION;
 	float4 Normal : NORMAL;	
-	float2 Tex : TEXCOORD0;
+    float4 ScreenPos : TEXCOORD0;
+	float2 Tex : TEXCOORD1;
 };
 
 PSData VS(VSData input)
@@ -30,13 +31,43 @@ PSData VS(VSData input)
 	output.Pos = mul(output.Pos, View);
 	output.Pos = mul(output.Pos, Projection);
 	output.Normal = mul(input.Normal, World);
+	output.ScreenPos = output.Pos;
 	output.Tex = input.Tex;
 	return output;
 }
 
+
+cbuffer ConstantBuffer : register(b[1])
+{
+	matrix viewProj;
+	float4 cameraPos;
+}
+
+// See http://www.thetenthplanet.de/archives/1180
+float3 perturbNormal(PSData input)
+{
+	float3 q1 = ddx(input.Pos.xyz);
+	float3 q2 = ddy(input.Pos.xyz);
+	float2 st1 = ddx(input.Tex);
+	float2 st2 = ddy(input.Tex);
+
+	float3 N = normalize(input.Normal.xyz);
+	float3 T = normalize(q1 * st2.x - q2 * st1.x);
+	float3 B = -normalize(cross(N, T));
+	float3x3 TBN = float3x3(T, B, N);
+
+	float3 tangentNormal = normalMap.Sample(linearSampler, input.Tex).xyz * 2.0 - 1.0;
+	float3 unnormalized = mul(TBN, tangentNormal);
+	return normalize(unnormalized);
+}
+
 float4 PS(PSData input) : SV_Target
 {
-	float4 output = normalMap.Sample(linearSampler, input.Tex) + scene.Sample(linearSampler, input.Tex) * 0.1;
-	output.a = 0.5;
+	float3 normal = perturbNormal(input);
+	float3 cameraToPixel = normalize(input.Pos.xyz - cameraPos.xyz);
+	float3 refracted = refract(normal, cameraToPixel, 1.0);
+	float3 screenRefracted = normalize(mul(float4(refracted, 0.0), viewProj).xyz);
+	float2 refractedUv = input.ScreenPos.xy + screenRefracted.xy;	
+	float4 output = scene.Sample(linearSampler, refractedUv);
 	return output;
 }
