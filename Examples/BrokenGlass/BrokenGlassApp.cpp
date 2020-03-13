@@ -53,6 +53,7 @@ BrokenGlassApp::~BrokenGlassApp()
     fw::release(outputRTV);
     fw::release(outputSRV);
     fw::release(blendDisabledState);
+    fw::release(cameraPositionBuffer);
 }
 
 bool BrokenGlassApp::initialize()

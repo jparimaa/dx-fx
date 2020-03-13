@@ -3,9 +3,15 @@
 #include "Framework.h"
 #include "DX.h"
 #include "Model.h"
+
 #include <d3dcompiler.h>
 #include <DirectXMath.h>
 #include <Windows.h>
+
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
+
 #include <iostream>
 #include <cstdlib>
 #include <vector>
@@ -32,20 +38,23 @@ template<typename T>
 inline int executeGenericMain(HINSTANCE hInstance, int nCmdShow, LONG windowWidth = 800, LONG windowHeight = 600)
 {
     int ret = EXIT_FAILURE;
-    Framework framework(windowWidth, windowHeight);
-    if (framework.initialize(hInstance, nCmdShow))
     {
-        T app;
-        if (framework.setApplication(&app))
+        Framework framework(windowWidth, windowHeight);
+        if (framework.initialize(hInstance, nCmdShow))
         {
-            ret = framework.execute();
+            T app;
+            if (framework.setApplication(&app))
+            {
+                ret = framework.execute();
+            }
+        }
+
+        if (ret == EXIT_FAILURE)
+        {
+            MessageBox(framework.getWindow()->getHandle(), "Fatal error. Check console output.", nullptr, MB_OK);
         }
     }
-
-    if (ret == EXIT_FAILURE)
-    {
-        MessageBox(framework.getWindow()->getHandle(), "Fatal error. Check console output.", nullptr, MB_OK);
-    }
+    _CrtDumpMemoryLeaks();
 
     return ret;
 }
