@@ -1,18 +1,21 @@
 #include "Window.h"
 #include "Common.h"
-#include "imgui/imgui.h"
-#include "imgui/imgui_impl_dx11.h"
+#include "imgui.h"
+#include "imgui_impl_dx11.h"
 #include <Keyboard.h>
 #include <Mouse.h>
 #include <iostream>
 
-extern LRESULT ImGui_ImplDX11_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 namespace
 {
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    ImGui_ImplDX11_WndProcHandler(hWnd, message, wParam, lParam);
+    if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))
+    {
+        return true;
+    }
 
     PAINTSTRUCT ps;
     HDC hdc;

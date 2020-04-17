@@ -5,7 +5,12 @@ file(GLOB SOURCES fw/*.cpp fw/*.h)
 
 file(GLOB IMGUI
     fw/imgui/*.cpp 
-    fw/imgui/*.h)
+    fw/imgui/*.h
+    fw/imgui/examples/imgui_impl_dx11.h
+    fw/imgui/examples/imgui_impl_dx11.cpp
+    fw/imgui/examples/imgui_impl_win32.h
+    fw/imgui/examples/imgui_impl_win32.cpp
+)
 
 add_library(Framework STATIC
     ${SOURCES}
@@ -20,5 +25,5 @@ target_compile_features(Framework
 target_compile_options(Framework PRIVATE /W3 /WX /MP)
 
 target_link_libraries(Framework assimp DirectXTK d3d11 d3dcompiler)
-target_include_directories(Framework PUBLIC ${PROJECT_SOURCE_DIR}/../External/assimp/include/)
+target_include_directories(Framework PUBLIC ${PROJECT_SOURCE_DIR}/../External/assimp/include/ fw/imgui/ fw/imgui/examples/)
 target_compile_definitions(Framework PUBLIC -D_CRT_SECURE_NO_WARNINGS)
