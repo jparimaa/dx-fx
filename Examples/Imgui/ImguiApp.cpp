@@ -113,7 +113,67 @@ void ImguiApp::render()
 
 void ImguiApp::gui()
 {
-    ImGui::Text("Hello, world!");
+    ImGui::Begin("Dear ImGui Demo");
+
+    static bool check = true;
+    ImGui::Checkbox("checkbox", &check);
+
+    static int e = 0;
+    ImGui::RadioButton("radio a", &e, 0);
+    ImGui::SameLine();
+    ImGui::RadioButton("radio b", &e, 1);
+    ImGui::SameLine();
+    ImGui::RadioButton("radio c", &e, 2);
+
+    ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
+    if (ImGui::BeginTabBar("TabBar 0", tab_bar_flags))
+    {
+        if (ImGui::BeginTabItem("TabItem 0 in TabBar 0"))
+        {
+            ImGui::Text("TabItem 0 in TabBar 0");
+
+            ImGui::Text("TabBar 0 pointer in g.CurrentTabar is invalid");
+            ImGui::EndTabItem();
+        }
+
+        if (ImGui::BeginTabItem("asdasd"))
+        {
+            ImGui::Text("trololo");
+
+            ImGui::Text("ebin");
+            ImGui::EndTabItem();
+        }
+
+        ImGui::EndTabBar();
+    }
+
+    ImGui::BeginTabBar("TabBar");
+
+    float value = 0.4f;
+    if (ImGui::BeginTabItem("Tab1"))
+    {
+        static int lines = 7;
+        ImGui::SliderInt("Lines", &lines, 1, 15);
+        ImGui::EndTabItem();
+    }
+
+    if (ImGui::BeginTabItem("Tab2"))
+    {
+        ImGui::Text("Test text");
+        ImGui::EndTabItem();
+    }
+
+    bool a, b;
+    if (ImGui::BeginTabItem("Tab3"))
+    {
+        ImGui::Checkbox("Demo Window", &a);
+        ImGui::Checkbox("Another Window", &b);
+        ImGui::EndTabItem();
+    }
+
+    ImGui::EndTabBar();
+
+    ImGui::End();
 }
 
 bool ImguiApp::createMatrixBuffer()
