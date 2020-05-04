@@ -43,6 +43,26 @@ bool VertexShader::create(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderModel
     return true;
 }
 
+bool VertexShader::create(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderModel)
+{
+    ID3DBlob* blob = nullptr;
+    bool compiled = compileShaderFromFile(fileName, entryPoint, shaderModel, &blob);
+    if (!compiled)
+    {
+        return false;
+    }
+
+    HRESULT hr = DX::device->CreateVertexShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &vertexShader);
+    if (FAILED(hr))
+    {
+        printError("Failed to create vertex shader", &hr);
+        blob->Release();
+        return false;
+    }
+
+    return true;
+}
+
 ID3D11VertexShader* VertexShader::get() const
 {
     return vertexShader;
