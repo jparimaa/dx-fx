@@ -15,7 +15,7 @@
 class TAAApp : public fw::Application
 {
 public:
-    TAAApp();
+    TAAApp(){};
     virtual ~TAAApp();
 
     virtual bool initialize() final;
@@ -40,8 +40,20 @@ private:
     fw::VertexBuffer* m_vertexBuffer = nullptr;
 
     ID3D11Buffer* m_matrixBuffer = nullptr;
+    ID3D11Buffer* m_prevMatrixBuffer = nullptr;
+
     ID3D11ShaderResourceView* m_textureView = nullptr;
     ID3D11SamplerState* m_samplerLinear = nullptr;
 
-    bool createMatrixBuffer();
+    ID3D11Texture2D* m_prevFrameTexture;
+    ID3D11RenderTargetView* m_prevFrameRtv;
+    ID3D11ShaderResourceView* m_prevFrameSrv;
+
+    ID3D11Texture2D* m_motionTexture;
+    ID3D11RenderTargetView* m_motionRtv;
+    ID3D11ShaderResourceView* m_motionSrv;
+
+    bool createMatrixBuffers();
+    bool createPrevFrameTexture();
+    bool createMotionTexture();
 };

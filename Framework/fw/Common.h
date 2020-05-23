@@ -3,6 +3,7 @@
 #include "Framework.h"
 #include "DX.h"
 #include "Model.h"
+#include "Config.h"
 
 #include <d3dcompiler.h>
 #include <DirectXMath.h>
@@ -35,11 +36,11 @@ void printError(const std::string& msg, HRESULT* hr = nullptr);
 void printWarning(const std::string& msg, HRESULT* hr = nullptr);
 
 template<typename T>
-inline int executeGenericMain(HINSTANCE hInstance, int nCmdShow, LONG windowWidth = 800, LONG windowHeight = 600)
+inline int executeGenericMain(HINSTANCE hInstance, int nCmdShow, LONG windowWidth = 800, LONG windowHeight = 600, Config config = {})
 {
     int ret = EXIT_FAILURE;
     {
-        Framework framework(windowWidth, windowHeight);
+        Framework framework(windowWidth, windowHeight, config);
         if (framework.initialize(hInstance, nCmdShow))
         {
             T app;

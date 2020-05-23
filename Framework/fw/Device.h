@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Config.h"
+
 #include <windows.h>
 #include <d3d11.h>
 
@@ -11,7 +13,7 @@ public:
     Device();
     ~Device();
 
-    bool initialize(HWND windowHandle);
+    bool initialize(HWND windowHandle, Config config);
     ID3D11DepthStencilView* getDepthStencilView();
     ID3D11RenderTargetView* getRenderTargetView();
 
