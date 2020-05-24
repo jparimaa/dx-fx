@@ -84,8 +84,11 @@ void Blitter::blit(ID3D11ShaderResourceView* src, ID3D11RenderTargetView* dst)
     fw::DX::context->VSSetShader(vertexShader.get(), nullptr, 0);
     fw::DX::context->PSSetShader(pixelShader.get(), nullptr, 0);
     fw::DX::context->PSSetSamplers(0, 1, &samplerLinear);
-    fw::DX::context->OMSetRenderTargets(1, &dst, NULL);
     fw::DX::context->PSSetShaderResources(0, 1, &src);
+    fw::DX::context->OMSetRenderTargets(1, &dst, NULL);
     fw::DX::context->Draw(3, 0);
+
+    ID3D11ShaderResourceView* const nullSrv[1] = {NULL};
+    fw::DX::context->PSSetShaderResources(0, 1, nullSrv);
 }
 } // namespace fw

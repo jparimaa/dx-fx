@@ -88,7 +88,7 @@ bool Device::initialize(HWND windowHandle, Config config)
     backBuffer->Release();
     if (FAILED(hr))
     {
-        printError("Failed to create render target view", &hr);
+        printError("Failed to create back buffer RTV", &hr);
         return false;
     }
 
@@ -151,5 +151,4 @@ ID3D11RenderTargetView* Device::getRenderTargetView()
 {
     return renderTargetView;
 }
-
 } // namespace fw
