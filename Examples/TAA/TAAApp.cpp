@@ -11,7 +11,7 @@
 
 namespace
 {
-float clearColor[4] = {0.0f, 0.125f, 0.3f, 1.0f};
+float clearColor[4] = {1.0f, 0.0f, 1.0f, 1.0f};
 
 float getHaltonSequenceValue(int index, int base)
 {
@@ -107,8 +107,8 @@ void TAAApp::update()
 
     // Prev frame
     DirectX::XMFLOAT4X4 jitter = identity4x4();
-    jitter(2, 0) = m_jitterX;
-    jitter(2, 1) = m_jitterY;
+    jitter(2, 0) = m_disableJitter ? 0.0f : m_jitterX;
+    jitter(2, 1) = m_disableJitter ? 0.0f : m_jitterY;
     DirectX::XMMATRIX jitterMatrix = DirectX::XMLoadFloat4x4(&jitter);
 
     {
@@ -126,7 +126,7 @@ void TAAApp::update()
     m_cameraController.update();
     m_camera.updateViewMatrix();
 
-    //m_transformation.rotate(DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f), DirectX::XM_2PI * fw::API::getTimeDelta() * 0.1f);
+    //m_transformation.rotate(DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f), DirectX::XM_2PI * fw::API::getTimeDelta() * 0.3f);
     m_transformation.updateWorldMatrix();
 
     ++m_haltonIndex;
@@ -135,8 +135,8 @@ void TAAApp::update()
     // Current frame
     m_jitterX = getWidthOffset(m_haltonIndex);
     m_jitterY = getHeightOffset(m_haltonIndex);
-    jitter(2, 0) = m_jitterX;
-    jitter(2, 1) = m_jitterY;
+    jitter(2, 0) = m_disableJitter ? 0.0f : m_jitterX;
+    jitter(2, 1) = m_disableJitter ? 0.0f : m_jitterY;
     jitterMatrix = DirectX::XMLoadFloat4x4(&jitter);
 
     {
@@ -161,37 +161,25 @@ void TAAApp::update()
 
 void TAAApp::render()
 {
-    m_blitter.blit(m_currentFrameSrv, m_prevFrameRtv);
-
+    // Render
     fw::DX::context->OMSetRenderTargets(1, &m_currentFrameRtv, m_depthmapDsv);
-
     fw::DX::context->ClearRenderTargetView(m_currentFrameRtv, clearColor);
     fw::DX::context->ClearDepthStencilView(m_depthmapDsv, D3D11_CLEAR_DEPTH, 1.0f, 0);
-
     fw::VertexBuffer* vb = m_vertexBuffer;
     fw::DX::context->IASetVertexBuffers(0, 1, &vb->vertexBuffer, &vb->stride, &vb->offset);
     fw::DX::context->IASetInputLayout(m_renderVS.getVertexLayout());
     fw::DX::context->IASetIndexBuffer(vb->indexBuffer, DXGI_FORMAT_R16_UINT, 0);
     fw::DX::context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
     fw::DX::context->VSSetShader(m_renderVS.get(), nullptr, 0);
     fw::DX::context->VSSetConstantBuffers(0, 1, &m_matrixBuffer);
     fw::DX::context->VSSetConstantBuffers(1, 1, &m_prevMatrixBuffer);
-
     fw::DX::context->PSSetShader(m_renderPS.get(), nullptr, 0);
     fw::DX::context->PSSetSamplers(0, 1, &m_samplerLinear);
     fw::DX::context->PSSetShaderResources(0, 1, &m_textureView);
-
     fw::DX::context->DrawIndexed(static_cast<UINT>(vb->numIndices), 0, 0);
-    /*
-    ID3D11RenderTargetView* const nullRtv[1] = {NULL};
-    fw::DX::context->OMSetRenderTargets(1, nullRtv, nullptr);
-    ID3D11ShaderResourceView* const nullSrv[1] = {NULL};
-    fw::DX::context->PSSetShaderResources(1, 1, nullSrv);
-    */
 
     // TAA
-    fw::DX::context->OMSetRenderTargets(1, &fw::DX::renderTargetView, nullptr);
+    fw::DX::context->OMSetRenderTargets(1, &m_outputFrameRtv, nullptr);
     fw::DX::context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     fw::DX::context->IASetInputLayout(nullptr);
     fw::DX::context->VSSetShader(m_taaVS.get(), nullptr, 0);
@@ -202,14 +190,25 @@ void TAAApp::render()
     fw::DX::context->PSSetConstantBuffers(0, 1, &m_taaParametersBuffer);
     fw::DX::context->Draw(3, 0);
 
-    ID3D11ShaderResourceView* const nullSrv[2] = {NULL, NULL};
-    fw::DX::context->PSSetShaderResources(0, 2, nullSrv);
+    ID3D11ShaderResourceView* nullSrv[] = {NULL};
+    fw::DX::context->PSSetShaderResources(1, 1, nullSrv);
+
+    ID3D11RenderTargetView* nullRtv[] = {NULL};
+    fw::DX::context->OMSetRenderTargets(1, nullRtv, nullptr);
+
+    // Blit results
+    m_blitter.blit(m_outputFrameSrv, m_prevFrameRtv);
+    m_blitter.blit(m_outputFrameSrv, fw::DX::renderTargetView);
 }
 
 void TAAApp::gui()
 {
     const char* format = "%.2f";
-    if (ImGui::SliderFloat("Blend lerp", &m_taaParameters.blendRatio, 0.1f, 1.0f, format))
+    if (ImGui::SliderFloat("Blend lerp", &m_taaParameters.blendRatio, 0.01f, 0.5f, format))
+    {
+    }
+
+    if (ImGui::Checkbox("Disable jitter", &m_disableJitter))
     {
     }
 }
@@ -255,50 +254,72 @@ bool TAAApp::createFrameTextures()
     UINT width = static_cast<UINT>(fw::API::getWindowWidth());
     UINT height = static_cast<UINT>(fw::API::getWindowHeight());
 
-    D3D11_TEXTURE2D_DESC textureDesc{};
-    textureDesc.Width = width;
-    textureDesc.Height = height;
-    textureDesc.MipLevels = 1;
-    textureDesc.ArraySize = 1;
-    textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    textureDesc.SampleDesc = DXGI_SAMPLE_DESC{1, 0};
-    textureDesc.Usage = D3D11_USAGE_DEFAULT;
-    textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
-    textureDesc.CPUAccessFlags = 0;
-    textureDesc.MiscFlags = 0;
-    HRESULT hr1 = device->CreateTexture2D(&textureDesc, NULL, &m_currentFrameTexture);
-    HRESULT hr2 = device->CreateTexture2D(&textureDesc, NULL, &m_prevFrameTexture);
-    if (FAILED(hr1) || FAILED(hr2))
-    {
-        fw::printError("Failed to create frame texture", &hr1);
-        fw::printError("Failed to create frame texture", &hr2);
-        return false;
-    }
+    DXGI_FORMAT format = DXGI_FORMAT_R32G32B32A32_FLOAT;
 
-    D3D11_RENDER_TARGET_VIEW_DESC rtvDesc{};
-    rtvDesc.Format = textureDesc.Format;
-    rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-    rtvDesc.Texture2D.MipSlice = 0;
-    hr1 = device->CreateRenderTargetView(m_currentFrameTexture, &rtvDesc, &m_currentFrameRtv);
-    hr2 = device->CreateRenderTargetView(m_prevFrameTexture, &rtvDesc, &m_prevFrameRtv);
-    if (FAILED(hr1) || FAILED(hr2))
-    {
-        fw::printError("Failed to create frame RTV", &hr1);
-        fw::printError("Failed to create frame RTV", &hr2);
-        return false;
-    }
+    auto createTexture = [format](ID3D11Texture2D*& texture) {
+        D3D11_TEXTURE2D_DESC textureDesc{};
+        textureDesc.Width = static_cast<UINT>(fw::API::getWindowWidth());
+        textureDesc.Height = static_cast<UINT>(fw::API::getWindowHeight());
+        textureDesc.MipLevels = 1;
+        textureDesc.ArraySize = 1;
+        textureDesc.Format = format;
+        textureDesc.SampleDesc = DXGI_SAMPLE_DESC{1, 0};
+        textureDesc.Usage = D3D11_USAGE_DEFAULT;
+        textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+        textureDesc.CPUAccessFlags = 0;
+        textureDesc.MiscFlags = 0;
+        HRESULT hr = fw::DX::device->CreateTexture2D(&textureDesc, NULL, &texture);
 
-    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc{};
-    srvDesc.Format = textureDesc.Format;
-    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-    srvDesc.Texture2D.MostDetailedMip = 0;
-    srvDesc.Texture2D.MipLevels = 1;
-    hr1 = device->CreateShaderResourceView(m_currentFrameTexture, &srvDesc, &m_currentFrameSrv);
-    hr2 = device->CreateShaderResourceView(m_prevFrameTexture, &srvDesc, &m_prevFrameSrv);
-    if (FAILED(hr1) || FAILED(hr2))
+        if (FAILED(hr))
+        {
+            fw::printError("Failed to create frame texture", &hr);
+            return false;
+        }
+        return true;
+    };
+
+    auto createRtv = [format](ID3D11Texture2D* texture, ID3D11RenderTargetView*& rtv) {
+        D3D11_RENDER_TARGET_VIEW_DESC rtvDesc{};
+        rtvDesc.Format = format;
+        rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+        rtvDesc.Texture2D.MipSlice = 0;
+        HRESULT hr = fw::DX::device->CreateRenderTargetView(texture, &rtvDesc, &rtv);
+        if (FAILED(hr))
+        {
+            fw::printError("Failed to create frame RTV", &hr);
+            return false;
+        }
+        return true;
+    };
+
+    auto createSrv = [format](ID3D11Texture2D* texture, ID3D11ShaderResourceView*& srv) {
+        D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc{};
+        srvDesc.Format = format;
+        srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+        srvDesc.Texture2D.MostDetailedMip = 0;
+        srvDesc.Texture2D.MipLevels = 1;
+        HRESULT hr = fw::DX::device->CreateShaderResourceView(texture, &srvDesc, &srv);
+        if (FAILED(hr))
+        {
+            fw::printError("Failed to create frame SRV", &hr);
+            return false;
+        }
+        return true;
+    };
+
+    bool ok = //
+        createTexture(m_currentFrameTexture) && //
+        createTexture(m_prevFrameTexture) && //
+        createTexture(m_outputFrameTexture) && //
+        createRtv(m_currentFrameTexture, m_currentFrameRtv) && //
+        createRtv(m_prevFrameTexture, m_prevFrameRtv) && //
+        createRtv(m_outputFrameTexture, m_outputFrameRtv) && //
+        createSrv(m_currentFrameTexture, m_currentFrameSrv) && //
+        createSrv(m_prevFrameTexture, m_prevFrameSrv) && //
+        createSrv(m_outputFrameTexture, m_outputFrameSrv);
+
+    if (!ok)
     {
-        fw::printError("Failed to create frame SRV", &hr1);
-        fw::printError("Failed to create frame SRV", &hr2);
         return false;
     }
 
@@ -314,10 +335,10 @@ bool TAAApp::createFrameTextures()
     depthmapDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
     depthmapDesc.CPUAccessFlags = 0;
     depthmapDesc.MiscFlags = 0;
-    hr1 = fw::DX::device->CreateTexture2D(&depthmapDesc, nullptr, &m_depthmapTexture);
-    if (FAILED(hr1))
+    HRESULT hr = fw::DX::device->CreateTexture2D(&depthmapDesc, nullptr, &m_depthmapTexture);
+    if (FAILED(hr))
     {
-        fw::printError("Failed to create depthmap", &hr1);
+        fw::printError("Failed to create depthmap", &hr);
         return false;
     }
 
@@ -325,10 +346,10 @@ bool TAAApp::createFrameTextures()
     depthStencilViewDesc.Format = DXGI_FORMAT_D32_FLOAT;
     depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
     depthStencilViewDesc.Flags = 0;
-    hr1 = fw::DX::device->CreateDepthStencilView(m_depthmapTexture, &depthStencilViewDesc, &m_depthmapDsv);
-    if (FAILED(hr1))
+    hr = fw::DX::device->CreateDepthStencilView(m_depthmapTexture, &depthStencilViewDesc, &m_depthmapDsv);
+    if (FAILED(hr))
     {
-        fw::printError("Failed to create dsv", &hr1);
+        fw::printError("Failed to create dsv", &hr);
         return false;
     }
 

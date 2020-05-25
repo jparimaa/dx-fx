@@ -35,7 +35,7 @@ private:
 
     struct TAAParameters
     {
-        float blendRatio = 0.8f;
+        float blendRatio = 0.05f;
         float padding[3];
     };
 
@@ -49,7 +49,7 @@ private:
     fw::AssetManager m_assetManager;
     fw::VertexBuffer* m_vertexBuffer = nullptr;
 
-    TAAParameters m_taaParameters{0.8f};
+    TAAParameters m_taaParameters;
 
     ID3D11Buffer* m_matrixBuffer = nullptr;
     ID3D11Buffer* m_prevMatrixBuffer = nullptr;
@@ -69,6 +69,10 @@ private:
     ID3D11RenderTargetView* m_prevFrameRtv = nullptr;
     ID3D11ShaderResourceView* m_prevFrameSrv = nullptr;
 
+    ID3D11Texture2D* m_outputFrameTexture = nullptr;
+    ID3D11RenderTargetView* m_outputFrameRtv = nullptr;
+    ID3D11ShaderResourceView* m_outputFrameSrv = nullptr;
+
     ID3D11Texture2D* m_motionTexture = nullptr;
     ID3D11RenderTargetView* m_motionRtv = nullptr;
     ID3D11ShaderResourceView* m_motionSrv = nullptr;
@@ -76,6 +80,8 @@ private:
     int m_haltonIndex = 0;
     float m_jitterX = 0.0f;
     float m_jitterY = 0.0f;
+
+    bool m_disableJitter = false;
 
     fw::Blitter m_blitter;
 
