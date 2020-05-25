@@ -11,7 +11,8 @@
 
 namespace
 {
-float clearColor[4] = {1.0f, 0.0f, 1.0f, 1.0f};
+const float clearColor[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+const float clearMotion[2] = {0.0f, 0.0f};
 
 float getHaltonSequenceValue(int index, int base)
 {
@@ -76,9 +77,8 @@ bool TAAApp::initialize()
     ok = ok && m_taaVS.create(taaShaderWchar.getWchar(), "VS", "vs_4_0");
     ok = ok && m_taaPS.create(taaShaderWchar.getWchar(), "PS", "ps_4_0");
     ok = ok && createConstantBuffers();
-    ok = ok && m_assetManager.getLinearSampler(&m_samplerLinear);
+    ok = ok && m_assetManager.getLinearSampler(&m_linearSampler);
     ok = ok && createFrameTextures();
-    ok = ok && createMotionTexture();
     assert(ok);
 
     m_camera.getTransformation().position = DirectX::XMVectorSet(0.0f, 1.5f, -3.0f, 0.0f);
@@ -126,7 +126,7 @@ void TAAApp::update()
     m_cameraController.update();
     m_camera.updateViewMatrix();
 
-    //m_transformation.rotate(DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f), DirectX::XM_2PI * fw::API::getTimeDelta() * 0.3f);
+    m_transformation.rotate(DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f), DirectX::XM_2PI * fw::API::getTimeDelta() * 0.3f);
     m_transformation.updateWorldMatrix();
 
     ++m_haltonIndex;
@@ -161,37 +161,42 @@ void TAAApp::update()
 
 void TAAApp::render()
 {
+    ID3D11DeviceContext* context = fw::DX::context;
+    context->ClearRenderTargetView(m_currentFrameRtv, clearColor);
+    context->ClearRenderTargetView(m_motionRtv, clearMotion);
+    context->ClearDepthStencilView(m_depthmapDsv, D3D11_CLEAR_DEPTH, 1.0f, 0);
+
     // Render
-    fw::DX::context->OMSetRenderTargets(1, &m_currentFrameRtv, m_depthmapDsv);
-    fw::DX::context->ClearRenderTargetView(m_currentFrameRtv, clearColor);
-    fw::DX::context->ClearDepthStencilView(m_depthmapDsv, D3D11_CLEAR_DEPTH, 1.0f, 0);
+    ID3D11RenderTargetView* rtvs[] = {m_currentFrameRtv, m_motionRtv};
+    context->OMSetRenderTargets(2, rtvs, m_depthmapDsv);
     fw::VertexBuffer* vb = m_vertexBuffer;
-    fw::DX::context->IASetVertexBuffers(0, 1, &vb->vertexBuffer, &vb->stride, &vb->offset);
-    fw::DX::context->IASetInputLayout(m_renderVS.getVertexLayout());
-    fw::DX::context->IASetIndexBuffer(vb->indexBuffer, DXGI_FORMAT_R16_UINT, 0);
-    fw::DX::context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    fw::DX::context->VSSetShader(m_renderVS.get(), nullptr, 0);
-    fw::DX::context->VSSetConstantBuffers(0, 1, &m_matrixBuffer);
-    fw::DX::context->VSSetConstantBuffers(1, 1, &m_prevMatrixBuffer);
-    fw::DX::context->PSSetShader(m_renderPS.get(), nullptr, 0);
-    fw::DX::context->PSSetSamplers(0, 1, &m_samplerLinear);
-    fw::DX::context->PSSetShaderResources(0, 1, &m_textureView);
-    fw::DX::context->DrawIndexed(static_cast<UINT>(vb->numIndices), 0, 0);
+    context->IASetVertexBuffers(0, 1, &vb->vertexBuffer, &vb->stride, &vb->offset);
+    context->IASetInputLayout(m_renderVS.getVertexLayout());
+    context->IASetIndexBuffer(vb->indexBuffer, DXGI_FORMAT_R16_UINT, 0);
+    context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    context->VSSetShader(m_renderVS.get(), nullptr, 0);
+    context->VSSetConstantBuffers(0, 1, &m_matrixBuffer);
+    context->VSSetConstantBuffers(1, 1, &m_prevMatrixBuffer);
+    context->PSSetShader(m_renderPS.get(), nullptr, 0);
+    context->PSSetSamplers(0, 1, &m_linearSampler);
+    context->PSSetShaderResources(0, 1, &m_textureView);
+    context->DrawIndexed(static_cast<UINT>(vb->numIndices), 0, 0);
 
     // TAA
-    fw::DX::context->OMSetRenderTargets(1, &m_outputFrameRtv, nullptr);
-    fw::DX::context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    fw::DX::context->IASetInputLayout(nullptr);
-    fw::DX::context->VSSetShader(m_taaVS.get(), nullptr, 0);
-    fw::DX::context->PSSetShader(m_taaPS.get(), nullptr, 0);
-    fw::DX::context->PSSetSamplers(0, 1, &m_samplerLinear);
-    fw::DX::context->PSSetShaderResources(0, 1, &m_currentFrameSrv);
-    fw::DX::context->PSSetShaderResources(1, 1, &m_prevFrameSrv);
-    fw::DX::context->PSSetConstantBuffers(0, 1, &m_taaParametersBuffer);
-    fw::DX::context->Draw(3, 0);
+    context->OMSetRenderTargets(1, &m_outputFrameRtv, nullptr);
+    context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    context->IASetInputLayout(nullptr);
+    context->VSSetShader(m_taaVS.get(), nullptr, 0);
+    context->PSSetShader(m_taaPS.get(), nullptr, 0);
+    context->PSSetSamplers(0, 1, &m_linearSampler);
+    context->PSSetShaderResources(0, 1, &m_currentFrameSrv);
+    context->PSSetShaderResources(1, 1, &m_prevFrameSrv);
+    context->PSSetShaderResources(2, 1, &m_motionSrv);
+    context->PSSetConstantBuffers(0, 1, &m_taaParametersBuffer);
+    context->Draw(3, 0);
 
-    ID3D11ShaderResourceView* nullSrv[] = {NULL};
-    fw::DX::context->PSSetShaderResources(1, 1, nullSrv);
+    ID3D11ShaderResourceView* nullSrv[] = {NULL, NULL, NULL};
+    context->PSSetShaderResources(0, 3, nullSrv);
 
     ID3D11RenderTargetView* nullRtv[] = {NULL};
     fw::DX::context->OMSetRenderTargets(1, nullRtv, nullptr);
@@ -204,13 +209,20 @@ void TAAApp::render()
 void TAAApp::gui()
 {
     const char* format = "%.2f";
-    if (ImGui::SliderFloat("Blend lerp", &m_taaParameters.blendRatio, 0.01f, 0.5f, format))
-    {
-    }
+    ImGui::SliderFloat("Blend lerp", &m_taaParameters.blendRatio, 0.01f, 0.5f, format);
+    ImGui::Checkbox("Disable jitter", &m_disableJitter);
 
-    if (ImGui::Checkbox("Disable jitter", &m_disableJitter))
+    static int counter = 0;
+    static float frameTime = 0.0f;
+    static float fps = 0.0f;
+    ++counter;
+    if (counter > 1000)
     {
+        counter = 0;
+        frameTime = 1000.0f / ImGui::GetIO().Framerate;
+        fps = ImGui::GetIO().Framerate;
     }
+    ImGui::Text("%.3f ms/frame (%.1f FPS)", frameTime, fps);
 }
 
 bool TAAApp::createConstantBuffers()
@@ -249,14 +261,7 @@ bool TAAApp::createConstantBuffers()
 
 bool TAAApp::createFrameTextures()
 {
-    ID3D11Device* device = fw::DX::device;
-
-    UINT width = static_cast<UINT>(fw::API::getWindowWidth());
-    UINT height = static_cast<UINT>(fw::API::getWindowHeight());
-
-    DXGI_FORMAT format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-
-    auto createTexture = [format](ID3D11Texture2D*& texture) {
+    auto createTexture = [](ID3D11Texture2D*& texture, DXGI_FORMAT format) {
         D3D11_TEXTURE2D_DESC textureDesc{};
         textureDesc.Width = static_cast<UINT>(fw::API::getWindowWidth());
         textureDesc.Height = static_cast<UINT>(fw::API::getWindowHeight());
@@ -278,7 +283,7 @@ bool TAAApp::createFrameTextures()
         return true;
     };
 
-    auto createRtv = [format](ID3D11Texture2D* texture, ID3D11RenderTargetView*& rtv) {
+    auto createRtv = [](ID3D11Texture2D* texture, ID3D11RenderTargetView*& rtv, DXGI_FORMAT format) {
         D3D11_RENDER_TARGET_VIEW_DESC rtvDesc{};
         rtvDesc.Format = format;
         rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
@@ -292,7 +297,7 @@ bool TAAApp::createFrameTextures()
         return true;
     };
 
-    auto createSrv = [format](ID3D11Texture2D* texture, ID3D11ShaderResourceView*& srv) {
+    auto createSrv = [](ID3D11Texture2D* texture, ID3D11ShaderResourceView*& srv, DXGI_FORMAT format) {
         D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc{};
         srvDesc.Format = format;
         srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
@@ -307,16 +312,22 @@ bool TAAApp::createFrameTextures()
         return true;
     };
 
+    DXGI_FORMAT format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+    DXGI_FORMAT motionFormat = DXGI_FORMAT_R16G16_FLOAT;
+
     bool ok = //
-        createTexture(m_currentFrameTexture) && //
-        createTexture(m_prevFrameTexture) && //
-        createTexture(m_outputFrameTexture) && //
-        createRtv(m_currentFrameTexture, m_currentFrameRtv) && //
-        createRtv(m_prevFrameTexture, m_prevFrameRtv) && //
-        createRtv(m_outputFrameTexture, m_outputFrameRtv) && //
-        createSrv(m_currentFrameTexture, m_currentFrameSrv) && //
-        createSrv(m_prevFrameTexture, m_prevFrameSrv) && //
-        createSrv(m_outputFrameTexture, m_outputFrameSrv);
+        createTexture(m_currentFrameTexture, format) && //
+        createTexture(m_prevFrameTexture, format) && //
+        createTexture(m_outputFrameTexture, format) && //
+        createTexture(m_motionTexture, motionFormat) && //
+        createRtv(m_currentFrameTexture, m_currentFrameRtv, format) && //
+        createRtv(m_prevFrameTexture, m_prevFrameRtv, format) && //
+        createRtv(m_outputFrameTexture, m_outputFrameRtv, format) && //
+        createRtv(m_motionTexture, m_motionRtv, motionFormat) && //
+        createSrv(m_currentFrameTexture, m_currentFrameSrv, format) && //
+        createSrv(m_prevFrameTexture, m_prevFrameSrv, format) && //
+        createSrv(m_outputFrameTexture, m_outputFrameSrv, format) && //
+        createSrv(m_motionTexture, m_motionSrv, motionFormat);
 
     if (!ok)
     {
@@ -325,8 +336,8 @@ bool TAAApp::createFrameTextures()
 
     // Depth
     D3D11_TEXTURE2D_DESC depthmapDesc{};
-    depthmapDesc.Width = width;
-    depthmapDesc.Height = height;
+    depthmapDesc.Width = static_cast<UINT>(fw::API::getWindowWidth());
+    depthmapDesc.Height = static_cast<UINT>(fw::API::getWindowHeight());
     depthmapDesc.MipLevels = 1;
     depthmapDesc.ArraySize = 1;
     depthmapDesc.Format = DXGI_FORMAT_R32_TYPELESS;
@@ -350,54 +361,6 @@ bool TAAApp::createFrameTextures()
     if (FAILED(hr))
     {
         fw::printError("Failed to create dsv", &hr);
-        return false;
-    }
-
-    return true;
-}
-
-bool TAAApp::createMotionTexture()
-{
-    ID3D11Device* device = fw::DX::device;
-
-    D3D11_TEXTURE2D_DESC textureDesc{};
-    textureDesc.Width = fw::API::getWindowWidth();
-    textureDesc.Height = fw::API::getWindowWidth();
-    textureDesc.MipLevels = 1;
-    textureDesc.ArraySize = 1;
-    textureDesc.Format = DXGI_FORMAT_R16G16_FLOAT;
-    textureDesc.SampleDesc.Count = 1;
-    textureDesc.Usage = D3D11_USAGE_DEFAULT;
-    textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
-    textureDesc.CPUAccessFlags = 0;
-    textureDesc.MiscFlags = 0;
-    HRESULT hr = device->CreateTexture2D(&textureDesc, NULL, &m_motionTexture);
-    if (FAILED(hr))
-    {
-        fw::printError("Failed to create prev frame texture", &hr);
-        return false;
-    }
-
-    D3D11_RENDER_TARGET_VIEW_DESC rtvDesc{};
-    rtvDesc.Format = textureDesc.Format;
-    rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-    rtvDesc.Texture2D.MipSlice = 0;
-    hr = device->CreateRenderTargetView(m_motionTexture, &rtvDesc, &m_motionRtv);
-    if (FAILED(hr))
-    {
-        fw::printError("Failed to create prev frame RTV", &hr);
-        return false;
-    }
-
-    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc{};
-    srvDesc.Format = textureDesc.Format;
-    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-    srvDesc.Texture2D.MostDetailedMip = 0;
-    srvDesc.Texture2D.MipLevels = 1;
-    hr = device->CreateShaderResourceView(m_motionTexture, &srvDesc, &m_motionSrv);
-    if (FAILED(hr))
-    {
-        fw::printError("Failed to create prev frame SRV", &hr);
         return false;
     }
 

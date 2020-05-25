@@ -35,7 +35,7 @@ private:
 
     struct TAAParameters
     {
-        float blendRatio = 0.05f;
+        float blendRatio = 0.01f;
         float padding[3];
     };
 
@@ -56,7 +56,7 @@ private:
     ID3D11Buffer* m_taaParametersBuffer = nullptr;
 
     ID3D11ShaderResourceView* m_textureView = nullptr;
-    ID3D11SamplerState* m_samplerLinear = nullptr;
+    ID3D11SamplerState* m_linearSampler = nullptr;
 
     ID3D11Texture2D* m_currentFrameTexture = nullptr;
     ID3D11RenderTargetView* m_currentFrameRtv = nullptr;
@@ -87,5 +87,4 @@ private:
 
     bool createConstantBuffers();
     bool createFrameTextures();
-    bool createMotionTexture();
 };

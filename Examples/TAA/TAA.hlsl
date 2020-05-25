@@ -15,6 +15,7 @@ VS_OUTPUT VS(uint id
 
 Texture2D currentFrameTex : register(t[0]);
 Texture2D prevFrameTex : register(t[1]);
+Texture2D motionTex : register(t[2]);
 SamplerState linearSampler : register(s[0]);
 
 cbuffer TAAParameters : register(b[0])
@@ -27,6 +28,7 @@ float4 PS(VS_OUTPUT input) :
     SV_Target
 {
     float4 currentFrameColor = currentFrameTex.Sample(linearSampler, input.Tex);
-    float4 prevFrameColor = prevFrameTex.Sample(linearSampler, input.Tex);
+    float2 motion = motionTex.Sample(linearSampler, input.Tex);
+    float4 prevFrameColor = prevFrameTex.Sample(linearSampler, input.Tex + motion);
     return lerp(prevFrameColor, currentFrameColor, blendRatio);
 }
