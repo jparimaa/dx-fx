@@ -22,15 +22,33 @@ cbuffer TAAParameters : register(b[0])
 {
     float blendRatio;
     int enableMotionBuffer;
-    float2 padding;
+    float2 texelSize;
 }
 
 float4 PS(VS_OUTPUT input) :
     SV_Target
 {
-    float4 currentFrameColor = currentFrameTex.Sample(linearSampler, input.Tex);
+    // Simple neighbor min-max clamp to avoid ghosting. Could do fancier stuff here.
+    float4 colorCenter = currentFrameTex.Sample(linearSampler, input.Tex);
+    /*
+    Same as below
+    float4 colorUp = currentFrameTex.Sample(linearSampler, input.Tex + float2(0.0, texelSize.y));
+    float4 colorRight = currentFrameTex.Sample(linearSampler, input.Tex + float2(texelSize.x, 0.0));
+    float4 colorDown = currentFrameTex.Sample(linearSampler, input.Tex + float2(0.0, -texelSize.y));
+    float4 colorLeft = currentFrameTex.Sample(linearSampler, input.Tex + float2(-texelSize.x, 0.0));
+    */
+    float4 colorUp = currentFrameTex.Sample(linearSampler, input.Tex, int2(0, 1));
+    float4 colorRight = currentFrameTex.Sample(linearSampler, input.Tex, int2(1, 0));
+    float4 colorDown = currentFrameTex.Sample(linearSampler, input.Tex, int2(0, -1));
+    float4 colorLeft = currentFrameTex.Sample(linearSampler, input.Tex, int2(-1, 0));
+
+    float4 minColor = min(colorCenter, min(colorUp, min(colorRight, min(colorDown, colorLeft))));
+    float4 maxColor = max(colorCenter, max(colorUp, max(colorRight, max(colorDown, colorLeft))));
+
     float2 motion = motionTex.Sample(linearSampler, input.Tex);
     motion *= float(enableMotionBuffer);
-    float4 prevFrameColor = prevFrameTex.Sample(linearSampler, input.Tex + motion);
-    return lerp(prevFrameColor, currentFrameColor, blendRatio);
+    float4 historyColor = prevFrameTex.Sample(linearSampler, input.Tex + motion);
+    float4 clampedHistoryColor = clamp(historyColor, minColor, maxColor);
+
+    return lerp(clampedHistoryColor, colorCenter, blendRatio);
 }

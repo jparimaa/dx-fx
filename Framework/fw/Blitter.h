@@ -21,6 +21,6 @@ private:
     fw::VertexShader vertexShader;
     fw::PixelShader pixelShader;
 
-    ID3D11SamplerState* samplerLinear = nullptr;
+    ID3D11SamplerState* pointSampler = nullptr;
 };
 } // namespace fw

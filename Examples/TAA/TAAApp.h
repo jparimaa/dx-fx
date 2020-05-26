@@ -37,7 +37,7 @@ private:
     {
         float blendRatio = 0.05f;
         int enableMotionBuffer = 1;
-        float padding[2];
+        float texelSize[2];
     };
 
     fw::PerspectiveCamera m_camera;
@@ -85,7 +85,8 @@ private:
     bool m_disableJitter = false;
     bool m_enableMotionBuffer = true;
     bool m_rotate = false;
-    bool m_enableMovement = true;
+    bool m_enableMovement = false;
+    bool m_enableTAA = false;
 
     fw::Blitter m_blitter;
 

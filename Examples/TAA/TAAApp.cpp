@@ -93,6 +93,9 @@ bool TAAApp::initialize()
     assert(m_textureView != nullptr);
     assert(m_vertexBuffer != nullptr);
 
+    m_taaParameters.texelSize[0] = 1.0f / fw::API::getWindowWidth();
+    m_taaParameters.texelSize[1] = 1.0f / fw::API::getWindowHeight();
+
     std::cout << "TAAApp initialization completed\n";
 
     return true;
@@ -134,7 +137,7 @@ void TAAApp::update()
         }
         else
         {
-            DirectX::XMFLOAT3 p(0.0f, std::sin(fw::API::getTimeSinceStart() * 2.0f) * 0.3f, 0.0f);
+            DirectX::XMFLOAT3 p(0.0f, std::sin(fw::API::getTimeSinceStart()) * 0.3f, 0.0f);
             m_transformation.position = XMLoadFloat3(&p);
         }
     }
@@ -194,33 +197,45 @@ void TAAApp::render()
     context->DrawIndexed(static_cast<UINT>(vb->numIndices), 0, 0);
 
     // TAA
-    context->OMSetRenderTargets(1, &m_outputFrameRtv, nullptr);
-    context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    context->IASetInputLayout(nullptr);
-    context->VSSetShader(m_taaVS.get(), nullptr, 0);
-    context->PSSetShader(m_taaPS.get(), nullptr, 0);
-    context->PSSetSamplers(0, 1, &m_linearSampler);
-    context->PSSetShaderResources(0, 1, &m_currentFrameSrv);
-    context->PSSetShaderResources(1, 1, &m_prevFrameSrv);
-    context->PSSetShaderResources(2, 1, &m_motionSrv);
-    context->PSSetConstantBuffers(0, 1, &m_taaParametersBuffer);
-    context->Draw(3, 0);
+    if (m_enableTAA)
+    {
+        context->OMSetRenderTargets(1, &m_outputFrameRtv, nullptr);
+        context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        context->IASetInputLayout(nullptr);
+        context->VSSetShader(m_taaVS.get(), nullptr, 0);
+        context->PSSetShader(m_taaPS.get(), nullptr, 0);
+        context->PSSetSamplers(0, 1, &m_linearSampler);
+        context->PSSetShaderResources(0, 1, &m_currentFrameSrv);
+        context->PSSetShaderResources(1, 1, &m_prevFrameSrv);
+        context->PSSetShaderResources(2, 1, &m_motionSrv);
+        context->PSSetConstantBuffers(0, 1, &m_taaParametersBuffer);
+        context->Draw(3, 0);
 
-    ID3D11ShaderResourceView* nullSrv[] = {NULL, NULL, NULL};
-    context->PSSetShaderResources(0, 3, nullSrv);
+        ID3D11ShaderResourceView* nullSrv[] = {NULL, NULL, NULL};
+        context->PSSetShaderResources(0, 3, nullSrv);
 
-    ID3D11RenderTargetView* nullRtv[] = {NULL};
-    fw::DX::context->OMSetRenderTargets(1, nullRtv, nullptr);
+        ID3D11RenderTargetView* nullRtv[] = {NULL};
+        fw::DX::context->OMSetRenderTargets(1, nullRtv, nullptr);
 
-    // Blit results
-    m_blitter.blit(m_outputFrameSrv, m_prevFrameRtv);
-    m_blitter.blit(m_outputFrameSrv, fw::DX::renderTargetView);
+        m_blitter.blit(m_outputFrameSrv, m_prevFrameRtv);
+        m_blitter.blit(m_outputFrameSrv, fw::DX::renderTargetView);
+    }
+    else
+    {
+        ID3D11ShaderResourceView* nullSrv[] = {NULL, NULL, NULL};
+        context->PSSetShaderResources(0, 3, nullSrv);
+
+        ID3D11RenderTargetView* nullRtv[] = {NULL};
+        fw::DX::context->OMSetRenderTargets(1, nullRtv, nullptr);
+
+        m_blitter.blit(m_currentFrameSrv, fw::DX::renderTargetView);
+    }
 }
 
 void TAAApp::gui()
 {
     const char* format = "%.2f";
-    ImGui::SliderFloat("Blend lerp", &m_taaParameters.blendRatio, 0.01f, 0.5f, format);
+    ImGui::SliderFloat("Blend lerp", &m_taaParameters.blendRatio, 0.01f, 1.0f, format);
     ImGui::Checkbox("Disable jitter", &m_disableJitter);
 
     if (ImGui::Checkbox("Enable motion buffer", &m_enableMotionBuffer))
@@ -231,6 +246,7 @@ void TAAApp::gui()
 
     ImGui::Checkbox("Enable movement", &m_enableMovement);
     ImGui::Checkbox("Rotate", &m_rotate);
+    ImGui::Checkbox("Enable TAA", &m_enableTAA);
 }
 
 bool TAAApp::createConstantBuffers()
