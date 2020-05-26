@@ -24,7 +24,7 @@ struct VS_INPUT
 struct VS_OUTPUT
 {
     float4 Pos : SV_POSITION;
-    float4 CurrPos : POSITION0;
+    float4 CurrentPos : POSITION0;
     float4 PrevPos : POSITION1;
     float4 Normal : NORMAL;
     float2 Tex : TEXCOORD0;
@@ -36,8 +36,8 @@ VS_OUTPUT VS(VS_INPUT input)
     output.Pos = mul(input.Pos, World);
     output.Pos = mul(output.Pos, View);
     output.Pos = mul(output.Pos, Projection);
-    output.CurrPos = output.Pos;
-    output.Pos = mul(output.Pos, Jitter);
+    output.CurrentPos = output.Pos;
+    output.Pos = mul(output.Pos, Jitter); // Jitter can be combined with Projection
     output.PrevPos = mul(input.Pos, PrevWorld);
     output.PrevPos = mul(output.PrevPos, PrevView);
     output.PrevPos = mul(output.PrevPos, PrevProjection);
@@ -61,7 +61,7 @@ PS_OUTPUT PS(VS_OUTPUT input) :
     PS_OUTPUT output;
     output.Color = diffuseTex.Sample(linearSampler, input.Tex);
 
-    float2 currentPos = input.CurrPos.xy / input.CurrPos.w;
+    float2 currentPos = input.CurrentPos.xy / input.CurrentPos.w;
     float2 prevPos = input.PrevPos.xy / input.PrevPos.w;
     output.Motion = (prevPos - currentPos) * float2(0.5, -0.5);
     return output;

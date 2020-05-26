@@ -21,7 +21,8 @@ SamplerState linearSampler : register(s[0]);
 cbuffer TAAParameters : register(b[0])
 {
     float blendRatio;
-    float3 padding;
+    int enableMotionBuffer;
+    float2 padding;
 }
 
 float4 PS(VS_OUTPUT input) :
@@ -29,6 +30,7 @@ float4 PS(VS_OUTPUT input) :
 {
     float4 currentFrameColor = currentFrameTex.Sample(linearSampler, input.Tex);
     float2 motion = motionTex.Sample(linearSampler, input.Tex);
+    motion *= float(enableMotionBuffer);
     float4 prevFrameColor = prevFrameTex.Sample(linearSampler, input.Tex + motion);
     return lerp(prevFrameColor, currentFrameColor, blendRatio);
 }

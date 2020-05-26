@@ -35,8 +35,9 @@ private:
 
     struct TAAParameters
     {
-        float blendRatio = 0.01f;
-        float padding[3];
+        float blendRatio = 0.05f;
+        int enableMotionBuffer = 1;
+        float padding[2];
     };
 
     fw::PerspectiveCamera m_camera;
@@ -82,6 +83,9 @@ private:
     float m_jitterY = 0.0f;
 
     bool m_disableJitter = false;
+    bool m_enableMotionBuffer = true;
+    bool m_rotate = false;
+    bool m_enableMovement = true;
 
     fw::Blitter m_blitter;
 

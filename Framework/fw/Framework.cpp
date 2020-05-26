@@ -82,7 +82,7 @@ int Framework::execute()
             app->gui();
             ImGui::Render();
             ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-            DX::swapChain->Present(0, 0);
+            DX::swapChain->Present(1, 0);
         }
     }
     return static_cast<int>(msg.wParam);

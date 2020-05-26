@@ -126,7 +126,18 @@ void TAAApp::update()
     m_cameraController.update();
     m_camera.updateViewMatrix();
 
-    m_transformation.rotate(DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f), DirectX::XM_2PI * fw::API::getTimeDelta() * 0.3f);
+    if (m_enableMovement)
+    {
+        if (m_rotate)
+        {
+            m_transformation.rotate(DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f), DirectX::XM_2PI * fw::API::getTimeDelta() * 0.3f);
+        }
+        else
+        {
+            DirectX::XMFLOAT3 p(0.0f, std::sin(fw::API::getTimeSinceStart() * 2.0f) * 0.3f, 0.0f);
+            m_transformation.position = XMLoadFloat3(&p);
+        }
+    }
     m_transformation.updateWorldMatrix();
 
     ++m_haltonIndex;
@@ -212,17 +223,14 @@ void TAAApp::gui()
     ImGui::SliderFloat("Blend lerp", &m_taaParameters.blendRatio, 0.01f, 0.5f, format);
     ImGui::Checkbox("Disable jitter", &m_disableJitter);
 
-    static int counter = 0;
-    static float frameTime = 0.0f;
-    static float fps = 0.0f;
-    ++counter;
-    if (counter > 1000)
+    if (ImGui::Checkbox("Enable motion buffer", &m_enableMotionBuffer))
     {
-        counter = 0;
-        frameTime = 1000.0f / ImGui::GetIO().Framerate;
-        fps = ImGui::GetIO().Framerate;
+        m_taaParameters.enableMotionBuffer = static_cast<int>(m_enableMotionBuffer);
+        assert(m_taaParameters.enableMotionBuffer == 1 || m_taaParameters.enableMotionBuffer == 0);
     }
-    ImGui::Text("%.3f ms/frame (%.1f FPS)", frameTime, fps);
+
+    ImGui::Checkbox("Enable movement", &m_enableMovement);
+    ImGui::Checkbox("Rotate", &m_rotate);
 }
 
 bool TAAApp::createConstantBuffers()
