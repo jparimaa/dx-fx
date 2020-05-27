@@ -23,7 +23,7 @@ Device::~Device()
     release(depthStencilView);
 }
 
-bool Device::initialize(HWND windowHandle)
+bool Device::initialize(HWND windowHandle, Config config)
 {
     RECT rc;
     GetClientRect(windowHandle, &rc);
@@ -55,7 +55,7 @@ bool Device::initialize(HWND windowHandle)
     sd.BufferDesc.RefreshRate.Denominator = 1;
     sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     sd.OutputWindow = windowHandle;
-    sd.SampleDesc.Count = 4;
+    sd.SampleDesc.Count = config.sampleCount;
     sd.SampleDesc.Quality = (UINT)D3D11_STANDARD_MULTISAMPLE_PATTERN;
     sd.Windowed = TRUE;
 
@@ -88,7 +88,7 @@ bool Device::initialize(HWND windowHandle)
     backBuffer->Release();
     if (FAILED(hr))
     {
-        printError("Failed to create render target view", &hr);
+        printError("Failed to create back buffer RTV", &hr);
         return false;
     }
 
@@ -99,7 +99,7 @@ bool Device::initialize(HWND windowHandle)
     depthDesc.MipLevels = 1;
     depthDesc.ArraySize = 1;
     depthDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-    depthDesc.SampleDesc.Count = 4;
+    depthDesc.SampleDesc.Count = config.sampleCount;
     depthDesc.SampleDesc.Quality = (UINT)D3D11_STANDARD_MULTISAMPLE_PATTERN;
     depthDesc.Usage = D3D11_USAGE_DEFAULT;
     depthDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
@@ -151,5 +151,4 @@ ID3D11RenderTargetView* Device::getRenderTargetView()
 {
     return renderTargetView;
 }
-
 } // namespace fw

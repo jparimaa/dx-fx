@@ -155,4 +155,29 @@ bool AssetManager::getLinearSampler(ID3D11SamplerState** sampler)
     return true;
 }
 
+bool AssetManager::getPointSampler(ID3D11SamplerState** sampler)
+{
+    if (samplerPoint)
+    {
+        *sampler = samplerPoint;
+    }
+    D3D11_SAMPLER_DESC sampDesc;
+    ZeroMemory(&sampDesc, sizeof(sampDesc));
+    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    sampDesc.MinLOD = 0;
+    sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+    HRESULT hr = fw::DX::device->CreateSamplerState(&sampDesc, &samplerPoint);
+    if (FAILED(hr))
+    {
+        printError("Failed to create sampler state", &hr);
+        return false;
+    }
+    *sampler = samplerPoint;
+    return true;
+}
+
 } // namespace fw
