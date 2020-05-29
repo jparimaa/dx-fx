@@ -1,47 +1,20 @@
-cbuffer MatrixBuffer : register(b0)
-{
-    matrix World;
-    matrix View;
-    matrix Projection;
-}
-
-struct VS_INPUT
-{
-    float4 Pos : POSITION;
-    float4 Normal : NORMAL;
-    float2 Tex : TEXCOORD0;
-};
-
 struct VS_OUTPUT
 {
     float4 Pos : SV_POSITION;
-    float4 Normal : NORMAL;
     float2 Tex : TEXCOORD0;
 };
 
-VS_OUTPUT VS(VS_INPUT input)
+VS_OUTPUT VS(uint id
+             : SV_VertexID)
 {
-    VS_OUTPUT output = (VS_OUTPUT)0;
-    output.Pos = mul(input.Pos, World);
-    output.Pos = mul(output.Pos, View);
-    output.Pos = mul(output.Pos, Projection);
-    output.Normal = mul(input.Normal, World);
-    output.Tex = input.Tex;
+    VS_OUTPUT output;
+    output.Tex = float2((id << 1) & 2, id & 2);
+    output.Pos = float4(output.Tex * float2(2, -2) + float2(-1, 1), 0, 1);
     return output;
 }
 
-Texture2D diffuseTex : register(t[0]);
-SamplerState linearSampler : register(s[0]);
-
-struct PS_OUTPUT
-{
-    float4 Color : SV_Target0;
-};
-
-PS_OUTPUT PS(VS_OUTPUT input) :
+float4 PS(VS_OUTPUT input) :
     SV_Target
 {
-    PS_OUTPUT output;
-    output.Color = diffuseTex.Sample(linearSampler, input.Tex);
-    return output;
+    return float4(input.Tex.x, input.Tex.y, 0.2, 1.0);
 }
