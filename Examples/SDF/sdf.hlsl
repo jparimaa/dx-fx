@@ -16,11 +16,30 @@ VS_OUTPUT VS(uint id
 static const float3 c_cameraPos = {0, 0, 0};
 static const float c_epsilon = 0.0001;
 
+cbuffer ConstantBuffer : register(b[0])
+{
+    float time;
+    float3 padding;
+}
+
+float smoothUnion(float a, float b, float k = 32)
+{
+    float res = exp(-k * a) + exp(-k * b);
+    return -log(max(0.0001, res)) / k;
+}
+
+float sphereSDF(in float3 p, in float3 center, in float radius)
+{
+    return distance(p, center) - radius;
+}
+
 float sceneSDF(in float3 p)
 {
-    const float3 sphereCenter = {0.0, 0.0, 10.0};
-    const float sphereRadius = 2.0;
-    return distance(p, sphereCenter) - sphereRadius;
+    float spherePos = 3.5 * sin(time); 
+    float a = sphereSDF(p, float3(spherePos, 0.0, 10.0), 2.0);
+    float b = sphereSDF(p, float3(-spherePos, 0.0, 10.0), 2.0);
+    float c = sphereSDF(p, float3(0.0, spherePos, 10.0), 2.0);
+    return smoothUnion(smoothUnion(a, b, 1), c, 1);
 }
 
 float3 estimateNormal(float3 p)
@@ -70,7 +89,7 @@ float3 simpleLambert(float3 normal)
 float4 PS(VS_OUTPUT input) :
     SV_Target
 {
-    const float2 uvNormYUp = (input.Tex - 0.5) * 2.0 * float2(1.0,-1.0);
+    const float2 uvNormYUp = (input.Tex - 0.5) * 2.0 * float2(1.0, -1.0);
     const float3 viewDir = float3(uvNormYUp.x, uvNormYUp.y, 1.0) - c_cameraPos;
     float4 hit = raymarch(viewDir);
     if (hit.a > 0.0)
@@ -80,5 +99,5 @@ float4 PS(VS_OUTPUT input) :
         return float4(c, 1.0);
     }
 
-    return float4(uvNormYUp, 0.2, 1.0);
+    return float4(uvNormYUp, sin(time), 1.0);
 }

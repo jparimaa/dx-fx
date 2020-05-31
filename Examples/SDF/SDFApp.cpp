@@ -24,6 +24,9 @@ bool SDFApp::initialize()
 
     m_shaderReloader.init(fw::DX::device, shaderFile, "PS", "ps_4_0");
 
+    bool ok = createConstantBuffer();
+    assert(ok);
+
     std::cout << "SDFApp initialization completed\n";
 
     return true;
@@ -36,20 +39,45 @@ void SDFApp::update()
     {
         fw::API::quit();
     }
+
+    D3D11_MAPPED_SUBRESOURCE MappedResource;
+    fw::DX::context->Map(m_constantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource);
+    Constants* constantsData = (Constants*)MappedResource.pData;
+    constantsData->time = fw::API::getTimeSinceStart();
+    fw::DX::context->Unmap(m_constantBuffer, 0);
 }
 
 void SDFApp::render()
 {
-    fw::DX::context->ClearRenderTargetView(fw::DX::renderTargetView, clearColor);
-    fw::DX::context->ClearDepthStencilView(fw::API::getDepthStencilView(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+    ID3D11DeviceContext* context = fw::DX::context;
+    context->ClearRenderTargetView(fw::DX::renderTargetView, clearColor);
+    context->ClearDepthStencilView(fw::API::getDepthStencilView(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
-    fw::DX::context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    fw::DX::context->VSSetShader(m_vertexShader.get(), nullptr, 0);
-    fw::DX::context->PSSetShader(m_shaderReloader.getShader(), nullptr, 0);
-    fw::DX::context->Draw(3, 0);
+    context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    context->VSSetShader(m_vertexShader.get(), nullptr, 0);
+    context->PSSetShader(m_shaderReloader.getShader(), nullptr, 0);
+    context->PSSetConstantBuffers(0, 1, &m_constantBuffer);
+    context->Draw(3, 0);
 }
 
 void SDFApp::gui()
 {
     ImGui::Text("SDF");
+}
+
+bool SDFApp::createConstantBuffer()
+{
+    D3D11_BUFFER_DESC bd{};
+    bd.ByteWidth = sizeof(Constants);
+    bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    bd.Usage = D3D11_USAGE_DYNAMIC;
+
+    HRESULT hr = fw::DX::device->CreateBuffer(&bd, nullptr, &m_constantBuffer);
+    if (FAILED(hr))
+    {
+        fw::printError("Failed to create constant buffer", &hr);
+        return false;
+    }
+    return true;
 }

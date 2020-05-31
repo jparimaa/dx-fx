@@ -21,9 +21,19 @@ public:
     virtual void gui() final;
 
 private:
+    struct Constants
+    {
+        float time;
+        float padding[3];
+    };
+
     fw::PerspectiveCamera m_camera;
     fw::CameraController m_cameraController;
     fw::VertexShader m_vertexShader;
 
+    ID3D11Buffer* m_constantBuffer = nullptr;
+
     ShaderReloader<ID3D11PixelShader> m_shaderReloader;
+
+    bool createConstantBuffer();
 };
