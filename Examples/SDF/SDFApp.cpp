@@ -27,11 +27,12 @@ bool SDFApp::initialize()
     bool ok = createConstantBuffer();
     assert(ok);
 
-    m_sphere1Transform.move(DirectX::XMFLOAT3(0.0f, 0.0f, 10.0f));
-    m_sphere2Transform.move(DirectX::XMFLOAT3(0.0f, 0.0f, 10.0f));
-    m_sphere3Transform.move(DirectX::XMFLOAT3(0.0f, 0.0f, 10.0f));
-    m_torusTransform.move(DirectX::XMFLOAT3(0.0f, -3.0f, 10.0f));
-    m_torusTransform.rotate(DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f), DirectX::XM_PIDIV2);
+    m_cameraController.setCameraTransformation(&m_camera.getTransformation());
+
+    m_sphere1Transform.move(DirectX::XMFLOAT3(0.0f, 0.0f, 15.0f));
+    m_sphere2Transform.move(DirectX::XMFLOAT3(0.0f, 0.0f, 15.0f));
+    m_sphere3Transform.move(DirectX::XMFLOAT3(0.0f, 0.0f, 15.0f));
+    m_sphereBoxTransform.move(DirectX::XMFLOAT3(0.0f, -5.0f, 15.0f));
 
     std::cout << "SDFApp initialization completed\n";
 
@@ -50,16 +51,19 @@ void SDFApp::update()
     const float delta = fw::API::getTimeDelta();
     const float movement = std::sin(time) * delta * 4.0f;
 
+    m_cameraController.update();
+
     m_sphere1Transform.move(DirectX::XMFLOAT3(movement, 0.0f, 0.0f));
     m_sphere2Transform.move(DirectX::XMFLOAT3(-movement, 0.0f, 0.0f));
     m_sphere3Transform.move(DirectX::XMFLOAT3(0.0f, movement, 0.0f));
-    m_torusTransform.rotate(DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f), DirectX::XM_2PI * delta * 0.1f);
+    m_sphereBoxTransform.rotate(DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f), DirectX::XM_2PI * delta * 0.1f);
 
     m_constants.time = time;
+    m_constants.cameraTransform = m_camera.getTransformation().updateWorldMatrix();
     m_constants.sphere1Transform = DirectX::XMMatrixInverse(nullptr, m_sphere1Transform.updateWorldMatrix());
     m_constants.sphere2Transform = DirectX::XMMatrixInverse(nullptr, m_sphere2Transform.updateWorldMatrix());
     m_constants.sphere3Transform = DirectX::XMMatrixInverse(nullptr, m_sphere3Transform.updateWorldMatrix());
-    m_constants.torusTransform = DirectX::XMMatrixInverse(nullptr, m_torusTransform.updateWorldMatrix());
+    m_constants.sphereBoxTransform = DirectX::XMMatrixInverse(nullptr, m_sphereBoxTransform.updateWorldMatrix());
 
     D3D11_MAPPED_SUBRESOURCE MappedResource;
     fw::DX::context->Map(m_constantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource);
@@ -83,7 +87,9 @@ void SDFApp::render()
 
 void SDFApp::gui()
 {
-    ImGui::Text("SDF");
+    DirectX::XMFLOAT3 p;
+    DirectX::XMStoreFloat3(&p, m_camera.getTransformation().position);
+    ImGui::Text("%f, %f, %f", p.x, p.y, p.z);
 }
 
 bool SDFApp::createConstantBuffer()

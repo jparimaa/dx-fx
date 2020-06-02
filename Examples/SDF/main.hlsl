@@ -17,16 +17,16 @@ VS_OUTPUT VS(uint id
 #include "operations.hlsl"
 #include "lighting.hlsl"
 
-static const float3 c_cameraPos = {0, 0, 0};
 static const float c_epsilon = 0.0001;
 
 cbuffer ConstantBuffer : register(b[0])
 {
     float time;
+    matrix cameraTransform;
     matrix sphere1Transform;
     matrix sphere2Transform;
     matrix sphere3Transform;
-    matrix torusTransform;
+    matrix sphereBoxTransform;
     float3 padding;
 }
 
@@ -35,36 +35,35 @@ float3 tr(in float3 p, matrix m)
     return mul(float4(p, 1.0), m).xyz;
 }
 
+float3 trDir(in float3 p, matrix m)
+{
+    return mul(float4(p, 0.0), m).xyz;
+}
+
 float sceneSDF(in float3 p)
 {
     float a = sphereSDF(tr(p, sphere1Transform), 2.0);
     float b = sphereSDF(tr(p, sphere2Transform), 2.0);
     float c = sphereSDF(tr(p, sphere3Transform), 2.0);
-    float torus = torusSDF(tr(p, torusTransform), float2(4.0, 0.5));
-    return smoothConjunct(smoothConjunct(smoothConjunct(a, b, 1), c, 1), torus);
+    float sphere = sphereSDF(tr(p, sphereBoxTransform), 1.0);
+    float box = boxSDF(tr(p, sphereBoxTransform), float3(1.0, 1.0, 1.0));
+    float sphereBox = lerp(box, sphere, saturate(sin(time)));
+    return conjunct(smoothConjunct(smoothConjunct(a, b, 1), c, 1), sphereBox);
 }
 
-float3 estimateNormal(float3 p)
+float4 raymarch(in float3 start, in float3 dir)
 {
-    return normalize(float3(
-        sceneSDF(float3(p.x + c_epsilon, p.y, p.z)) - sceneSDF(float3(p.x - c_epsilon, p.y, p.z)),
-        sceneSDF(float3(p.x, p.y + c_epsilon, p.z)) - sceneSDF(float3(p.x, p.y - c_epsilon, p.z)),
-        sceneSDF(float3(p.x, p.y, p.z + c_epsilon)) - sceneSDF(float3(p.x, p.y, p.z - c_epsilon))));
-}
-
-float4 raymarch(in float3 viewDir)
-{
-    static const int c_maxSteps = 512;
+    static const int c_maxSteps = 1024;
     static const float c_maxDistance = 1000.0;
 
     float depth = 0.0;
     for (int i = 0; i < c_maxSteps; ++i)
     {
-        float dist = sceneSDF(c_cameraPos + depth * viewDir);
+        float dist = sceneSDF(start + depth * dir);
 
         if (dist < c_epsilon)
         {
-            return float4(c_cameraPos + depth * viewDir, 1.0);
+            return float4(start + depth * dir, 1.0);
         }
 
         depth += dist;
@@ -77,12 +76,23 @@ float4 raymarch(in float3 viewDir)
     return float4(0.0, 0.0, 0.0, 0.0);
 }
 
+float3 estimateNormal(float3 p)
+{
+    return normalize(float3(
+        sceneSDF(float3(p.x + c_epsilon, p.y, p.z)) - sceneSDF(float3(p.x - c_epsilon, p.y, p.z)),
+        sceneSDF(float3(p.x, p.y + c_epsilon, p.z)) - sceneSDF(float3(p.x, p.y - c_epsilon, p.z)),
+        sceneSDF(float3(p.x, p.y, p.z + c_epsilon)) - sceneSDF(float3(p.x, p.y, p.z - c_epsilon))));
+}
+
 float4 PS(VS_OUTPUT input) :
     SV_Target
 {
+    const float3 cameraPos = tr(float3(0.0, 0.0, 0.0), cameraTransform);
+    const float3 cameraDir = trDir(float3(0.0, 0.0, 1.0), cameraTransform);
     const float2 uvNormYUp = (input.Tex - 0.5) * 2.0 * float2(1.0, -1.0);
-    const float3 viewDir = float3(uvNormYUp.x, uvNormYUp.y, 1.0) - c_cameraPos;
-    float4 hit = raymarch(viewDir);
+    const float3 viewDir = normalize(float3(uvNormYUp.x, uvNormYUp.y, 1.0));
+    const float3 dir = normalize(cameraDir + viewDir);
+    float4 hit = raymarch(cameraPos, dir);
     if (hit.a > 0.0)
     {
         float3 n = estimateNormal(hit.xyz);
