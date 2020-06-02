@@ -24,6 +24,10 @@ private:
     struct Constants
     {
         float time;
+        DirectX::XMMATRIX sphere1Transform;
+        DirectX::XMMATRIX sphere2Transform;
+        DirectX::XMMATRIX sphere3Transform;
+        DirectX::XMMATRIX torusTransform;
         float padding[3];
     };
 
@@ -31,7 +35,12 @@ private:
     fw::CameraController m_cameraController;
     fw::VertexShader m_vertexShader;
 
+    fw::Transformation m_sphere1Transform;
+    fw::Transformation m_sphere2Transform;
+    fw::Transformation m_sphere3Transform;
+    fw::Transformation m_torusTransform;
     ID3D11Buffer* m_constantBuffer = nullptr;
+    Constants m_constants;
 
     ShaderReloader<ID3D11PixelShader> m_shaderReloader;
 

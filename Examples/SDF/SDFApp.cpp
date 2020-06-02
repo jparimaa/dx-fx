@@ -15,7 +15,7 @@ const float clearColor[4] = {1.0f, 1.0f, 1.0f, 1.0f};
 
 bool SDFApp::initialize()
 {
-    std::string shaderFile = ROOT_PATH + std::string("Examples/SDF/sdf.hlsl");
+    std::string shaderFile = ROOT_PATH + std::string("Examples/SDF/main.hlsl");
     fw::ToWchar wcharHelper(shaderFile);
     if (!m_vertexShader.create(wcharHelper.getWchar(), "VS", "vs_4_0"))
     {
@@ -26,6 +26,12 @@ bool SDFApp::initialize()
 
     bool ok = createConstantBuffer();
     assert(ok);
+
+    m_sphere1Transform.move(DirectX::XMFLOAT3(0.0f, 0.0f, 10.0f));
+    m_sphere2Transform.move(DirectX::XMFLOAT3(0.0f, 0.0f, 10.0f));
+    m_sphere3Transform.move(DirectX::XMFLOAT3(0.0f, 0.0f, 10.0f));
+    m_torusTransform.move(DirectX::XMFLOAT3(0.0f, -3.0f, 10.0f));
+    m_torusTransform.rotate(DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f), DirectX::XM_PIDIV2);
 
     std::cout << "SDFApp initialization completed\n";
 
@@ -40,10 +46,25 @@ void SDFApp::update()
         fw::API::quit();
     }
 
+    const float time = fw::API::getTimeSinceStart();
+    const float delta = fw::API::getTimeDelta();
+    const float movement = std::sin(time) * delta * 4.0f;
+
+    m_sphere1Transform.move(DirectX::XMFLOAT3(movement, 0.0f, 0.0f));
+    m_sphere2Transform.move(DirectX::XMFLOAT3(-movement, 0.0f, 0.0f));
+    m_sphere3Transform.move(DirectX::XMFLOAT3(0.0f, movement, 0.0f));
+    m_torusTransform.rotate(DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f), DirectX::XM_2PI * delta * 0.1f);
+
+    m_constants.time = time;
+    m_constants.sphere1Transform = DirectX::XMMatrixInverse(nullptr, m_sphere1Transform.updateWorldMatrix());
+    m_constants.sphere2Transform = DirectX::XMMatrixInverse(nullptr, m_sphere2Transform.updateWorldMatrix());
+    m_constants.sphere3Transform = DirectX::XMMatrixInverse(nullptr, m_sphere3Transform.updateWorldMatrix());
+    m_constants.torusTransform = DirectX::XMMatrixInverse(nullptr, m_torusTransform.updateWorldMatrix());
+
     D3D11_MAPPED_SUBRESOURCE MappedResource;
     fw::DX::context->Map(m_constantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource);
     Constants* constantsData = (Constants*)MappedResource.pData;
-    constantsData->time = fw::API::getTimeSinceStart();
+    *constantsData = m_constants;
     fw::DX::context->Unmap(m_constantBuffer, 0);
 }
 

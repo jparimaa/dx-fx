@@ -68,7 +68,7 @@ bool compileShaderFromFile(WCHAR* fileName, LPCSTR entryPoint, LPCSTR shaderMode
 #endif
 
     ID3DBlob* errorBlob = nullptr;
-    hr = D3DCompileFromFile(fileName, nullptr, nullptr, entryPoint, shaderModel, shaderFlags, 0, blobOut, &errorBlob);
+    hr = D3DCompileFromFile(fileName, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, entryPoint, shaderModel, shaderFlags, 0, blobOut, &errorBlob);
     if (FAILED(hr))
     {
         if (errorBlob != nullptr)
