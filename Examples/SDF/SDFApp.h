@@ -30,7 +30,7 @@ private:
         DirectX::XMMATRIX cameraTransform;
         DirectX::XMMATRIX sphere1Transform;
         DirectX::XMMATRIX sphere2Transform;
-        DirectX::XMMATRIX sphere3Transform;
+        DirectX::XMMATRIX torusTransform;
         DirectX::XMMATRIX sphereBoxTransform;
     };
 
@@ -40,7 +40,7 @@ private:
 
     fw::Transformation m_sphere1Transform;
     fw::Transformation m_sphere2Transform;
-    fw::Transformation m_sphere3Transform;
+    fw::Transformation m_torusTransform;
     fw::Transformation m_sphereBoxTransform;
     ID3D11Buffer* m_constantBuffer = nullptr;
     Constants m_constants;

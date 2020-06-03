@@ -28,7 +28,7 @@ cbuffer ConstantBuffer : register(b[0])
     matrix cameraTransform;
     matrix sphere1Transform;
     matrix sphere2Transform;
-    matrix sphere3Transform;
+    matrix torusTransform;
     matrix sphereBoxTransform;
 }
 
@@ -46,10 +46,13 @@ float sceneSDF(in float3 p)
 {
     float a = sphereSDF(tr(p, sphere1Transform), 2.0);
     float b = sphereSDF(tr(p, sphere2Transform), 2.0);
-    float c = sphereSDF(tr(p, sphere3Transform), 2.0);
+
+    float c = torusSDF(tr(p, torusTransform), float2(2.0, 0.5)) + displace(p, time);
+
     float sphere = sphereSDF(tr(p, sphereBoxTransform), 1.0);
     float box = boxSDF(tr(p, sphereBoxTransform), float3(1.0, 1.0, 1.0));
     float sphereBox = lerp(box, sphere, saturate(sin(time)));
+
     return conjunct(smoothConjunct(smoothConjunct(a, b, 1), c, 1), sphereBox);
 }
 

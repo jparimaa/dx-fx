@@ -18,3 +18,8 @@ float subtract(in float a, in float b)
 {
     return max(a, -b);
 }
+
+float displace(in float3 p, in float time)
+{
+    return sin(2.0 * p.x) * sin(2.0 * p.y) * sin(2.0 * p.z) * sin(time);
+} 
