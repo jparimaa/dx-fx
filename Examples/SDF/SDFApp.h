@@ -24,12 +24,14 @@ private:
     struct Constants
     {
         float time;
+        float padding[3];
+        DirectX::XMVECTOR cameraPos;
+        DirectX::XMVECTOR cameraDir;
         DirectX::XMMATRIX cameraTransform;
         DirectX::XMMATRIX sphere1Transform;
         DirectX::XMMATRIX sphere2Transform;
         DirectX::XMMATRIX sphere3Transform;
         DirectX::XMMATRIX sphereBoxTransform;
-        float padding[3];
     };
 
     fw::PerspectiveCamera m_camera;

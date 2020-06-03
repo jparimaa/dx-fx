@@ -22,20 +22,22 @@ static const float c_epsilon = 0.0001;
 cbuffer ConstantBuffer : register(b[0])
 {
     float time;
+    float3 padding;
+    float4 cameraPos;
+    float4 cameraDir;
     matrix cameraTransform;
     matrix sphere1Transform;
     matrix sphere2Transform;
     matrix sphere3Transform;
     matrix sphereBoxTransform;
-    float3 padding;
 }
 
-float3 tr(in float3 p, matrix m)
+float3 tr(in float3 p, in matrix m)
 {
     return mul(float4(p, 1.0), m).xyz;
 }
 
-float3 trDir(in float3 p, matrix m)
+float3 trDir(in float3 p, in matrix m)
 {
     return mul(float4(p, 0.0), m).xyz;
 }
@@ -49,6 +51,11 @@ float sceneSDF(in float3 p)
     float box = boxSDF(tr(p, sphereBoxTransform), float3(1.0, 1.0, 1.0));
     float sphereBox = lerp(box, sphere, saturate(sin(time)));
     return conjunct(smoothConjunct(smoothConjunct(a, b, 1), c, 1), sphereBox);
+}
+
+float scene2SDF(in float3 p)
+{
+    return boxSDF(p, float3(0.5, 0.3, 0.1));
 }
 
 float4 raymarch(in float3 start, in float3 dir)
@@ -76,7 +83,7 @@ float4 raymarch(in float3 start, in float3 dir)
     return float4(0.0, 0.0, 0.0, 0.0);
 }
 
-float3 estimateNormal(float3 p)
+float3 estimateNormal(in float3 p)
 {
     return normalize(float3(
         sceneSDF(float3(p.x + c_epsilon, p.y, p.z)) - sceneSDF(float3(p.x - c_epsilon, p.y, p.z)),
@@ -87,12 +94,11 @@ float3 estimateNormal(float3 p)
 float4 PS(VS_OUTPUT input) :
     SV_Target
 {
-    const float3 cameraPos = tr(float3(0.0, 0.0, 0.0), cameraTransform);
-    const float3 cameraDir = trDir(float3(0.0, 0.0, 1.0), cameraTransform);
     const float2 uvNormYUp = (input.Tex - 0.5) * 2.0 * float2(1.0, -1.0);
-    const float3 viewDir = normalize(float3(uvNormYUp.x, uvNormYUp.y, 1.0));
-    const float3 dir = normalize(cameraDir + viewDir);
-    float4 hit = raymarch(cameraPos, dir);
+    const float3 uvDir = normalize(float3(uvNormYUp.x, uvNormYUp.y, 1.0));
+    const float3 viewDir = trDir(uvDir, cameraTransform);
+    const float3 dir = normalize(cameraDir.xyz + viewDir);
+    float4 hit = raymarch(cameraPos.xyz, dir);
     if (hit.a > 0.0)
     {
         float3 n = estimateNormal(hit.xyz);
