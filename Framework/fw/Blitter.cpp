@@ -37,7 +37,7 @@ Blitter::Blitter()
     HRESULT hr = fw::DX::device->CreateBuffer(&bd, &data, &vertexBuffer);
     if (FAILED(hr))
     {
-        printError("ERROR: Failed to create vertex buffer", &hr);
+        printError("Failed to create vertex buffer", &hr);
     }
 
     std::vector<D3D11_INPUT_ELEMENT_DESC> layout = {
@@ -47,12 +47,12 @@ Blitter::Blitter()
     ToWchar wcharHelper(shaderFile);
     if (!vertexShader.create(wcharHelper.getWchar(), "VS", "vs_4_0", layout))
     {
-        printError("ERROR: Failed to create blitter vertex shader");
+        printError("Failed to create blitter vertex shader");
     }
 
     if (!pixelShader.create(wcharHelper.getWchar(), "PS", "ps_4_0"))
     {
-        printError("ERROR: Failed to create blitter pixel shader");
+        printError("Failed to create blitter pixel shader");
     }
 
     D3D11_SAMPLER_DESC sampDesc{};
