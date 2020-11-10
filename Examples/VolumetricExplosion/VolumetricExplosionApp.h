@@ -30,11 +30,11 @@ private:
         DirectX::XMMATRIX projection;
     };
 
-    fw::PerspectiveCamera camera;
-    fw::CameraController cameraController;
-    fw::Transformation trans;
-    fw::VertexShader vertexShader;
-    fw::PixelShader pixelShader;
+    fw::PerspectiveCamera m_camera;
+    fw::CameraController m_cameraController;
+    fw::Transformation m_transformation;
+    fw::VertexShader m_vertexShader;
+    fw::PixelShader m_pixelShader;
 
     ID3D11Buffer* m_matrixBuffer = nullptr;
     ID3D11SamplerState* m_linearSampler = nullptr;
