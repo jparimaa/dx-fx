@@ -27,11 +27,49 @@ public:
     virtual void gui() final;
 
 private:
-    struct MatrixData
+    struct CBData
     {
-        DirectX::XMMATRIX world;
-        DirectX::XMMATRIX view;
-        DirectX::XMMATRIX projection;
+        DirectX::XMMATRIX worldToViewMatrix;
+        DirectX::XMMATRIX viewToProjectionMatrix;
+        DirectX::XMMATRIX projectionToViewMatrix;
+        DirectX::XMMATRIX worldToProjectionMatrix;
+        DirectX::XMMATRIX projectionToWorldMatrix;
+        DirectX::XMMATRIX viewToWorldMatrix;
+
+        DirectX::XMFLOAT3 eyePositionWS;
+        DirectX::XMFLOAT3 eyeForwardWS;
+
+        float noiseAmplitudeFactor;
+        float noiseScale;
+
+        DirectX::XMFLOAT4 projectionParams;
+
+        DirectX::XMFLOAT4 screenParams;
+
+        DirectX::XMFLOAT3 explosionPositionWS;
+        float explosionRadiusWS;
+
+        DirectX::XMFLOAT3 noiseAnimationSpeed;
+        float time;
+
+        float edgeSoftness;
+        float noiseFrequencyFactor;
+        uint32_t primitiveIdx;
+        float opacity;
+
+        float displacementWS;
+        float stepSizeWS;
+        uint32_t maxNumSteps;
+        float noiseInitialAmplitude;
+
+        DirectX::XMFLOAT2 uvScaleBias;
+        float invMaxNoiseDisplacement;
+        uint32_t numOctaves;
+
+        float skinThickness;
+        uint32_t numHullOctaves;
+        uint32_t numHullSteps;
+        float tessellationFactor;
     };
 
     fw::PerspectiveCamera m_camera;
@@ -55,5 +93,6 @@ private:
     bool createNoiseTexture();
     bool createGradientTexture();
     bool createSamplers();
-    bool createMatrixBuffer();
+    bool createConstantBuffer();
+    void updateConstantBuffer();
 };
