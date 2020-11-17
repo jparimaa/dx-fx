@@ -1,4 +1,4 @@
-#include "VolumetricExplosionApp.h"
+﻿#include "VolumetricExplosionApp.h"
 #include <fw/Common.h>
 #include <fw/DX.h>
 #include <fw/API.h>
@@ -6,6 +6,7 @@
 #include <fw/imgui/imgui.h>
 
 #include <DDSTextureLoader.h>
+#include <DirectXPackedVector.h>
 
 #include <fstream>
 #include <vector>
@@ -14,6 +15,24 @@
 namespace
 {
 const float c_clearColor[4] = {0.0f, 0.125f, 0.3f, 1.0f};
+
+const DirectX::XMFLOAT3 c_noiseAnimationSpeed(0.0f, 0.02f, 0.0f);
+const float c_noiseInitialAmplitude = 3.0f;
+const uint16_t c_maxNumSteps = 256;
+const uint16_t c_numHullSteps = 2;
+const float c_stepSize = 0.04f;
+const uint16_t c_numOctaves = 4;
+const uint16_t c_numHullOctaves = 2;
+const float c_skinThicknessBias = 0.6f;
+const float c_tessellationFactor = 16;
+const bool c_enableHullShrinking = true;
+const float c_edgeSoftness = 0.05f;
+const float c_noiseScale = 0.04f;
+const float c_explosionRadius = 4.0f;
+const float c_displacementAmount = 1.75f;
+const DirectX::XMFLOAT2 c_uvScaleBias(2.1f, 0.35f);
+const float c_noiseAmplitudeFactor = 0.4f;
+const float c_noiseFrequencyFactor = 3.0f;
 } // namespace
 
 VolumetricExplosionApp::VolumetricExplosionApp()
@@ -23,7 +42,7 @@ VolumetricExplosionApp::VolumetricExplosionApp()
 VolumetricExplosionApp::~VolumetricExplosionApp()
 {
     fw::release(m_noiseVolume);
-    fw::release(m_matrixBuffer);
+    fw::release(m_constantBuffer);
 }
 
 bool VolumetricExplosionApp::initialize()
@@ -61,6 +80,8 @@ bool VolumetricExplosionApp::initialize()
     m_transformation.position = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
     m_transformation.updateWorldMatrix();
 
+    calculateConstantBufferValues();
+
     std::cout << "VolumetricExplosionApp initialization completed\n";
 
     return true;
@@ -94,7 +115,7 @@ void VolumetricExplosionApp::render()
     fw::DX::context->IASetInputLayout(m_vertexShader.getVertexLayout());
     fw::DX::context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-    fw::DX::context->VSSetConstantBuffers(0, 1, &m_matrixBuffer);
+    fw::DX::context->VSSetConstantBuffers(0, 1, &m_constantBuffer);
 }
 
 void VolumetricExplosionApp::gui()
@@ -159,6 +180,26 @@ bool VolumetricExplosionApp::createNoiseTexture()
     return true;
 }
 
+void VolumetricExplosionApp::calculateConstantBufferValues()
+{
+    const float largestAbsoluteNoiseValue = std::max(std::abs(static_cast<float>(m_maxNoiseValue)), std::abs(static_cast<float>(m_minNoiseValue)));
+
+    for (uint16_t i = 0; i < c_numOctaves; ++i)
+    {
+        m_maxNoiseDisplacement += largestAbsoluteNoiseValue * c_noiseInitialAmplitude * std::powf(c_noiseAmplitudeFactor, (float)i);
+    }
+
+    // Skin thickness is the amount of displacement to add to the geometry hull after shrinking it around the explosion primitive.
+    m_maxSkinThickness = 0;
+    for (uint16_t i = c_numHullOctaves; i < c_numOctaves; ++i)
+    {
+        m_maxSkinThickness += largestAbsoluteNoiseValue * c_noiseInitialAmplitude * std::powf(c_noiseAmplitudeFactor, (float)i);
+    }
+
+    // Add a little bit extra to account for under-tessellation.
+    m_maxSkinThickness += c_skinThicknessBias;
+}
+
 bool VolumetricExplosionApp::createGradientTexture()
 {
     HRESULT hr = DirectX::CreateDDSTextureFromFile(fw::DX::device, L"gradient.dds", nullptr, &m_gradientSRV);
@@ -210,7 +251,7 @@ bool VolumetricExplosionApp::createConstantBuffer()
     desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     desc.Usage = D3D11_USAGE_DYNAMIC;
 
-    HRESULT hr = fw::DX::device->CreateBuffer(&desc, nullptr, &m_matrixBuffer);
+    HRESULT hr = fw::DX::device->CreateBuffer(&desc, nullptr, &m_constantBuffer);
     if (FAILED(hr))
     {
         fw::printError("Failed to create matrix buffer", &hr);
@@ -221,9 +262,45 @@ bool VolumetricExplosionApp::createConstantBuffer()
 
 void VolumetricExplosionApp::updateConstantBuffer()
 {
+    DirectX::XMVECTOR det;
+    const DirectX::XMMATRIX worldToView = m_camera.getViewMatrix();
+    const DirectX::XMMATRIX viewToProj = m_camera.getProjectionMatrix();
+    const DirectX::XMMATRIX worldToProj = viewToProj * worldToView;
+    const DirectX::XMMATRIX viewToWorld = DirectX::XMMatrixInverse(&det, worldToView);
+
+    DirectX::XMFLOAT3 cameraPos;
+    DirectX::XMStoreFloat3(&cameraPos, m_camera.getTransformation().position);
+    DirectX::XMFLOAT3 cameraForward;
+    DirectX::XMStoreFloat3(&cameraForward, m_camera.getTransformation().getForward());
+
     D3D11_MAPPED_SUBRESOURCE mappedResource;
-    fw::DX::context->Map(m_matrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+    fw::DX::context->Map(m_constantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
     CBData* cbData = (CBData*)mappedResource.pData;
-    //cbData->world = m_transformation.getWorldMatrix();
-    fw::DX::context->Unmap(m_matrixBuffer, 0);
+    cbData->worldToViewMatrix = worldToView;
+    cbData->worldToProjectionMatrix = worldToProj;
+    cbData->viewToWorldMatrix = viewToWorld;
+    cbData->eyePositionWS = cameraPos;
+    cbData->noiseAmplitudeFactor = c_noiseAmplitudeFactor;
+    cbData->eyeForwardWS = cameraForward;
+    cbData->noiseScale = c_noiseScale;
+    cbData->explosionPositionWS = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+    cbData->explosionRadiusWS = c_explosionRadius;
+    cbData->noiseAnimationSpeed = c_noiseAnimationSpeed;
+    cbData->time = fw::API::getTimeSinceStart();
+    cbData->edgeSoftness = c_edgeSoftness;
+    cbData->noiseFrequencyFactor = c_noiseFrequencyFactor;
+    cbData->primitiveIdx = 0;
+    cbData->opacity = 1.0f;
+    cbData->displacementWS = c_displacementAmount;
+    cbData->stepSizeWS = c_stepSize;
+    cbData->maxNumSteps = c_maxNumSteps;
+    cbData->uvScaleBias = c_uvScaleBias;
+    cbData->noiseInitialAmplitude = c_noiseInitialAmplitude;
+    cbData->invMaxNoiseDisplacement = 1.0f / m_maxNoiseDisplacement;
+    cbData->numOctaves = c_numOctaves;
+    cbData->skinThickness = m_maxSkinThickness;
+    cbData->numHullOctaves = c_numHullOctaves;
+    cbData->numHullSteps = c_enableHullShrinking ? c_numHullSteps : 0;
+    cbData->tessellationFactor = c_tessellationFactor;
+    fw::DX::context->Unmap(m_constantBuffer, 0);
 }

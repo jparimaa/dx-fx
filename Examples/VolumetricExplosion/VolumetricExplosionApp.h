@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <fw/Application.h>
 #include <fw/VertexShader.h>
@@ -30,10 +30,7 @@ private:
     struct CBData
     {
         DirectX::XMMATRIX worldToViewMatrix;
-        DirectX::XMMATRIX viewToProjectionMatrix;
-        DirectX::XMMATRIX projectionToViewMatrix;
         DirectX::XMMATRIX worldToProjectionMatrix;
-        DirectX::XMMATRIX projectionToWorldMatrix;
         DirectX::XMMATRIX viewToWorldMatrix;
 
         DirectX::XMFLOAT3 eyePositionWS;
@@ -41,10 +38,6 @@ private:
 
         float noiseAmplitudeFactor;
         float noiseScale;
-
-        DirectX::XMFLOAT4 projectionParams;
-
-        DirectX::XMFLOAT4 screenParams;
 
         DirectX::XMFLOAT3 explosionPositionWS;
         float explosionRadiusWS;
@@ -83,14 +76,18 @@ private:
     ID3D11Texture3D* m_noiseVolume = nullptr;
     ID3D11ShaderResourceView* m_noiseVolumeSRV = nullptr;
     ID3D11ShaderResourceView* m_gradientSRV = nullptr;
-    ID3D11Buffer* m_matrixBuffer = nullptr;
+    ID3D11Buffer* m_constantBuffer = nullptr;
     ID3D11SamplerState* m_samplerClamped = nullptr;
     ID3D11SamplerState* m_samplerWrapped = nullptr;
 
     uint16_t m_maxNoiseValue = 0;
     uint16_t m_minNoiseValue = 0xFFFF;
+    float m_maxSkinThickness = 0.0f;
+    float m_maxNoiseDisplacement = 0.0f;
+    DirectX::XMMATRIX m_invProjMatrix;
 
     bool createNoiseTexture();
+    void calculateConstantBufferValues();
     bool createGradientTexture();
     bool createSamplers();
     bool createConstantBuffer();
