@@ -12,6 +12,7 @@
 
 #include <DirectXMath.h>
 #include <d3d11.h>
+#include <wrl.h>
 
 #include <memory>
 
@@ -73,12 +74,14 @@ private:
     fw::DomainShader m_domainShader;
     fw::PixelShader m_pixelShader;
 
-    ID3D11Texture3D* m_noiseVolume = nullptr;
-    ID3D11ShaderResourceView* m_noiseVolumeSRV = nullptr;
-    ID3D11ShaderResourceView* m_gradientSRV = nullptr;
-    ID3D11Buffer* m_constantBuffer = nullptr;
-    ID3D11SamplerState* m_samplerClamped = nullptr;
-    ID3D11SamplerState* m_samplerWrapped = nullptr;
+    Microsoft::WRL::ComPtr<ID3D11Texture3D> m_noiseVolume = nullptr;
+    Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_noiseVolumeSRV = nullptr;
+    Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_gradientSRV = nullptr;
+    Microsoft::WRL::ComPtr<ID3D11Buffer> m_constantBuffer = nullptr;
+    Microsoft::WRL::ComPtr<ID3D11SamplerState> m_samplerClamped = nullptr;
+    Microsoft::WRL::ComPtr<ID3D11SamplerState> m_samplerWrapped = nullptr;
+    Microsoft::WRL::ComPtr<ID3D11DepthStencilState> m_depthStencilState = nullptr;
+    Microsoft::WRL::ComPtr<ID3D11BlendState> m_blendState = nullptr;
 
     uint16_t m_maxNoiseValue = 0;
     uint16_t m_minNoiseValue = 0xFFFF;
@@ -91,5 +94,6 @@ private:
     bool createGradientTexture();
     bool createSamplers();
     bool createConstantBuffer();
+    bool createBlendAndDepthState();
     void updateConstantBuffer();
 };

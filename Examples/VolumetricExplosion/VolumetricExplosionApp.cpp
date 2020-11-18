@@ -41,8 +41,6 @@ VolumetricExplosionApp::VolumetricExplosionApp()
 
 VolumetricExplosionApp::~VolumetricExplosionApp()
 {
-    fw::release(m_noiseVolume);
-    fw::release(m_constantBuffer);
 }
 
 bool VolumetricExplosionApp::initialize()
@@ -52,12 +50,22 @@ bool VolumetricExplosionApp::initialize()
 
     const std::string shaderFile = ROOT_PATH + std::string("Examples/VolumetricExplosion/example.hlsl");
     fw::ToWchar wcharHelper(shaderFile);
-    if (!m_vertexShader.create(wcharHelper.getWchar(), "VS", "vs_4_0", layout))
+    if (!m_vertexShader.create(wcharHelper.getWchar(), "VS", "vs_5_0", layout))
     {
         return false;
     }
 
-    if (!m_pixelShader.create(wcharHelper.getWchar(), "PS", "ps_4_0"))
+    if (!m_hullShader.create(wcharHelper.getWchar(), "HS", "hs_5_0"))
+    {
+        return false;
+    }
+
+    if (!m_domainShader.create(wcharHelper.getWchar(), "DS", "ds_5_0"))
+    {
+        return false;
+    }
+
+    if (!m_pixelShader.create(wcharHelper.getWchar(), "PS", "ps_5_0"))
     {
         return false;
     }
@@ -66,7 +74,8 @@ bool VolumetricExplosionApp::initialize()
         createNoiseTexture() && //
         createGradientTexture() && //
         createSamplers() && //
-        createConstantBuffer();
+        createConstantBuffer() && //
+        createBlendAndDepthState();
 
     if (!resourcesCreated)
     {
@@ -108,14 +117,33 @@ void VolumetricExplosionApp::render()
     fw::DX::context->ClearRenderTargetView(fw::DX::renderTargetView, c_clearColor);
     fw::DX::context->ClearDepthStencilView(fw::API::getDepthStencilView(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
-    fw::DX::context->VSSetShader(m_vertexShader.get(), nullptr, 0);
-    fw::DX::context->PSSetShader(m_pixelShader.get(), nullptr, 0);
-    //fw::DX::context->PSSetSamplers(0, 1, &m_linearSampler);
-
     fw::DX::context->IASetInputLayout(m_vertexShader.getVertexLayout());
-    fw::DX::context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    fw::DX::context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_1_CONTROL_POINT_PATCHLIST);
 
-    fw::DX::context->VSSetConstantBuffers(0, 1, &m_constantBuffer);
+    fw::DX::context->VSSetShader(m_vertexShader.get(), nullptr, 0);
+    fw::DX::context->HSSetShader(m_hullShader.get(), nullptr, 0);
+    fw::DX::context->DSSetShader(m_domainShader.get(), nullptr, 0);
+    fw::DX::context->PSSetShader(m_pixelShader.get(), nullptr, 0);
+
+    static ID3D11SamplerState* const samplers[] = {m_samplerClamped.Get(), m_samplerWrapped.Get()};
+    fw::DX::context->DSSetSamplers(0, 2, samplers);
+    fw::DX::context->PSSetSamplers(0, 2, samplers);
+
+    auto cb = m_constantBuffer.GetAddressOf();
+    fw::DX::context->HSSetConstantBuffers(0, 1, cb);
+    fw::DX::context->DSSetConstantBuffers(0, 1, cb);
+    fw::DX::context->PSSetConstantBuffers(0, 1, cb);
+
+    auto noiseSrv = m_noiseVolumeSRV.GetAddressOf();
+    fw::DX::context->DSSetShaderResources(0, 1, noiseSrv);
+    fw::DX::context->PSSetShaderResources(0, 1, noiseSrv);
+    fw::DX::context->PSSetShaderResources(1, 1, m_gradientSRV.GetAddressOf());
+
+    fw::DX::context->Draw(1, 0);
+
+    static const float blendFactor[4] = {1, 1, 1, 1};
+    fw::DX::context->OMSetBlendState(m_blendState.Get(), blendFactor, 0xFFFFFFFF);
+    fw::DX::context->OMSetDepthStencilState(m_depthStencilState.Get(), 0);
 }
 
 void VolumetricExplosionApp::gui()
@@ -170,7 +198,7 @@ bool VolumetricExplosionApp::createNoiseTexture()
         return false;
     }
 
-    hr = fw::DX::device->CreateShaderResourceView(m_noiseVolume, nullptr, &m_noiseVolumeSRV);
+    hr = fw::DX::device->CreateShaderResourceView(m_noiseVolume.Get(), nullptr, &m_noiseVolumeSRV);
     if (FAILED(hr))
     {
         fw::printError("Failed to create noise volume SRV", &hr);
@@ -260,6 +288,41 @@ bool VolumetricExplosionApp::createConstantBuffer()
     return true;
 }
 
+bool VolumetricExplosionApp::createBlendAndDepthState()
+{
+    D3D11_DEPTH_STENCIL_DESC dsDesc{};
+    dsDesc.DepthEnable = true;
+    dsDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
+    dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+    dsDesc.StencilEnable = false;
+
+    HRESULT hr = fw::DX::device->CreateDepthStencilState(&dsDesc, &m_depthStencilState);
+    if (FAILED(hr))
+    {
+        fw::printError("Failed to create depth stencil state", &hr);
+        return false;
+    }
+
+    D3D11_BLEND_DESC bsDesc{};
+    bsDesc.AlphaToCoverageEnable = false;
+    bsDesc.RenderTarget[0].BlendEnable = true;
+    bsDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+    bsDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+    bsDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+    bsDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_SRC_ALPHA;
+    bsDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
+    bsDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+    bsDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+    hr = fw::DX::device->CreateBlendState(&bsDesc, &m_blendState);
+    if (FAILED(hr))
+    {
+        fw::printError("Failed to create blend state", &hr);
+        return false;
+    }
+    return true;
+}
+
 void VolumetricExplosionApp::updateConstantBuffer()
 {
     DirectX::XMVECTOR det;
@@ -274,7 +337,7 @@ void VolumetricExplosionApp::updateConstantBuffer()
     DirectX::XMStoreFloat3(&cameraForward, m_camera.getTransformation().getForward());
 
     D3D11_MAPPED_SUBRESOURCE mappedResource;
-    fw::DX::context->Map(m_constantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+    fw::DX::context->Map(m_constantBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
     CBData* cbData = (CBData*)mappedResource.pData;
     cbData->worldToViewMatrix = worldToView;
     cbData->worldToProjectionMatrix = worldToProj;
@@ -302,5 +365,5 @@ void VolumetricExplosionApp::updateConstantBuffer()
     cbData->numHullOctaves = c_numHullOctaves;
     cbData->numHullSteps = c_enableHullShrinking ? c_numHullSteps : 0;
     cbData->tessellationFactor = c_tessellationFactor;
-    fw::DX::context->Unmap(m_constantBuffer, 0);
+    fw::DX::context->Unmap(m_constantBuffer.Get(), 0);
 }
