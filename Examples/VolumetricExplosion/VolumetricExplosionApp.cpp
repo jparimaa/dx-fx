@@ -139,11 +139,11 @@ void VolumetricExplosionApp::render()
     fw::DX::context->PSSetShaderResources(0, 1, noiseSrv);
     fw::DX::context->PSSetShaderResources(1, 1, m_gradientSRV.GetAddressOf());
 
-    fw::DX::context->Draw(1, 0);
-
     static const float blendFactor[4] = {1, 1, 1, 1};
     fw::DX::context->OMSetBlendState(m_blendState.Get(), blendFactor, 0xFFFFFFFF);
     fw::DX::context->OMSetDepthStencilState(m_depthStencilState.Get(), 0);
+
+    fw::DX::context->Draw(1, 0);
 }
 
 void VolumetricExplosionApp::gui()
@@ -156,10 +156,12 @@ bool VolumetricExplosionApp::createNoiseTexture()
     const uint16_t noiseValueSize = 32;
     const uint16_t noiseValueCount = noiseValueSize * noiseValueSize * noiseValueSize;
     uint16_t noiseValues[noiseValueCount] = {0};
+    const std::string noiseDatPath = ROOT_PATH + std::string("/Assets/noise_32x32x32.dat");
     std::fstream f;
-    f.open("noise_32x32x32.dat", std::ios::in);
+    f.open(noiseDatPath.c_str(), std::ios::in);
     if (!f.is_open())
     {
+        fw::printError("Failed to open noise_32x32x32.dat");
         return false;
     }
 
@@ -230,7 +232,9 @@ void VolumetricExplosionApp::calculateConstantBufferValues()
 
 bool VolumetricExplosionApp::createGradientTexture()
 {
-    HRESULT hr = DirectX::CreateDDSTextureFromFile(fw::DX::device, L"gradient.dds", nullptr, &m_gradientSRV);
+    const std::string noiseDatPath = ROOT_PATH + std::string("/Assets/gradient.dds");
+    fw::ToWchar wcharHelper(noiseDatPath);
+    HRESULT hr = DirectX::CreateDDSTextureFromFile(fw::DX::device, wcharHelper.getWchar(), nullptr, &m_gradientSRV);
     if (FAILED(hr))
     {
         fw::printError("Failed to create gradient SRV", &hr);
@@ -251,21 +255,21 @@ bool VolumetricExplosionApp::createSamplers()
     desc.MinLOD = 0;
     desc.MaxLOD = D3D11_FLOAT32_MAX;
 
-    HRESULT hr = fw::DX::device->CreateSamplerState(&desc, &m_samplerClamped);
+    HRESULT hr = fw::DX::device->CreateSamplerState(&desc, m_samplerClamped.GetAddressOf());
     if (FAILED(hr))
     {
-        return false;
         fw::printError("Failed to create sampler", &hr);
+        return false;
     }
 
     desc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
     desc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
     desc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-    hr = fw::DX::device->CreateSamplerState(&desc, &m_samplerWrapped);
+    hr = fw::DX::device->CreateSamplerState(&desc, m_samplerWrapped.GetAddressOf());
     if (FAILED(hr))
     {
-        return false;
         fw::printError("Failed to create sampler", &hr);
+        return false;
     }
 
     return true;
