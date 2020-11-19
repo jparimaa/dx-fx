@@ -82,12 +82,11 @@ bool VolumetricExplosionApp::initialize()
         return false;
     }
 
-    m_camera.getTransformation().position = DirectX::XMVectorSet(0.0f, 2.0f, -5.0f, 0.0f);
-    m_camera.getTransformation().rotate(DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f), 0.4f);
+    m_camera.setFarClipDistance(20.0f);
+    m_camera.setNearClipDistance(0.01f);
+    m_camera.updateProjectionMatrix();
+    m_camera.getTransformation().position = DirectX::XMVectorSet(0.0f, 0.0f, -5.0f, 0.0f);
     m_cameraController.setCameraTransformation(&m_camera.getTransformation());
-
-    m_transformation.position = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-    m_transformation.updateWorldMatrix();
 
     calculateConstantBufferValues();
 
@@ -105,9 +104,6 @@ void VolumetricExplosionApp::update()
 
     m_cameraController.update();
     m_camera.updateViewMatrix();
-
-    m_transformation.rotate(DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f), DirectX::XM_2PI * fw::API::getTimeDelta() * 0.1f);
-    m_transformation.updateWorldMatrix();
 
     updateConstantBuffer();
 }
@@ -212,7 +208,7 @@ bool VolumetricExplosionApp::createNoiseTexture()
 
 void VolumetricExplosionApp::calculateConstantBufferValues()
 {
-    const float largestAbsoluteNoiseValue = std::max(std::abs(static_cast<float>(m_maxNoiseValue)), std::abs(static_cast<float>(m_minNoiseValue)));
+    const float largestAbsoluteNoiseValue = std::max(std::abs(DirectX::PackedVector::XMConvertHalfToFloat(m_maxNoiseValue)), std::abs(DirectX::PackedVector::XMConvertHalfToFloat(m_minNoiseValue)));
 
     for (uint16_t i = 0; i < c_numOctaves; ++i)
     {
@@ -332,7 +328,7 @@ void VolumetricExplosionApp::updateConstantBuffer()
     DirectX::XMVECTOR det;
     const DirectX::XMMATRIX worldToView = m_camera.getViewMatrix();
     const DirectX::XMMATRIX viewToProj = m_camera.getProjectionMatrix();
-    const DirectX::XMMATRIX worldToProj = viewToProj * worldToView;
+    const DirectX::XMMATRIX worldToProj = DirectX::XMMatrixMultiply(worldToView, viewToProj);
     const DirectX::XMMATRIX viewToWorld = DirectX::XMMatrixInverse(&det, worldToView);
 
     DirectX::XMFLOAT3 cameraPos;
@@ -343,12 +339,12 @@ void VolumetricExplosionApp::updateConstantBuffer()
     D3D11_MAPPED_SUBRESOURCE mappedResource;
     fw::DX::context->Map(m_constantBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
     CBData* cbData = (CBData*)mappedResource.pData;
-    cbData->worldToViewMatrix = worldToView;
-    cbData->worldToProjectionMatrix = worldToProj;
-    cbData->viewToWorldMatrix = viewToWorld;
+    DirectX::XMStoreFloat4x4(&cbData->worldToViewMatrix, worldToView);
+    DirectX::XMStoreFloat4x4(&cbData->worldToProjectionMatrix, worldToProj);
+    DirectX::XMStoreFloat4x4(&cbData->viewToWorldMatrix, viewToWorld);
     cbData->eyePositionWS = cameraPos;
-    cbData->noiseAmplitudeFactor = c_noiseAmplitudeFactor;
     cbData->eyeForwardWS = cameraForward;
+    cbData->noiseAmplitudeFactor = c_noiseAmplitudeFactor;
     cbData->noiseScale = c_noiseScale;
     cbData->explosionPositionWS = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
     cbData->explosionRadiusWS = c_explosionRadius;
@@ -361,8 +357,8 @@ void VolumetricExplosionApp::updateConstantBuffer()
     cbData->displacementWS = c_displacementAmount;
     cbData->stepSizeWS = c_stepSize;
     cbData->maxNumSteps = c_maxNumSteps;
-    cbData->uvScaleBias = c_uvScaleBias;
     cbData->noiseInitialAmplitude = c_noiseInitialAmplitude;
+    cbData->uvScaleBias = c_uvScaleBias;
     cbData->invMaxNoiseDisplacement = 1.0f / m_maxNoiseDisplacement;
     cbData->numOctaves = c_numOctaves;
     cbData->skinThickness = m_maxSkinThickness;

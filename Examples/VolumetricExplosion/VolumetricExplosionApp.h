@@ -30,14 +30,13 @@ public:
 private:
     struct CBData
     {
-        DirectX::XMMATRIX worldToViewMatrix;
-        DirectX::XMMATRIX worldToProjectionMatrix;
-        DirectX::XMMATRIX viewToWorldMatrix;
+        DirectX::XMFLOAT4X4 worldToViewMatrix;
+        DirectX::XMFLOAT4X4 worldToProjectionMatrix;
+        DirectX::XMFLOAT4X4 viewToWorldMatrix;
 
         DirectX::XMFLOAT3 eyePositionWS;
-        DirectX::XMFLOAT3 eyeForwardWS;
-
         float noiseAmplitudeFactor;
+        DirectX::XMFLOAT3 eyeForwardWS;
         float noiseScale;
 
         DirectX::XMFLOAT3 explosionPositionWS;
@@ -68,7 +67,6 @@ private:
 
     fw::PerspectiveCamera m_camera;
     fw::CameraController m_cameraController;
-    fw::Transformation m_transformation;
     fw::VertexShader m_vertexShader;
     fw::HullShader m_hullShader;
     fw::DomainShader m_domainShader;

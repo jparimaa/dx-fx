@@ -1,19 +1,18 @@
-Texture3D<float> noiseVolumeTex : register(t[0]);
-Texture2D<float4> gradientTex : register(t[1]);
+Texture3D<float> noiseVolumeTex : register(t0);
+Texture2D<float4> gradientTex : register(t1);
 
-SamplerState clampedSampler : register(s[0]);
-SamplerState wrappedSampler : register(s[1]);
+SamplerState clampedSampler : register(s0);
+SamplerState wrappedSampler : register(s1);
 
-cbuffer ConstantBuffer : register(b[0])
+cbuffer ConstantBuffer : register(b0)
 {
-    matrix worldToViewMatrix;
-    matrix worldToProjectionMatrix;
-    matrix viewToWorldMatrix;
+    float4x4 worldToViewMatrix;
+    float4x4 worldToProjectionMatrix;
+    float4x4 viewToWorldMatrix;
 
     float3 eyePositionWS;
-    float3 eyeForwardWS;
-
     float noiseAmplitudeFactor;
+    float3 eyeForwardWS;
     float noiseScale;
 
     float3 explosionPositionWS;
@@ -24,21 +23,21 @@ cbuffer ConstantBuffer : register(b[0])
 
     float edgeSoftness;
     float noiseFrequencyFactor;
-    uint primitiveIdx;
+    int primitiveIdx;
     float opacity;
 
     float displacementWS;
     float stepSizeWS;
-    uint maxNumSteps;
+    int maxNumSteps;
     float noiseInitialAmplitude;
 
     float2 uvScaleBias;
     float invMaxNoiseDisplacement;
-    uint numOctaves;
+    int numOctaves;
 
     float skinThickness;
-    uint numHullOctaves;
-    uint numHullSteps;
+    int numHullOctaves;
+    int numHullSteps;
     float tessellationFactor;
 };
 
