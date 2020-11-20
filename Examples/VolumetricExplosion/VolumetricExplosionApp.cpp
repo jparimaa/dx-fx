@@ -1,4 +1,4 @@
-﻿#include "VolumetricExplosionApp.h"
+#include "VolumetricExplosionApp.h"
 #include <fw/Common.h>
 #include <fw/DX.h>
 #include <fw/API.h>
@@ -16,7 +16,7 @@ namespace
 {
 const float c_clearColor[4] = {0.0f, 0.125f, 0.3f, 1.0f};
 
-const DirectX::XMFLOAT3 c_noiseAnimationSpeed(0.0f, 0.02f, 0.0f);
+const DirectX::XMFLOAT3 c_noiseAnimationSpeed(0.0f, 0.05f, 0.0f);
 const float c_noiseInitialAmplitude = 3.0f;
 const uint16_t c_maxNumSteps = 256;
 const uint16_t c_numHullSteps = 2;
@@ -30,7 +30,7 @@ const float c_edgeSoftness = 0.05f;
 const float c_noiseScale = 0.04f;
 const float c_explosionRadius = 4.0f;
 const float c_displacementAmount = 1.75f;
-const DirectX::XMFLOAT2 c_uvScaleBias(2.1f, 0.35f);
+const DirectX::XMFLOAT2 c_uvScaleBias(2.1f, -0.15f);
 const float c_noiseAmplitudeFactor = 0.4f;
 const float c_noiseFrequencyFactor = 3.0f;
 } // namespace
@@ -85,7 +85,7 @@ bool VolumetricExplosionApp::initialize()
     m_camera.setFarClipDistance(20.0f);
     m_camera.setNearClipDistance(0.01f);
     m_camera.updateProjectionMatrix();
-    m_camera.getTransformation().position = DirectX::XMVectorSet(0.0f, 0.0f, -5.0f, 0.0f);
+    m_camera.getTransformation().position = DirectX::XMVectorSet(0.0f, 0.0f, -10.0f, 0.0f);
     m_cameraController.setCameraTransformation(&m_camera.getTransformation());
 
     calculateConstantBufferValues();
@@ -339,9 +339,9 @@ void VolumetricExplosionApp::updateConstantBuffer()
     D3D11_MAPPED_SUBRESOURCE mappedResource;
     fw::DX::context->Map(m_constantBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
     CBData* cbData = (CBData*)mappedResource.pData;
-    DirectX::XMStoreFloat4x4(&cbData->worldToViewMatrix, worldToView);
-    DirectX::XMStoreFloat4x4(&cbData->worldToProjectionMatrix, worldToProj);
-    DirectX::XMStoreFloat4x4(&cbData->viewToWorldMatrix, viewToWorld);
+    cbData->worldToViewMatrix = worldToView;
+    cbData->worldToProjectionMatrix = worldToProj;
+    cbData->viewToWorldMatrix = viewToWorld;
     cbData->eyePositionWS = cameraPos;
     cbData->eyeForwardWS = cameraForward;
     cbData->noiseAmplitudeFactor = c_noiseAmplitudeFactor;

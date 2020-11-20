@@ -30,9 +30,9 @@ public:
 private:
     struct CBData
     {
-        DirectX::XMFLOAT4X4 worldToViewMatrix;
-        DirectX::XMFLOAT4X4 worldToProjectionMatrix;
-        DirectX::XMFLOAT4X4 viewToWorldMatrix;
+        DirectX::XMMATRIX worldToViewMatrix;
+        DirectX::XMMATRIX worldToProjectionMatrix;
+        DirectX::XMMATRIX viewToWorldMatrix;
 
         DirectX::XMFLOAT3 eyePositionWS;
         float noiseAmplitudeFactor;

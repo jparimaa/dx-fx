@@ -6,9 +6,9 @@ SamplerState wrappedSampler : register(s1);
 
 cbuffer ConstantBuffer : register(b0)
 {
-    float4x4 worldToViewMatrix;
-    float4x4 worldToProjectionMatrix;
-    float4x4 viewToWorldMatrix;
+    matrix worldToViewMatrix;
+    matrix worldToProjectionMatrix;
+    matrix viewToWorldMatrix;
 
     float3 eyePositionWS;
     float noiseAmplitudeFactor;
@@ -47,30 +47,34 @@ void VS()
 
 struct HS_CONSTANT_DATA_OUTPUT
 {
-    float TessFactor[4]	: SV_TessFactor; 
-    float InsideTessFactor[2] : SV_InsideTessFactor; 
+    float TessFactor[4] : SV_TessFactor;
+    float InsideTessFactor[2] : SV_InsideTessFactor;
 };
 
 HS_CONSTANT_DATA_OUTPUT CalcHSPatchConstants()
 {
-	HS_CONSTANT_DATA_OUTPUT Output;
-	Output.TessFactor[0] = 
-    Output.TessFactor[1] = 
-    Output.TessFactor[2] = 
-    Output.TessFactor[3] = 
-    Output.InsideTessFactor[0] = 
-    Output.InsideTessFactor[1] = tessellationFactor;
-	return Output;
+    HS_CONSTANT_DATA_OUTPUT Output;
+    Output.TessFactor[0] = //
+        Output.TessFactor[1] = //
+        Output.TessFactor[2] = //
+        Output.TessFactor[3] = //
+        Output.InsideTessFactor[0] = //
+        Output.InsideTessFactor[1] = tessellationFactor;
+    return Output;
 }
 
-struct HS_OUTPUT{};
+struct HS_OUTPUT
+{
+};
 
+// clang-format off
 [domain("quad")]
 [partitioning("integer")]
 [outputtopology("triangle_ccw")]
 [outputcontrolpoints(4)]
 [patchconstantfunc("CalcHSPatchConstants")]
 HS_OUTPUT HS()
+// clang-format on
 {
     HS_OUTPUT o = (HS_OUTPUT)0;
     return o;
@@ -85,18 +89,18 @@ float fractalNoiseAtPositionWS(float3 posWS, uint numOctaves)
 {
     const float3 animation = noiseAnimationSpeed * time;
 
-    float3 uvw = posWS * noiseScale + animation; 
+    float3 uvw = posWS * noiseScale + animation;
     float amplitude = noiseInitialAmplitude;
-    
+
     float noiseValue = 0;
-    for(uint i = 0; i < numOctaves; ++i)
+    for (uint i = 0; i < numOctaves; ++i)
     {
-        noiseValue += abs(amplitude * noise( uvw )); 
-        amplitude *= noiseAmplitudeFactor; 
+        noiseValue += abs(amplitude * noise(uvw));
+        amplitude *= noiseAmplitudeFactor;
         uvw *= noiseFrequencyFactor;
     }
 
-    return noiseValue * invMaxNoiseDisplacement; 
+    return noiseValue * invMaxNoiseDisplacement;
 }
 
 float sphereSDF(float3 relativePosWS, float radiusWS)
@@ -119,8 +123,10 @@ struct PS_INPUT
     noperspective float3 rayDirectionWS : RAYDIR;
 };
 
+// clang-format off
 [domain("quad")]
 PS_INPUT DS(HS_CONSTANT_DATA_OUTPUT input, float2 UV : SV_DomainLocation, const OutputPatch<HS_OUTPUT, 4> quad)
+// clang-format on
 {
     float2 posClipSpace = UV.xy * 2.0f - 1.0f;
     float2 posClipSpaceAbs = abs(posClipSpace.xy);
@@ -134,74 +140,75 @@ PS_INPUT DS(HS_CONSTANT_DATA_OUTPUT input, float2 UV : SV_DomainLocation, const 
 
     // First get the front world space position of the hull.
     float3 frontNormDir = dir;
-    float3 frontPosWS = mul(viewToWorldMatrix, float4(frontNormDir, 0)).xyz * explosionRadiusWS + explosionPositionWS;
+    float3 frontPosWS = mul(float4(frontNormDir, 0), viewToWorldMatrix).xyz * explosionRadiusWS + explosionPositionWS;
     float3 frontDirWS = normalize(frontPosWS);
     // Then perform the shrink wrapping step using sphere tracing.
     float dummy;
-    for(uint i = 0; i < numHullSteps; ++i)
+    for (int i = 0; i < numHullSteps; ++i)
     {
         float dist = displacedPrimitive(frontPosWS, explosionPositionWS.xyz, innerRadius, displacementWS, numHullOctaves, dummy);
         frontPosWS -= frontDirWS * dist;
     }
     frontPosWS += frontDirWS * skinThickness;
-    float4 frontPosVS = mul(worldToViewMatrix, float4(frontPosWS, 1));
-    float4 frontPosPS = mul(worldToProjectionMatrix, float4(frontPosWS, 1));
+    float4 frontPosVS = mul(float4(frontPosWS, 1), worldToViewMatrix);
+    float4 frontPosPS = mul(float4(frontPosWS, 1), worldToProjectionMatrix);
 
     // Then repeat the process for the back faces.
     float3 backNormDir = dir * float3(1, 1, -1);
-    float3 backPosWS = mul(viewToWorldMatrix, float4(backNormDir, 0)).xyz * explosionRadiusWS + explosionPositionWS;
+    float3 backPosWS = mul(float4(backNormDir, 0), viewToWorldMatrix).xyz * explosionRadiusWS + explosionPositionWS;
     float3 backDirWS = normalize(frontPosWS);
-    for(uint j = 0; j < numHullSteps; ++j)
+    for (int j = 0; j < numHullSteps; ++j)
     {
         float dist = displacedPrimitive(backPosWS, explosionPositionWS.xyz, innerRadius, displacementWS, numHullOctaves, dummy);
         backPosWS -= backDirWS * dist;
     }
     backPosWS += backDirWS * skinThickness;
-    float4 backPosVS = mul(worldToViewMatrix, float4(backPosWS, 1));
-    float4 backPosPS = mul(worldToProjectionMatrix, float4(backPosWS, 1));
+    float4 backPosVS = mul(float4(backPosWS, 1), worldToViewMatrix);
+    float4 backPosPS = mul(float4(backPosWS, 1), worldToProjectionMatrix);
 
     float3 relativePosWS = frontPosWS - eyePositionWS;
     float3 rayDirectionWS = relativePosWS / dot(relativePosWS, eyeForwardWS);
 
-    PS_INPUT psInput;    
+    PS_INPUT psInput;
     psInput.PosPS = frontPosPS;
     psInput.rayHitNearFar = float2(frontPosVS.z, backPosVS.z);
-    psInput.rayDirectionWS = rayDirectionWS;    
+    psInput.rayDirectionWS = rayDirectionWS;
     return psInput;
 }
 
-float4 mapDisplacementToColour(const float displacement, const float2 uvScaleBias)
+float4 mapDisplacementToColor(const float displacement, const float2 uvScaleBias)
 {
     float texcoord = saturate(mad(displacement, uvScaleBias.x, uvScaleBias.y));
     texcoord = 1 - (1 - texcoord) * (1 - texcoord); // Adjust
 
-    float4 colour = gradientTex.SampleLevel(clampedSampler, texcoord, 0);
+    float4 color = gradientTex.SampleLevel(clampedSampler, texcoord, 0);
 
-    // Apply some more adjustments to the colour post sample. Again, these should be made in the texture itself.
-    colour *= colour;
-    colour.a = 0.5f;
+    // Apply some more adjustments to the color post sample. Again, these should be made in the texture itself.
+    color *= color;
+    color.a = 0.5f;
 
-    return colour;
+    return color;
 }
 
 float4 sceneFunction(const float3 posWS, const float3 spherePositionWS, const float radiusWS, const float displacementWS, const float2 uvScaleBias)
 {
     float displacementOut;
     float distance = displacedPrimitive(posWS, spherePositionWS, radiusWS, displacementWS, numOctaves, displacementOut);
-    float4 colour = mapDisplacementToColour(displacementOut, uvScaleBias);
+    float4 color = mapDisplacementToColor(displacementOut, uvScaleBias);
 
     // Rather than just using a binary in/out metric, we smooth the edge of the volume using a smoothstep so that we get soft edges.
     float edgeFade = smoothstep(0.5f + edgeSoftness, 0.5f - edgeSoftness, distance);
 
-    return colour * float4( 1..xxx, edgeFade );
+    return color * float4(1..xxx, edgeFade);
 }
 
-float4 Blend( const float4 src, const float4 dst )
+float4 Blend(const float4 src, const float4 dst)
 {
     return mad(float4(dst.rgb, 1), mad(dst.a, -src.a, dst.a), src);
 }
 
-float4 PS(PS_INPUT input) : SV_Target
+float4 PS(PS_INPUT input) :
+    SV_Target
 {
     const float3 rayDirectionWS = input.rayDirectionWS;
     float nearD = input.rayHitNearFar.x;
@@ -210,20 +217,20 @@ float4 PS(PS_INPUT input) : SV_Target
     float4 output;
 
     const float3 startWS = mad(rayDirectionWS, nearD, eyePositionWS.xyz);
-    const float3 endWS = mad(rayDirectionWS, farD , eyePositionWS.xyz);
+    const float3 endWS = mad(rayDirectionWS, farD, eyePositionWS.xyz);
 
-    const float3 stepAmountWS = rayDirectionWS * stepSizeWS; 
+    const float3 stepAmountWS = rayDirectionWS * stepSizeWS;
     const float numSteps = min(maxNumSteps, (farD - nearD) / stepSizeWS);
     const float innerRadius = explosionRadiusWS - displacementWS;
 
     float3 posWS = startWS;
 
     float stepsTaken = 0;
-    while(stepsTaken++ < numSteps && output.a < opacity)
+    while (stepsTaken++ < numSteps && output.a < opacity)
     {
-        float4 colour = sceneFunction(posWS, explosionPositionWS.xyz, innerRadius, displacementWS, uvScaleBias);
-        output = Blend(output, colour);
-        
+        float4 color = sceneFunction(posWS, explosionPositionWS.xyz, innerRadius, displacementWS, uvScaleBias);
+        output = Blend(output, color);
+
         posWS += stepAmountWS;
     }
 
